@@ -4,6 +4,7 @@
 #include <map>
 #include <unordered_map>
 #include <vector>
+#include <string>
 
 // cartesian coordinates in meters, e.g., for room positions:
 struct pos_t {
