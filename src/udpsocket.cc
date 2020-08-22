@@ -13,6 +13,11 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
+#ifdef __APPLE__
+#include "MACAddressUtility.h"
+#define MSG_CONFIRM 0
+#endif
+
 #define LISTEN_BACKLOG 512
 
 const size_t pingbufsize(
@@ -182,6 +187,8 @@ char* ovbox_udpsocket_t::recv_sec_msg(char* inputbuf, size_t& ilen, size_t& len,
   return &(inputbuf[HEADERLEN]);
 }
 
+
+#if defined(__linux__)
 std::string getmacaddr()
 {
   std::string retv;
@@ -223,6 +230,20 @@ std::string getmacaddr()
   }
   return retv;
 }
+#else
+  std::string getmacaddr()
+  {
+    std::string retv;
+    unsigned char mac_address[6];
+    char ctmp[1024];
+    if(MACAddressUtility::GetMACAddress(mac_address) == 0)
+    {
+      sprintf(ctmp, "%02x%02x%02x%02x%02x%02x", mac_address[0], mac_address[1], mac_address[2], mac_address[3], mac_address[4], mac_address[5]);
+      retv = ctmp;
+    }
+    return retv;
+  }
+#endif
 
 endpoint_t getipaddr()
 {

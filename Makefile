@@ -35,7 +35,7 @@ endif
 
 VERSION=0.3
 
-OBJ = ov_types errmsg common udpsocket callerlist ovboxclient
+OBJ = ov_types errmsg common udpsocket callerlist ovboxclient MACAddressUtility
 
 BUILD_OBJ = $(patsubst %,build/%.o,$(OBJ))
 
