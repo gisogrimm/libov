@@ -24,15 +24,13 @@ SOURCE_DIR = src
 lib: build/libov.a
 
 build/libov.a: $(BUILD_OBJ)
-	ar -rcs $@ $^
+	ar rcs $@ $^
 
 build: build/.directory
 
 %/.directory:
 	mkdir -p $*
 	touch $@
-
-$(BUILD_OBJ): $(wildcard src/*.h)
 
 build/%.o: src/%.cc
 	$(CXX) $(CXXFLAGS) -c $^ -o $@

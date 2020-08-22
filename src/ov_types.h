@@ -15,7 +15,7 @@ struct pos_t {
   double z;
 };
 
-bool operator!=(const pos_t &a, const pos_t &b);
+bool operator!=(const pos_t& a, const pos_t& b);
 
 // Euler angles for rotation, in radians:
 struct zyx_euler_t {
@@ -25,7 +25,7 @@ struct zyx_euler_t {
   double x;
 };
 
-bool operator!=(const zyx_euler_t &a, const zyx_euler_t &b);
+bool operator!=(const zyx_euler_t& a, const zyx_euler_t& b);
 
 /// packet sequence type:
 typedef int16_t sequence_t;
@@ -49,7 +49,7 @@ struct audio_device_t {
   unsigned int numperiods;
 };
 
-bool operator!=(const audio_device_t &a, const audio_device_t &b);
+bool operator!=(const audio_device_t& a, const audio_device_t& b);
 
 struct device_channel_t {
   /// Source of channel (used locally only):
@@ -60,7 +60,7 @@ struct device_channel_t {
   pos_t position;
 };
 
-bool operator!=(const device_channel_t &a, const device_channel_t &b);
+bool operator!=(const device_channel_t& a, const device_channel_t& b);
 
 struct stage_device_t {
   /// ID within the stage, typically a number from 0 to number of stage devices:
@@ -83,10 +83,10 @@ struct stage_device_t {
   double receiverjitter;
 };
 
-bool operator!=(const std::vector<device_channel_t> &a,
-                const std::vector<device_channel_t> &b);
+bool operator!=(const std::vector<device_channel_t>& a,
+                const std::vector<device_channel_t>& b);
 
-bool operator!=(const stage_device_t &a, const stage_device_t &b);
+bool operator!=(const stage_device_t& a, const stage_device_t& b);
 
 struct render_settings_t {
   stage_device_id_t id;
@@ -118,7 +118,7 @@ struct render_settings_t {
   double secrec;
 };
 
-bool operator!=(const render_settings_t &a, const render_settings_t &b);
+bool operator!=(const render_settings_t& a, const render_settings_t& b);
 
 struct stage_t {
   /// relay server host name:
@@ -139,25 +139,25 @@ struct stage_t {
 
 class ov_render_base_t {
 public:
-  ov_render_base_t(const std::string &deviceid);
+  ov_render_base_t(const std::string& deviceid);
   virtual ~ov_render_base_t(){};
-  virtual void set_relay_server(const std::string &host, port_t port,
+  virtual void set_relay_server(const std::string& host, port_t port,
                                 secret_t pin);
   virtual void start_session();
   virtual void end_session();
-  virtual void configure_audio_backend(const audio_device_t &);
-  virtual void add_stage_device(const stage_device_t &stagedevice);
+  virtual void configure_audio_backend(const audio_device_t&);
+  virtual void add_stage_device(const stage_device_t& stagedevice);
   virtual void rm_stage_device(stage_device_id_t stagedeviceid);
   virtual void clear_stage();
   virtual void set_stage_device_gain(stage_device_id_t stagedeviceid,
                                      double gain);
-  virtual void set_render_settings(const render_settings_t &rendersettings,
+  virtual void set_render_settings(const render_settings_t& rendersettings,
                                    stage_device_id_t thisstagedeviceid);
   virtual void start_audiobackend();
   virtual void stop_audiobackend();
   const bool is_session_active() const;
   const bool is_audio_active() const;
-  const std::string &get_deviceid() const;
+  const std::string& get_deviceid() const;
 
 protected:
   audio_device_t audiodevice;
@@ -170,13 +170,13 @@ private:
 
 class ov_client_base_t {
 public:
-  ov_client_base_t(ov_render_base_t &backend) : backend(backend){};
+  ov_client_base_t(ov_render_base_t& backend) : backend(backend){};
   virtual ~ov_client_base_t(){};
   virtual void start_service(){};
   virtual void stop_service(){};
 
 protected:
-  ov_render_base_t &backend;
+  ov_render_base_t& backend;
 };
 
 #endif

@@ -6,8 +6,9 @@
 std::mutex logmutex;
 int verbose(1);
 
-void log(int portno, const std::string &s, int v) {
-  if (v > verbose)
+void log(int portno, const std::string& s, int v)
+{
+  if(v > verbose)
     return;
   std::lock_guard<std::mutex> guard(logmutex);
   std::time_t t(std::time(nullptr));
@@ -15,8 +16,9 @@ void log(int portno, const std::string &s, int v) {
             << s << std::endl;
 }
 
-void set_thread_prio(unsigned int prio) {
-  if (prio > 0) {
+void set_thread_prio(unsigned int prio)
+{
+  if(prio > 0) {
     struct sched_param sp;
     memset(&sp, 0, sizeof(sp));
     sp.sched_priority = prio;
@@ -24,23 +26,25 @@ void set_thread_prio(unsigned int prio) {
   }
 }
 
-void app_usage(const std::string &app_name, struct option *opt,
-               const std::string &app_arg, const std::string &help) {
+void app_usage(const std::string& app_name, struct option* opt,
+               const std::string& app_arg, const std::string& help)
+{
   std::cout << "Usage:\n\n" << app_name << " [options] " << app_arg << "\n\n";
-  if (!help.empty())
+  if(!help.empty())
     std::cout << help << "\n\n";
   std::cout << "Options:\n\n";
-  while (opt->name) {
+  while(opt->name) {
     std::cout << "  -" << (char)(opt->val) << " " << (opt->has_arg ? "#" : "")
               << "\n  --" << opt->name << (opt->has_arg ? "=#" : "") << "\n\n";
     opt++;
   }
 }
 
-size_t packmsg(char *destbuf, size_t maxlen, secret_t secret,
+size_t packmsg(char* destbuf, size_t maxlen, secret_t secret,
                stage_device_id_t callerid, port_t destport, sequence_t seq,
-               const char *msg, size_t msglen) {
-  if (maxlen < HEADERLEN + msglen) {
+               const char* msg, size_t msglen)
+{
+  if(maxlen < HEADERLEN + msglen) {
     DEBUG(maxlen);
     DEBUG(HEADERLEN);
     DEBUG(msglen);
@@ -54,18 +58,20 @@ size_t packmsg(char *destbuf, size_t maxlen, secret_t secret,
   return HEADERLEN + msglen;
 }
 
-size_t addmsg(char *destbuf, size_t maxlen, size_t currentlen, const char *msg,
-              size_t msglen) {
-  if (maxlen < currentlen + msglen)
+size_t addmsg(char* destbuf, size_t maxlen, size_t currentlen, const char* msg,
+              size_t msglen)
+{
+  if(maxlen < currentlen + msglen)
     return 0;
   memcpy(&(destbuf[currentlen]), msg, msglen);
   return currentlen + msglen;
 }
 
-double get_pingtime(const char *msg, size_t msglen) {
-  if (msglen == sizeof(std::chrono::high_resolution_clock::time_point)) {
+double get_pingtime(const char* msg, size_t msglen)
+{
+  if(msglen == sizeof(std::chrono::high_resolution_clock::time_point)) {
     const std::chrono::high_resolution_clock::time_point t1(
-        *(std::chrono::high_resolution_clock::time_point *)msg);
+        *(std::chrono::high_resolution_clock::time_point*)msg);
     std::chrono::high_resolution_clock::time_point t2(
         std::chrono::high_resolution_clock::now());
     std::chrono::duration<double> time_span =

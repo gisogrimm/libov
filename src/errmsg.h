@@ -5,10 +5,10 @@
 
 class ErrMsg : public std::exception, private std::string {
 public:
-  ErrMsg(const std::string &msg);
-  ErrMsg(const std::string &msg, int err);
+  ErrMsg(const std::string& msg);
+  ErrMsg(const std::string& msg, int err);
   virtual ~ErrMsg() throw();
-  const char *what() const throw();
+  const char* what() const throw();
 };
 
 #endif
