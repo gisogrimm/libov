@@ -10,14 +10,14 @@
 #elif defined(__APPLE__)
 #include <CoreFoundation/CoreFoundation.h>
 #include <IOKit/IOKitLib.h>
+#include <IOKit/network/IOEthernetController.h>
 #include <IOKit/network/IOEthernetInterface.h>
 #include <IOKit/network/IONetworkInterface.h>
-#include <IOKit/network/IOEthernetController.h>
 #elif defined(LINUX) || defined(linux)
-#include <string.h>
-#include <net/if.h>
-#include <sys/ioctl.h>
 #include <arpa/inet.h>
+#include <net/if.h>
+#include <string.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
 #endif
 

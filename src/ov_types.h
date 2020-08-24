@@ -2,9 +2,9 @@
 #define OV_TYPES
 
 #include <map>
+#include <string>
 #include <unordered_map>
 #include <vector>
-#include <string>
 
 // cartesian coordinates in meters, e.g., for room positions:
 struct pos_t {
@@ -109,11 +109,14 @@ struct render_settings_t {
   double egogain;
   /// peer-to-peer mode:
   bool peer2peer;
-  /// output ports of device master:
+  /// output ports of device master (names may depend on audio backend):
   std::string outputport1;
   std::string outputport2;
-  /// extra ports, key is the source port, value is the destination:
+  /// the next bit is very specific and likely to change:
+  /// extra audio connection, key is the source port, value is the destination:
   std::unordered_map<std::string, std::string> xports;
+  /// extra forwarding UDP ports:
+  std::vector<port_t> xrecport;
   /// jitterbuffersize for second data receiver (e.g., for recording or
   /// broadcasting):
   double secrec;

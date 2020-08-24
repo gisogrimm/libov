@@ -17,10 +17,12 @@ public:
   void announce_latency(stage_device_id_t cid, double lmin, double lmean,
                         double lmax, uint32_t received, uint32_t lost);
   void add_extraport(port_t dest);
+  void add_receiverport(port_t port_t);
 
 private:
   void sendsrv();
   void recsrv();
+  void xrecsrv(port_t port);
   void pingservice();
   void handle_endpoint_list_update(stage_device_id_t cid, const endpoint_t& ep);
   // real time priority:
@@ -44,6 +46,7 @@ private:
   std::thread sendthread;
   std::thread recthread;
   std::thread pingthread;
+  std::vector<std::thread> xrecthread;
   epmode_t mode;
   endpoint_t localep;
 };

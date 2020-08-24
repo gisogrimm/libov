@@ -38,6 +38,13 @@ ovboxclient_t::~ovboxclient_t()
   sendthread.join();
   recthread.join();
   pingthread.join();
+  for(auto th = xrecthread.begin(); th != xrecthread.end(); ++th)
+    th->join();
+}
+
+void ovboxclient_t::add_receiverport(port_t xport)
+{
+  xrecthread.emplace_back(std::thread(&ovboxclient_t::xrecsrv, this, xport));
 }
 
 void ovboxclient_t::add_extraport(port_t dest)
@@ -203,6 +210,53 @@ void ovboxclient_t::recsrv()
     sequence_t seq(0);
     while(runsession) {
       ssize_t n = local_server.recvfrom(buffer, BUFSIZE, sender_endpoint);
+      if(n > 0) {
+        ++seq;
+        size_t un =
+            packmsg(msg, BUFSIZE, secret, callerid, recport, seq, buffer, n);
+        bool sendtoserver(!(mode & B_PEER2PEER));
+        if(mode & B_PEER2PEER) {
+          size_t ocid(0);
+          for(auto ep : endpoints) {
+            if(ep.timeout) {
+              if((ocid != callerid) && (ep.mode & B_PEER2PEER) &&
+                 (!(ep.mode & B_DONOTSEND))) {
+                remote_server.send(msg, un, ep.ep);
+              } else {
+                sendtoserver = true;
+              }
+            }
+            ++ocid;
+          }
+        }
+        if(sendtoserver) {
+          remote_server.send(msg, un, toport);
+        }
+      }
+    }
+  }
+  catch(const std::exception& e) {
+    std::cerr << "Error: " << e.what() << std::endl;
+    runsession = false;
+  }
+}
+
+// this thread receives local UDP messages and handles them:
+void ovboxclient_t::xrecsrv(port_t port)
+{
+  try {
+    udpsocket_t xlocal_server;
+    xlocal_server.set_timeout_usec(100000);
+    xlocal_server.destination("localhost");
+    xlocal_server.bind(port, true);
+    set_thread_prio(prio);
+    char buffer[BUFSIZE];
+    char msg[BUFSIZE];
+    endpoint_t sender_endpoint;
+    log(recport, "listening");
+    sequence_t seq(0);
+    while(runsession) {
+      ssize_t n = xlocal_server.recvfrom(buffer, BUFSIZE, sender_endpoint);
       if(n > 0) {
         ++seq;
         size_t un =

@@ -62,8 +62,8 @@ build: build/.directory
 	mkdir -p $*
 	touch $@
 
-build/%.o: src/%.cc
-	$(CXX) $(CXXFLAGS) -c $^ -o $@
+build/%.o: src/%.cc $(wildcard src/*.h)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clangformat:
 	clang-format-9 -i $(wildcard src/*.cc) $(wildcard src/*.h)
