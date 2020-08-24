@@ -260,7 +260,7 @@ void ovboxclient_t::xrecsrv(port_t port)
       if(n > 0) {
         ++seq;
         size_t un =
-            packmsg(msg, BUFSIZE, secret, callerid, recport, seq, buffer, n);
+            packmsg(msg, BUFSIZE, secret, callerid, port, seq, buffer, n);
         bool sendtoserver(!(mode & B_PEER2PEER));
         if(mode & B_PEER2PEER) {
           size_t ocid(0);
