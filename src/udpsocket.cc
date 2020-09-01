@@ -29,6 +29,10 @@ udpsocket_t::udpsocket_t()
   sockfd = socket(AF_INET, SOCK_DGRAM, 0);
   if(sockfd < 0)
     throw ErrMsg("Opening socket failed: ", errno);
+  int priority = 5;
+  int iptos = IPTOS_CLASS_CS6;
+  setsockopt(sockfd, IPPROTO_IP, IP_TOS, &iptos, sizeof(iptos));
+  setsockopt(sockfd, SOL_SOCKET, SO_PRIORITY, &priority,sizeof(priority));
   isopen = true;
 }
 
