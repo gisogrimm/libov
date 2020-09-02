@@ -183,6 +183,8 @@ protected:
   ov_render_base_t& backend;
 };
 
+const char* get_libov_version();
+
 #endif
 
 /*

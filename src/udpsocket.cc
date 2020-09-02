@@ -33,7 +33,7 @@ udpsocket_t::udpsocket_t()
   int priority = 5;
   int iptos = IPTOS_CLASS_CS6;
   setsockopt(sockfd, IPPROTO_IP, IP_TOS, &iptos, sizeof(iptos));
-  setsockopt(sockfd, SOL_SOCKET, SO_PRIORITY, &priority,sizeof(priority));
+  setsockopt(sockfd, SOL_SOCKET, SO_PRIORITY, &priority, sizeof(priority));
 #endif
   isopen = true;
 }

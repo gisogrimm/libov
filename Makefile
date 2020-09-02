@@ -35,6 +35,9 @@ endif
 
 VERSION=0.3
 
+showver:
+	@echo $(VERSION)
+
 OBJ = ov_types errmsg common udpsocket callerlist ovboxclient MACAddressUtility
 
 BUILD_OBJ = $(patsubst %,build/%.o,$(OBJ))

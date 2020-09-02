@@ -176,6 +176,11 @@ void ov_render_base_t::set_relay_server(const std::string& host, port_t port,
   }
 }
 
+const char* get_libov_version()
+{
+  return OVBOXVERSION;
+}
+
 /*
  * Local Variables:
  * compile-command: "make -C .."
