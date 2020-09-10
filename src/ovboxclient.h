@@ -4,6 +4,7 @@
 #include "callerlist.h"
 #include "common.h"
 #include "udpsocket.h"
+#include <functional>
 
 class ovboxclient_t : public endpoint_list_t {
 public:
@@ -18,6 +19,9 @@ public:
                         double lmax, uint32_t received, uint32_t lost);
   void add_extraport(port_t dest);
   void add_receiverport(port_t port_t);
+  void
+  set_ping_callback(std::function<void(stage_device_id_t, double, void*)> f,
+                    void* d);
 
 private:
   void sendsrv();
@@ -49,6 +53,8 @@ private:
   std::vector<std::thread> xrecthread;
   epmode_t mode;
   endpoint_t localep;
+  std::function<void(stage_device_id_t, double, void*)> cb_ping;
+  void* cb_ping_data;
 };
 
 #endif

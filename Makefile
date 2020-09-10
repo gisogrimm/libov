@@ -1,3 +1,5 @@
+VERSION=0.4
+
 all: build lib
 
 CXXFLAGS = -Wall -Wno-deprecated-declarations -std=c++11 -pthread	\
@@ -32,8 +34,6 @@ else
 		OSFLAG += -D ARM
 	endif
 endif
-
-VERSION=0.3
 
 showver:
 	@echo $(VERSION)

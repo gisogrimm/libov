@@ -12,7 +12,7 @@ ovboxclient_t::ovboxclient_t(const std::string& desthost, port_t destport,
                              bool downmixonly_)
     : prio(prio), secret(secret), remote_server(secret), toport(destport),
       recport(recport), portoffset(portoffset), callerid(callerid),
-      runsession(true), mode(0)
+      runsession(true), mode(0), cb_ping(nullptr), cb_ping_data(nullptr)
 {
   if(peer2peer_)
     mode |= B_PEER2PEER;
@@ -40,6 +40,13 @@ ovboxclient_t::~ovboxclient_t()
   pingthread.join();
   for(auto th = xrecthread.begin(); th != xrecthread.end(); ++th)
     th->join();
+}
+
+void ovboxclient_t::set_ping_callback(
+    std::function<void(stage_device_id_t, double, void*)> f, void* d)
+{
+  cb_ping = f;
+  cb_ping_data = d;
 }
 
 void ovboxclient_t::add_receiverport(port_t xport)
@@ -172,8 +179,11 @@ void ovboxclient_t::sendsrv()
           case PORT_PONG:
             if(rcallerid != callerid) {
               double tms(get_pingtime(msg, un));
-              if(tms > 0)
+              if(tms > 0) {
                 cid_setpingtime(rcallerid, tms);
+                if(cb_ping)
+                  cb_ping(rcallerid, tms, cb_ping_data);
+              }
             }
             break;
           case PORT_SETLOCALIP:
