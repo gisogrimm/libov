@@ -11,7 +11,7 @@
 // period time of ping statistic loggin, in ping periods:
 #define STATLOGPERIOD 600
 // timeout of caller actvity, in ping periods:
-#define TIMEOUT 30
+#define TIMEOUT 120
 
 #define B_PEER2PEER 1
 #define B_DOWNMIXONLY 2
