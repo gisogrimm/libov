@@ -2,6 +2,7 @@
 #include <condition_variable>
 #include <map>
 #include <netdb.h>
+#include <string.h>
 #include <strings.h>
 #include <thread>
 
@@ -9,10 +10,11 @@ ovboxclient_t::ovboxclient_t(const std::string& desthost, port_t destport,
                              port_t recport, port_t portoffset, int prio,
                              secret_t secret, stage_device_id_t callerid,
                              bool peer2peer_, bool donotsend_,
-                             bool downmixonly_)
+                             bool downmixonly_, bool sendlocal_)
     : prio(prio), secret(secret), remote_server(secret), toport(destport),
       recport(recport), portoffset(portoffset), callerid(callerid),
-      runsession(true), mode(0), cb_ping(nullptr), cb_ping_data(nullptr)
+      runsession(true), mode(0), cb_ping(nullptr), cb_ping_data(nullptr),
+      sendlocal(sendlocal_)
 {
   if(peer2peer_)
     mode |= B_PEER2PEER;
@@ -43,7 +45,8 @@ ovboxclient_t::~ovboxclient_t()
 }
 
 void ovboxclient_t::set_ping_callback(
-    std::function<void(stage_device_id_t, double, void*)> f, void* d)
+    std::function<void(stage_device_id_t, double, const endpoint_t&, void*)> f,
+    void* d)
 {
   cb_ping = f;
   cb_ping_data = d;
@@ -125,6 +128,10 @@ void ovboxclient_t::pingservice()
     for(auto ep : endpoints) {
       if(ep.timeout && (ocid != callerid)) {
         remote_server.send_ping(callerid, ep.ep);
+        // test if peer is in same network:
+        if((endpoints[callerid].ep.sin_addr.s_addr == ep.ep.sin_addr.s_addr) &&
+           (ep.localep.sin_addr.s_addr != 0))
+          remote_server.send_ping(callerid, ep.localep);
       }
       ++ocid;
     }
@@ -172,21 +179,30 @@ void ovboxclient_t::sendsrv()
         } else {
           switch(destport) {
           case PORT_PING:
+            // we received a ping message, so we just send it back as a pong
+            // message and with our own stage device id:
             msg_port(buffer) = PORT_PONG;
             msg_callerid(buffer) = callerid;
             remote_server.send(buffer, n, sender_endpoint);
             break;
           case PORT_PONG:
+            // we received a pong message, most likely a reply to an own ping
+            // message, so we extract the time and handle it:
             if(rcallerid != callerid) {
               double tms(get_pingtime(msg, un));
               if(tms > 0) {
+                endpoint_t ep;
+                memset(&ep, 0, sizeof(ep));
+                if(un >= sizeof(endpoint_t))
+                  ep = *((endpoint_t*)msg);
                 cid_setpingtime(rcallerid, tms);
                 if(cb_ping)
-                  cb_ping(rcallerid, tms, cb_ping_data);
+                  cb_ping(rcallerid, tms, ep, cb_ping_data);
               }
             }
             break;
           case PORT_SETLOCALIP:
+            // we received the local IP address of a peer:
             if(un == sizeof(endpoint_t)) {
               cid_setlocalip(rcallerid, *((endpoint_t*)msg));
             }
@@ -226,14 +242,29 @@ void ovboxclient_t::recsrv()
             packmsg(msg, BUFSIZE, secret, callerid, recport, seq, buffer, n);
         bool sendtoserver(!(mode & B_PEER2PEER));
         if(mode & B_PEER2PEER) {
+          // we are in peer-to-peer mode.
           size_t ocid(0);
           for(auto ep : endpoints) {
             if(ep.timeout) {
-              if((ocid != callerid) && (ep.mode & B_PEER2PEER) &&
-                 (!(ep.mode & B_DONOTSEND))) {
-                remote_server.send(msg, un, ep.ep);
-              } else {
-                sendtoserver = true;
+              // endpoint is active.
+              if(ocid != callerid) {
+                // not sending to ourself.
+                if(ep.mode & B_PEER2PEER) {
+                  // other end is in peer-to-peer mode.
+                  if(!(ep.mode & B_DONOTSEND)) {
+                    // sending is not deactivated.
+                    if(sendlocal &&
+                       (endpoints[callerid].ep.sin_addr.s_addr ==
+                        ep.ep.sin_addr.s_addr) &&
+                       (ep.localep.sin_addr.s_addr != 0))
+                      // same network.
+                      remote_server.send(msg, un, ep.localep);
+                    else
+                      remote_server.send(msg, un, ep.ep);
+                  }
+                } else {
+                  sendtoserver = true;
+                }
               }
             }
             ++ocid;

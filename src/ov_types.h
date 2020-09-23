@@ -82,6 +82,8 @@ struct stage_device_t {
   double senderjitter;
   /// receiver jitter:
   double receiverjitter;
+  /// send to local IP if same network:
+  bool sendlocal;
 };
 
 bool operator!=(const std::vector<device_channel_t>& a,

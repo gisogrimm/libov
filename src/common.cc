@@ -67,15 +67,17 @@ size_t addmsg(char* destbuf, size_t maxlen, size_t currentlen, const char* msg,
   return currentlen + msglen;
 }
 
-double get_pingtime(const char* msg, size_t msglen)
+double get_pingtime(char*& msg, size_t& msglen)
 {
-  if(msglen == sizeof(std::chrono::high_resolution_clock::time_point)) {
+  if(msglen >= sizeof(std::chrono::high_resolution_clock::time_point)) {
     const std::chrono::high_resolution_clock::time_point t1(
         *(std::chrono::high_resolution_clock::time_point*)msg);
     std::chrono::high_resolution_clock::time_point t2(
         std::chrono::high_resolution_clock::now());
     std::chrono::duration<double> time_span =
         std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+    msglen -= sizeof(std::chrono::high_resolution_clock::time_point);
+    msg += sizeof(std::chrono::high_resolution_clock::time_point);
     return (1000.0 * time_span.count());
   }
   return -1;

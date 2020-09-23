@@ -40,6 +40,11 @@ void app_usage(const std::string& app_name, struct option* opt,
 
 typedef uint8_t epmode_t;
 
+// the message header is a byte array with:
+// - secret
+// - stage_device_id
+// - sequence number
+// - user data
 #define POS_CALLERID sizeof(secret_t)
 #define POS_PORT (POS_CALLERID + sizeof(stage_device_id_t))
 #define POS_SEQ (POS_PORT + sizeof(port_t))
@@ -69,12 +74,13 @@ size_t packmsg(char* destbuf, size_t maxlen, secret_t secret,
 size_t addmsg(char* destbuf, size_t maxlen, size_t currentlen, const char* msg,
               size_t msglen);
 
-double get_pingtime(const char* msg, size_t msglen);
+double get_pingtime(char*& msg, size_t& msglen);
 
 #endif
 
 /*
  * Local Variables:
  * mode: c++
+ * compile-command: "make -C .."
  * End:
  */

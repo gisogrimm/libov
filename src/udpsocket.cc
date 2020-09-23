@@ -20,8 +20,10 @@
 
 #define LISTEN_BACKLOG 512
 
-const size_t pingbufsize(
-    HEADERLEN + sizeof(std::chrono::high_resolution_clock::time_point) + 1);
+const size_t
+    pingbufsize(HEADERLEN +
+                sizeof(std::chrono::high_resolution_clock::time_point) +
+                sizeof(endpoint_t) + 1);
 
 udpsocket_t::udpsocket_t()
 {
@@ -149,6 +151,7 @@ void ovbox_udpsocket_t::send_ping(stage_device_id_t cid, const endpoint_t& ep)
       std::chrono::high_resolution_clock::now());
   size_t n = packmsg(buffer, pingbufsize, secret, cid, PORT_PING, 0,
                      (const char*)(&t1), sizeof(t1));
+  n = addmsg(buffer, pingbufsize, n, (char*)(&ep), sizeof(ep));
   send(buffer, n, ep);
 }
 

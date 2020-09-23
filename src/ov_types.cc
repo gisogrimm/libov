@@ -38,7 +38,9 @@ bool operator!=(const stage_device_t& a, const stage_device_t& b)
 {
   return (a.id != b.id) || (a.label != b.label) || (a.channels != b.channels) ||
          (a.position != b.position) || (a.orientation != b.orientation) ||
-         (a.gain != b.gain) || (a.mute != b.mute);
+         (a.gain != b.gain) || (a.mute != b.mute) ||
+         (a.senderjitter != b.senderjitter) ||
+         (a.receiverjitter != b.receiverjitter) || (a.sendlocal != b.sendlocal);
 }
 
 bool operator!=(const render_settings_t& a, const render_settings_t& b)

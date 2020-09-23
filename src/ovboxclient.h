@@ -11,7 +11,7 @@ public:
   ovboxclient_t(const std::string& desthost, port_t destport, port_t recport,
                 port_t portoffset, int prio, secret_t secret,
                 stage_device_id_t callerid, bool peer2peer, bool donotsend,
-                bool downmixonly);
+                bool downmixonly, bool sendlocal_);
   virtual ~ovboxclient_t();
   void announce_new_connection(stage_device_id_t cid, const ep_desc_t& ep);
   void announce_connection_lost(stage_device_id_t cid);
@@ -19,9 +19,10 @@ public:
                         double lmax, uint32_t received, uint32_t lost);
   void add_extraport(port_t dest);
   void add_receiverport(port_t port_t);
-  void
-  set_ping_callback(std::function<void(stage_device_id_t, double, void*)> f,
-                    void* d);
+  void set_ping_callback(
+      std::function<void(stage_device_id_t, double, const endpoint_t&, void*)>
+          f,
+      void* d);
 
 private:
   void sendsrv();
@@ -53,8 +54,10 @@ private:
   std::vector<std::thread> xrecthread;
   epmode_t mode;
   endpoint_t localep;
-  std::function<void(stage_device_id_t, double, void*)> cb_ping;
+  std::function<void(stage_device_id_t, double, const endpoint_t&, void*)>
+      cb_ping;
   void* cb_ping_data;
+  bool sendlocal;
 };
 
 #endif
