@@ -2,6 +2,7 @@
 #define UDP_SOCKET_H
 
 #include "common.h"
+#include <atomic>
 #include <netinet/ip.h>
 #include <string>
 #include <sys/socket.h>
@@ -34,6 +35,10 @@ private:
   int sockfd;
   endpoint_t serv_addr;
   bool isopen;
+
+public:
+  std::atomic_size_t tx_bytes;
+  std::atomic_size_t rx_bytes;
 };
 
 class ovbox_udpsocket_t : public udpsocket_t {
@@ -56,6 +61,6 @@ protected:
 /*
  * Local Variables:
  * mode: c++
- * compile-command: "make"
+ * compile-command: "make -C .."
  * End:
  */

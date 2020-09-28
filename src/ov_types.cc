@@ -178,6 +178,8 @@ void ov_render_base_t::set_relay_server(const std::string& host, port_t port,
   }
 }
 
+void ov_render_base_t::getbitrate(double& txrate, double& rxrate) {}
+
 const char* get_libov_version()
 {
   return OVBOXVERSION;

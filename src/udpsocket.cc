@@ -25,7 +25,7 @@ const size_t
                 sizeof(std::chrono::high_resolution_clock::time_point) +
                 sizeof(endpoint_t) + 1);
 
-udpsocket_t::udpsocket_t()
+udpsocket_t::udpsocket_t() : tx_bytes(0), rx_bytes(0)
 {
   bzero((char*)&serv_addr, sizeof(serv_addr));
   sockfd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -109,14 +109,18 @@ size_t udpsocket_t::send(const char* buf, size_t len, int portno)
   if(portno == 0)
     return len;
   serv_addr.sin_port = htons(portno);
-  return sendto(sockfd, buf, len, MSG_CONFIRM, (struct sockaddr*)&serv_addr,
-                sizeof(serv_addr));
+  size_t tx(sendto(sockfd, buf, len, MSG_CONFIRM, (struct sockaddr*)&serv_addr,
+                   sizeof(serv_addr)));
+  tx_bytes += tx;
+  return tx;
 }
 
 size_t udpsocket_t::send(const char* buf, size_t len, const endpoint_t& ep)
 {
-  return sendto(sockfd, buf, len, MSG_CONFIRM, (struct sockaddr*)&ep,
-                sizeof(ep));
+  size_t tx(
+      sendto(sockfd, buf, len, MSG_CONFIRM, (struct sockaddr*)&ep, sizeof(ep)));
+  tx_bytes += tx;
+  return tx;
 }
 
 size_t udpsocket_t::recvfrom(char* buf, size_t len, endpoint_t& addr)
@@ -124,7 +128,9 @@ size_t udpsocket_t::recvfrom(char* buf, size_t len, endpoint_t& addr)
   memset(&addr, 0, sizeof(endpoint_t));
   addr.sin_family = AF_INET;
   socklen_t socklen(sizeof(endpoint_t));
-  return ::recvfrom(sockfd, buf, len, 0, (struct sockaddr*)&addr, &socklen);
+  size_t rx(::recvfrom(sockfd, buf, len, 0, (struct sockaddr*)&addr, &socklen));
+  rx_bytes += rx;
+  return rx;
 }
 
 std::string addr2str(const struct in_addr& addr)
@@ -271,3 +277,10 @@ endpoint_t getipaddr()
   freeifaddrs(addrs);
   return my_addr;
 }
+
+/*
+ * Local Variables:
+ * mode: c++
+ * compile-command: "make -C .."
+ * End:
+ */

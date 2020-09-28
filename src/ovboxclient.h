@@ -23,6 +23,7 @@ public:
       std::function<void(stage_device_id_t, double, const endpoint_t&, void*)>
           f,
       void* d);
+  void getbitrate(double& txrate, double& rxrate);
 
 private:
   void sendsrv();
@@ -58,6 +59,9 @@ private:
       cb_ping;
   void* cb_ping_data;
   bool sendlocal;
+  size_t last_tx;
+  size_t last_rx;
+  std::chrono::high_resolution_clock::time_point t_bitrate;
 };
 
 #endif

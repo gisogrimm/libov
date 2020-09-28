@@ -14,7 +14,9 @@ ovboxclient_t::ovboxclient_t(const std::string& desthost, port_t destport,
     : prio(prio), secret(secret), remote_server(secret), toport(destport),
       recport(recport), portoffset(portoffset), callerid(callerid),
       runsession(true), mode(0), cb_ping(nullptr), cb_ping_data(nullptr),
-      sendlocal(sendlocal_)
+      sendlocal(sendlocal_), last_tx(0), last_rx(0),
+      t_bitrate(std::chrono::high_resolution_clock::now())
+
 {
   if(peer2peer_)
     mode |= B_PEER2PEER;
@@ -42,6 +44,21 @@ ovboxclient_t::~ovboxclient_t()
   pingthread.join();
   for(auto th = xrecthread.begin(); th != xrecthread.end(); ++th)
     th->join();
+}
+
+void ovboxclient_t::getbitrate(double& txrate, double& rxrate)
+{
+  std::chrono::high_resolution_clock::time_point t2(
+      std::chrono::high_resolution_clock::now());
+  std::chrono::duration<double> time_span(
+      std::chrono::duration_cast<std::chrono::duration<double>>(t2 -
+                                                                t_bitrate));
+  double sc(8.0 / std::max(1e-6, time_span.count()));
+  txrate = sc * (remote_server.tx_bytes - last_tx);
+  rxrate = sc * (remote_server.rx_bytes - last_rx);
+  t_bitrate = t2;
+  last_tx = remote_server.tx_bytes;
+  last_rx = remote_server.rx_bytes;
 }
 
 void ovboxclient_t::set_ping_callback(

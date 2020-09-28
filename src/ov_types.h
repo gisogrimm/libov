@@ -164,6 +164,7 @@ public:
   const bool is_session_active() const;
   const bool is_audio_active() const;
   const std::string& get_deviceid() const;
+  virtual void getbitrate(double& txrate, double& rxrate);
 
 protected:
   audio_device_t audiodevice;
