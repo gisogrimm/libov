@@ -7,9 +7,11 @@
 
 #include "ov_types.h"
 
+#ifndef DEBUG
 #define DEBUG(x)                                                               \
   std::cerr << __FILE__ << ":" << __LINE__ << ": " << #x << "=" << x           \
             << std::endl
+#endif
 
 // maximum buffer size (mtu)
 #define BUFSIZE 4096
