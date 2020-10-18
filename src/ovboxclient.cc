@@ -28,6 +28,7 @@ ovboxclient_t::ovboxclient_t(const std::string& desthost, port_t destport,
   local_server.destination("localhost");
   local_server.bind(recport, true);
   remote_server.destination(desthost.c_str());
+  remote_server.set_timeout_usec(100000);
   remote_server.bind(0, false);
   localep = getipaddr();
   localep.sin_port = remote_server.getsockep().sin_port;
