@@ -13,6 +13,7 @@ typedef struct sockaddr_in endpoint_t;
 
 std::string addr2str(const struct in_addr& addr);
 std::string ep2str(const endpoint_t& ep);
+std::string ep2ipstr(const endpoint_t& ep);
 
 std::string getmacaddr();
 endpoint_t getipaddr();

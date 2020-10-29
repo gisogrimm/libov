@@ -146,6 +146,11 @@ std::string ep2str(const endpoint_t& ep)
   return addr2str(ep.sin_addr) + "/" + std::to_string(ntohs(ep.sin_port));
 }
 
+std::string ep2ipstr(const endpoint_t& ep)
+{
+  return addr2str(ep.sin_addr);
+}
+
 ovbox_udpsocket_t::ovbox_udpsocket_t(secret_t secret) : secret(secret) {}
 
 void ovbox_udpsocket_t::send_ping(stage_device_id_t cid, const endpoint_t& ep)
