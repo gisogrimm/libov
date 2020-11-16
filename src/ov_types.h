@@ -165,6 +165,7 @@ public:
   const bool is_audio_active() const;
   const std::string& get_deviceid() const;
   virtual void getbitrate(double& txrate, double& rxrate);
+  virtual std::vector<std::string> get_input_channel_ids() const { return {"system:capture_1","system:capture_2"}; };
 
 protected:
   audio_device_t audiodevice;
