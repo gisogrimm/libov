@@ -52,7 +52,8 @@ bool operator!=(const render_settings_t& a, const render_settings_t& b)
          (a.egogain != b.egogain) || (a.peer2peer != b.peer2peer) ||
          (a.outputport1 != b.outputport1) || (a.outputport2 != b.outputport2) ||
          (a.secrec != b.secrec) || (a.xports != b.xports) ||
-         (a.xrecport != b.xrecport);
+         (a.xrecport != b.xrecport) || (a.headtracking != b.headtracking) ||
+         (a.headtrackingrot != b.headtrackingrot);
 }
 
 ov_render_base_t::ov_render_base_t(const std::string& deviceid)
@@ -74,7 +75,9 @@ ov_render_base_t::ov_render_base_t(const std::string& deviceid)
               "",
               std::unordered_map<std::string, std::string>(),
               std::vector<port_t>(),
-              0},
+              0,
+              false,
+              true},
              deviceid,
              0}),
       session_active(false), audio_active(false)

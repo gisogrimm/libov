@@ -122,6 +122,10 @@ struct render_settings_t {
   /// jitterbuffersize for second data receiver (e.g., for recording or
   /// broadcasting):
   double secrec;
+  /// load headtracking module:
+  bool headtracking;
+  /// apply head rotation:
+  bool headtrackingrot;
 };
 
 bool operator!=(const render_settings_t& a, const render_settings_t& b);
@@ -165,7 +169,10 @@ public:
   const bool is_audio_active() const;
   const std::string& get_deviceid() const;
   virtual void getbitrate(double& txrate, double& rxrate);
-  virtual std::vector<std::string> get_input_channel_ids() const { return {"system:capture_1","system:capture_2"}; };
+  virtual std::vector<std::string> get_input_channel_ids() const
+  {
+    return {"system:capture_1", "system:capture_2"};
+  };
 
 protected:
   audio_device_t audiodevice;
