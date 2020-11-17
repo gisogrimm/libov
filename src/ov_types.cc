@@ -53,7 +53,7 @@ bool operator!=(const render_settings_t& a, const render_settings_t& b)
          (a.outputport1 != b.outputport1) || (a.outputport2 != b.outputport2) ||
          (a.secrec != b.secrec) || (a.xports != b.xports) ||
          (a.xrecport != b.xrecport) || (a.headtracking != b.headtracking) ||
-         (a.headtrackingrot != b.headtrackingrot);
+    (a.headtrackingrot != b.headtrackingrot)||(a.headtrackingport!=b.headtrackingport);
 }
 
 ov_render_base_t::ov_render_base_t(const std::string& deviceid)
@@ -77,7 +77,7 @@ ov_render_base_t::ov_render_base_t(const std::string& deviceid)
               std::vector<port_t>(),
               0,
               false,
-              true},
+              true,0},
              deviceid,
              0}),
       session_active(false), audio_active(false)

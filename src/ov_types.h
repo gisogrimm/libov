@@ -126,6 +126,8 @@ struct render_settings_t {
   bool headtracking;
   /// apply head rotation:
   bool headtrackingrot;
+  /// data logging port:
+  port_t headtrackingport;
 };
 
 bool operator!=(const render_settings_t& a, const render_settings_t& b);
