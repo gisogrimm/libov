@@ -104,32 +104,35 @@ endpoint_t udpsocket_t::getsockep()
   return my_addr;
 }
 
-size_t udpsocket_t::send(const char* buf, size_t len, int portno)
+ssize_t udpsocket_t::send(const char* buf, size_t len, int portno)
 {
   if(portno == 0)
     return len;
   serv_addr.sin_port = htons(portno);
-  size_t tx(sendto(sockfd, buf, len, MSG_CONFIRM, (struct sockaddr*)&serv_addr,
+  ssize_t tx(sendto(sockfd, buf, len, MSG_CONFIRM, (struct sockaddr*)&serv_addr,
                    sizeof(serv_addr)));
-  tx_bytes += tx;
+  if( tx > 0 )
+    tx_bytes += tx;
   return tx;
 }
 
-size_t udpsocket_t::send(const char* buf, size_t len, const endpoint_t& ep)
+ssize_t udpsocket_t::send(const char* buf, size_t len, const endpoint_t& ep)
 {
-  size_t tx(
+  ssize_t tx(
       sendto(sockfd, buf, len, MSG_CONFIRM, (struct sockaddr*)&ep, sizeof(ep)));
-  tx_bytes += tx;
+  if( tx > 0 )
+    tx_bytes += tx;
   return tx;
 }
 
-size_t udpsocket_t::recvfrom(char* buf, size_t len, endpoint_t& addr)
+ssize_t udpsocket_t::recvfrom(char* buf, size_t len, endpoint_t& addr)
 {
   memset(&addr, 0, sizeof(endpoint_t));
   addr.sin_family = AF_INET;
   socklen_t socklen(sizeof(endpoint_t));
-  size_t rx(::recvfrom(sockfd, buf, len, 0, (struct sockaddr*)&addr, &socklen));
-  rx_bytes += rx;
+  ssize_t rx(::recvfrom(sockfd, buf, len, 0, (struct sockaddr*)&addr, &socklen));
+  if( rx > 0 )
+    rx_bytes += rx;
   return rx;
 }
 

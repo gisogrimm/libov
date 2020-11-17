@@ -25,9 +25,9 @@ public:
   void set_timeout_usec(int usec);
   port_t bind(port_t port, bool loopback = false);
   void destination(const char* host);
-  size_t send(const char* buf, size_t len, int portno);
-  size_t send(const char* buf, size_t len, const endpoint_t& ep);
-  size_t recvfrom(char* buf, size_t len, endpoint_t& addr);
+  ssize_t send(const char* buf, size_t len, int portno);
+  ssize_t send(const char* buf, size_t len, const endpoint_t& ep);
+  ssize_t recvfrom(char* buf, size_t len, endpoint_t& addr);
   endpoint_t getsockep();
   void close();
   const std::string addrname() const { return ep2str(serv_addr); };
