@@ -1,17 +1,32 @@
-#include "udpsocket.h"
-#include "common.h"
-#include "errmsg.h"
-#include <errno.h>
+#if defined(WIN32) || defined(UNDER_CE)
+#include <winsock2.h>
+#include <winsock.h>
+#include <ws2tcpip.h>
+// for ifaddrs.h
+#include <iphlpapi.h>
+
+#elif defined(LINUX) || defined(linux)
 #include <ifaddrs.h>
 #include <net/if.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+#endif
+
+#include "udpsocket.h"
+#include "common.h"
+#include "errmsg.h"
+#include "ov_types.cc"
+#include "MACAddressUtility.h"
+#include <errno.h>
+
 #include <stdio.h>
 #include <string.h>
 #include <string>
 #include <strings.h>
-#include <sys/ioctl.h>
-#include <unistd.h>
+
+
 
 #ifdef __APPLE__
 #include "MACAddressUtility.h"
@@ -27,15 +42,29 @@ const size_t
 
 udpsocket_t::udpsocket_t() : tx_bytes(0), rx_bytes(0)
 {
-  bzero((char*)&serv_addr, sizeof(serv_addr));
+  // linux part, sets value pointed to by &serv_addr to 0 value:
+  //bzero((char*)&serv_addr, sizeof(serv_addr));
+  // windows:
+  memset((char*)&serv_addr, 0, sizeof(serv_addr));
   sockfd = socket(AF_INET, SOCK_DGRAM, 0);
   if(sockfd < 0)
     throw ErrMsg("Opening socket failed: ", errno);
 #ifndef __APPLE__
   int priority = 5;
-  int iptos = IPTOS_CLASS_CS6;
-  setsockopt(sockfd, IPPROTO_IP, IP_TOS, &iptos, sizeof(iptos));
-  setsockopt(sockfd, SOL_SOCKET, SO_PRIORITY, &priority, sizeof(priority));
+  // IPTOS_CLASS_CS6 defined in netinet/ip.h 0xc0
+  // int iptos = IPTOS_CLASS_CS6;
+  int iptos = 0xc0;
+
+  // gnu SO_PRIORITY
+  // IP_TOS defined in ws2tcpip.h
+  //setsockopt(sockfd, IPPROTO_IP, IP_TOS, &iptos, sizeof(iptos));
+  //setsockopt defined in winsock2.h 3rd parameter const char*
+  // windows (cast):
+  setsockopt(sockfd, IPPROTO_IP, IP_TOS, reinterpret_cast<const char *>(&iptos), sizeof(iptos));
+
+  // no documentation on what SO_PRIORITY does, optname, level in GNU socket
+  //setsockopt(sockfd, SOL_SOCKET, SO_PRIORITY, &priority, sizeof(priority));
+  setsockopt(sockfd, SOL_SOCKET, SO_GROUP_PRIORITY, reinterpret_cast<const char *>(&priority), sizeof(priority));
 #endif
   isopen = true;
 }
@@ -50,13 +79,16 @@ void udpsocket_t::set_timeout_usec(int usec)
   struct timeval tv;
   tv.tv_sec = 0;
   tv.tv_usec = usec;
-  setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+  //setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+  // windows (cast):
+  setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*) &tv, sizeof(tv));
 }
 
 void udpsocket_t::close()
 {
   if(isopen)
-    ::close(sockfd);
+    //::close(sockfd);
+    ::closesocket(sockfd);
   isopen = false;
 }
 
@@ -65,17 +97,26 @@ void udpsocket_t::destination(const char* host)
   struct hostent* server;
   server = gethostbyname(host);
   if(server == NULL)
-    throw ErrMsg("No such host: " + std::string(hstrerror(h_errno)));
-  bzero((char*)&serv_addr, sizeof(serv_addr));
+    //throw ErrMsg("No such host: " + std::string(hstrerror(h_errno)));
+    //windows:
+    throw ErrMsg("No such host: " + std::to_string(WSAGetLastError()));
+  //bzero((char*)&serv_addr, sizeof(serv_addr));
+  // windows:
+  memset((char*)&serv_addr, 0, sizeof(serv_addr));
   serv_addr.sin_family = AF_INET;
-  bcopy((char*)server->h_addr, (char*)&serv_addr.sin_addr.s_addr,
-        server->h_length);
+  //bcopy((char*)server->h_addr, (char*)&serv_addr.sin_addr.s_addr,
+  //      server->h_length);
+  // windows:
+  memcpy((char*)&serv_addr.sin_addr.s_addr, (char*)server->h_addr, server->h_length);
 }
 
 port_t udpsocket_t::bind(port_t port, bool loopback)
 {
   int optval = 1;
-  setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (const void*)&optval,
+  //setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (const void*)&optval,
+  //           sizeof(int));
+  // windows (cast):
+  setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (const char*)&optval,
              sizeof(int));
 
   endpoint_t my_addr;
@@ -88,7 +129,7 @@ port_t udpsocket_t::bind(port_t port, bool loopback)
   }
   if(::bind(sockfd, (struct sockaddr*)&my_addr, sizeof(endpoint_t)) == -1)
     throw ErrMsg("Binding the socket to port " + std::to_string(port) +
-                     " failed: ",
+                 " failed: ",
                  errno);
   socklen_t addrlen(sizeof(endpoint_t));
   getsockname(sockfd, (struct sockaddr*)&my_addr, &addrlen);
@@ -109,7 +150,9 @@ size_t udpsocket_t::send(const char* buf, size_t len, int portno)
   if(portno == 0)
     return len;
   serv_addr.sin_port = htons(portno);
-  size_t tx(sendto(sockfd, buf, len, MSG_CONFIRM, (struct sockaddr*)&serv_addr,
+  //size_t tx(sendto(sockfd, buf, len, MSG_CONFIRM, (struct sockaddr*)&serv_addr,
+  //                 sizeof(serv_addr)));
+  size_t tx(sendto(sockfd, buf, len, 0, (struct sockaddr*)&serv_addr,
                    sizeof(serv_addr)));
   tx_bytes += tx;
   return tx;
@@ -118,7 +161,8 @@ size_t udpsocket_t::send(const char* buf, size_t len, int portno)
 size_t udpsocket_t::send(const char* buf, size_t len, const endpoint_t& ep)
 {
   size_t tx(
-      sendto(sockfd, buf, len, MSG_CONFIRM, (struct sockaddr*)&ep, sizeof(ep)));
+      //sendto(sockfd, buf, len, MSG_CONFIRM, (struct sockaddr*)&ep, sizeof(ep)));
+      sendto(sockfd, buf, len, 0, (struct sockaddr*)&ep, sizeof(ep)));
   tx_bytes += tx;
   return tx;
 }
@@ -263,18 +307,28 @@ endpoint_t getipaddr()
 {
   endpoint_t my_addr;
   memset(&my_addr, 0, sizeof(endpoint_t));
-  struct ifaddrs* addrs;
-  getifaddrs(&addrs);
-  struct ifaddrs* tmp = addrs;
+  //struct ifaddrs* addrs;
+
+  //getifaddrs(&addrs);
+  _IP_ADAPTER_ADDRESSES_LH* addrs;
+  GetAdaptersAddresses(AF_UNSPEC, 0, NULL, addrs, reinterpret_cast<PULONG>(addrs->Length));
+  //struct ifaddrs* tmp = addrs;
+  _IP_ADAPTER_ADDRESSES_LH* tmp = addrs;
   while(tmp) {
-    if(tmp->ifa_addr && tmp->ifa_addr->sa_family == AF_INET &&
+    /*if(tmp->ifa_addr && tmp->ifa_addr->sa_family == AF_INET &&
        (!(tmp->ifa_flags & IFF_LOOPBACK))) {
       memcpy(&my_addr, tmp->ifa_addr, sizeof(endpoint_t));
       return my_addr;
     }
-    tmp = tmp->ifa_next;
+    tmp = tmp->ifa_next;*/
+    if(tmp->IfIndex && tmp->IfIndex == AF_INET && (!(tmp->IfType & IF_TYPE_SOFTWARE_LOOPBACK)) ){
+      memcpy(&my_addr, tmp, sizeof(endpoint_t));
+      return my_addr;
+    }
+    tmp = tmp->Next;
   }
-  freeifaddrs(addrs);
+  //freeifaddrs(addrs);
+  HeapFree(GetProcessHeap(), 0, (addrs));
   return my_addr;
 }
 
