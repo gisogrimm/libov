@@ -195,7 +195,12 @@ char* ovbox_udpsocket_t::recv_sec_msg(char* inputbuf, size_t& ilen, size_t& len,
                                       stage_device_id_t& cid, port_t& destport,
                                       sequence_t& seq, endpoint_t& addr)
 {
-  ilen = recvfrom(inputbuf, ilen, addr);
+  ssize_t ilens = recvfrom(inputbuf, ilen, addr);
+  if(ilens < 0) {
+    ilen = 0;
+    return NULL;
+  }
+  ilen = ilens;
   if(ilen < HEADERLEN)
     return NULL;
   // check secret:
