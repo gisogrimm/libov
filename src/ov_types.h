@@ -103,6 +103,8 @@ struct render_settings_t {
   double reverbgain;
   /// flag wether rendering of reverb is required or not:
   bool renderreverb;
+  /// flag wether rendering of image source model (ISM) or not:
+  bool renderism;
   /// flag wether rendering of virtual acoustics is required:
   bool rawmode;
   /// Receiver type, either ortf or hrtf:
@@ -171,6 +173,7 @@ public:
   const bool is_audio_active() const;
   const std::string& get_deviceid() const;
   virtual void getbitrate(double& txrate, double& rxrate);
+  virtual double get_load() const { return 0; };
   virtual std::vector<std::string> get_input_channel_ids() const
   {
     return {"system:capture_1", "system:capture_2"};
