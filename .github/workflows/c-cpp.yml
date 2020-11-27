@@ -2,7 +2,7 @@ name: Ubuntu make
 
 on:
   push:
-    branches: [ master, development ]
+    branches: [ master, development, libov_win ]
   pull_request:
     branches: [ master ]
 
