@@ -57,14 +57,17 @@ udpsocket_t::udpsocket_t() : tx_bytes(0), rx_bytes(0)
 
   // gnu SO_PRIORITY
   // IP_TOS defined in ws2tcpip.h
-  //setsockopt(sockfd, IPPROTO_IP, IP_TOS, &iptos, sizeof(iptos));
+#if defined(WIN32) || defined(UNDER_CE)
   //setsockopt defined in winsock2.h 3rd parameter const char*
   // windows (cast):
   setsockopt(sockfd, IPPROTO_IP, IP_TOS, reinterpret_cast<const char *>(&iptos), sizeof(iptos));
-
   // no documentation on what SO_PRIORITY does, optname, level in GNU socket
-  //setsockopt(sockfd, SOL_SOCKET, SO_PRIORITY, &priority, sizeof(priority));
   setsockopt(sockfd, SOL_SOCKET, SO_GROUP_PRIORITY, reinterpret_cast<const char *>(&priority), sizeof(priority));
+#else
+  // on linux:
+  setsockopt(sockfd, IPPROTO_IP, IP_TOS, &iptos, sizeof(iptos));
+  setsockopt(sockfd, SOL_SOCKET, SO_PRIORITY, &priority, sizeof(priority));
+#endif
 #endif
   isopen = true;
 }
@@ -87,8 +90,11 @@ void udpsocket_t::set_timeout_usec(int usec)
 void udpsocket_t::close()
 {
   if(isopen)
-    //::close(sockfd);
+#if defined(WIN32) || defined(UNDER_CE)
     ::closesocket(sockfd);
+#else
+  ::close(sockfd);
+#endif
   isopen = false;
 }
 
@@ -97,12 +103,18 @@ void udpsocket_t::destination(const char* host)
   struct hostent* server;
   server = gethostbyname(host);
   if(server == NULL)
-    //throw ErrMsg("No such host: " + std::string(hstrerror(h_errno)));
+#if defined(WIN32) || defined(UNDER_CE)
     //windows:
     throw ErrMsg("No such host: " + std::to_string(WSAGetLastError()));
-  //bzero((char*)&serv_addr, sizeof(serv_addr));
+#else
+  throw ErrMsg("No such host: " + std::string(hstrerror(h_errno)));
+#endif
+#if defined(WIN32) || defined(UNDER_CE)
   // windows:
   memset((char*)&serv_addr, 0, sizeof(serv_addr));
+#else
+  bzero((char*)&serv_addr, sizeof(serv_addr));
+#endif
   serv_addr.sin_family = AF_INET;
   //bcopy((char*)server->h_addr, (char*)&serv_addr.sin_addr.s_addr,
   //      server->h_length);
