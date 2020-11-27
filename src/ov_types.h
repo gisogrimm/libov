@@ -130,6 +130,10 @@ struct render_settings_t {
   bool headtrackingrot;
   /// data logging port:
   port_t headtrackingport;
+  // ambient sound file url:
+  std::string ambientsound;
+  // ambient sound file level in dB:
+  double ambientlevel;
 };
 
 bool operator!=(const render_settings_t& a, const render_settings_t& b);
