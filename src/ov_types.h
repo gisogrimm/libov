@@ -122,6 +122,10 @@ struct render_settings_t {
   /// jitterbuffersize for second data receiver (e.g., for recording or
   /// broadcasting):
   double secrec;
+  // ambient sound file url:
+  std::string ambientsound;
+  // ambient sound file level in dB:
+  double ambientlevel;
 };
 
 bool operator!=(const render_settings_t& a, const render_settings_t& b);

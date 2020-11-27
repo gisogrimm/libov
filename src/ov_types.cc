@@ -52,7 +52,8 @@ bool operator!=(const render_settings_t& a, const render_settings_t& b)
          (a.egogain != b.egogain) || (a.peer2peer != b.peer2peer) ||
          (a.outputport1 != b.outputport1) || (a.outputport2 != b.outputport2) ||
          (a.secrec != b.secrec) || (a.xports != b.xports) ||
-         (a.xrecport != b.xrecport);
+         (a.xrecport != b.xrecport) || (a.ambientsound != b.ambientsound) ||
+         (a.ambientlevel != b.ambientlevel);
 }
 
 ov_render_base_t::ov_render_base_t(const std::string& deviceid)
