@@ -3,11 +3,14 @@
 
 #include "common.h"
 #include <atomic>
+#if defined(LINUX) || defined(linux)
 #include <netinet/ip.h>
-#include <string>
+#endif
 #include <sys/socket.h>
 #include <sys/types.h>
+
 #include <unistd.h>
+#include <string>
 
 typedef struct sockaddr_in endpoint_t;
 
