@@ -192,12 +192,17 @@ private:
   bool audio_active;
 };
 
+// This class manages the communication with the frontend and calls
+// the corresponding methods of the rendering backend. Current
+// realizations are ov_client_orlandoviols_t and
+// ov_client_digitalstage_t.
 class ov_client_base_t {
 public:
   ov_client_base_t(ov_render_base_t& backend) : backend(backend){};
   virtual ~ov_client_base_t(){};
-  virtual void start_service(){};
-  virtual void stop_service(){};
+  virtual void start_service() = 0;
+  virtual void stop_service() = 0;
+  virtual bool is_going_to_stop() const = 0;
 
 protected:
   ov_render_base_t& backend;
