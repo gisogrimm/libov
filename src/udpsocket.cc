@@ -13,6 +13,10 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
+#if defined(__linux__)
+#include <linux/wireless.h>
+#endif
+
 #ifdef __APPLE__
 #include "MACAddressUtility.h"
 #define MSG_CONFIRM 0
@@ -236,7 +240,9 @@ std::string getmacaddr()
   struct ifreq* it = ifc.ifc_req;
   const struct ifreq* const end = it + (ifc.ifc_len / sizeof(struct ifreq));
   for(; it != end; ++it) {
+    DEBUG(it->ifr_name);
     strcpy(ifr.ifr_name, it->ifr_name);
+    DEBUG(ioctl(sock, SIOCGIWNAME, &ifr));
     if(ioctl(sock, SIOCGIFFLAGS, &ifr) == 0) {
       if(!(ifr.ifr_flags & IFF_LOOPBACK)) { // don't count loopback
         if(ioctl(sock, SIOCGIFHWADDR, &ifr) == 0) {
