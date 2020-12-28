@@ -3,7 +3,7 @@
 
 #include "common.h"
 #include <atomic>
-#if defined(LINUX) || defined(linux)
+#if defined(LINUX) || defined(linux) || defined(__APPLE__)
 #include <netinet/ip.h>
 #include <sys/socket.h>
 #endif

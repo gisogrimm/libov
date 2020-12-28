@@ -327,19 +327,32 @@ endpoint_t getipaddr()
   endpoint_t my_addr;
   memset(&my_addr, 0, sizeof(endpoint_t));
 #if defined(WIN32) || defined(UNDER_CE)
-  _IP_ADAPTER_ADDRESSES_LH* addrs;
-  GetAdaptersAddresses(AF_UNSPEC, 0, NULL, addrs,
-                       reinterpret_cast<PULONG>(addrs->Length));
-  _IP_ADAPTER_ADDRESSES_LH* tmp = addrs;
-  while(tmp) {
-    if(tmp->IfIndex && tmp->IfIndex == AF_INET &&
-       (!(tmp->IfType & IF_TYPE_SOFTWARE_LOOPBACK))) {
-      memcpy(&my_addr, tmp, sizeof(endpoint_t));
-      return my_addr;
-    }
-    tmp = tmp->Next;
+  DWORD rv, size;
+  PIP_ADAPTER_ADDRESSES adapter_addresses, aa;
+  PIP_ADAPTER_UNICAST_ADDRESS ua;
+
+  rv = GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, NULL, NULL,
+                            &size);
+  if(rv != ERROR_BUFFER_OVERFLOW) {
+    fprintf(stderr, "GetAdaptersAddresses() failed...");
+    return false;
   }
-  HeapFree(GetProcessHeap(), 0, (addrs));
+  adapter_addresses = (PIP_ADAPTER_ADDRESSES)malloc(size);
+
+  rv = GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, NULL,
+                            adapter_addresses, &size);
+  if(rv == ERROR_SUCCESS) {
+    for(aa = adapter_addresses; aa != NULL; aa = aa->Next) {
+      print_adapter(aa);
+      for(ua = aa->FirstUnicastAddress; ua != NULL; ua = ua->Next) {
+	my_addr = aa->Address.lpSockaddr;
+        // memcpy(&my_addr, aa, sizeof(endpoint_t));
+        free(adapter_addresses);
+	return my_addr;
+      }
+    }
+  }
+  free(adapter_addresses);
 #else
   struct ifaddrs* addrs;
   getifaddrs(&addrs);
