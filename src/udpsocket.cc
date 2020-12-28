@@ -2,6 +2,7 @@
 #include <ws2tcpip.h>
 // for ifaddrs.h
 #include <iphlpapi.h>
+#define MSG_CONFIRM 0
 
 #elif defined(LINUX) || defined(linux) || defined(__APPLE__)
 #include <ifaddrs.h>
@@ -32,6 +33,7 @@
 #include "MACAddressUtility.h"
 #define MSG_CONFIRM 0
 #endif
+
 
 #define LISTEN_BACKLOG 512
 
