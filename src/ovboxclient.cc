@@ -1,7 +1,6 @@
 #include "ovboxclient.h"
 #include <condition_variable>
 #include <map>
-#include <netdb.h>
 #include <string.h>
 #include <strings.h>
 #include <thread>
