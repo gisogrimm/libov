@@ -6,7 +6,7 @@
 // for ifaddrs.h
 #include <iphlpapi.h>
 
-#elif defined(LINUX) || defined(linux)
+#elif defined(LINUX) || defined(linux) || defined(__APPLE__)
 #include <ifaddrs.h>
 #include <net/if.h>
 #include <netdb.h>
@@ -335,7 +335,7 @@ endpoint_t getipaddr()
                             &size);
   if(rv != ERROR_BUFFER_OVERFLOW) {
     fprintf(stderr, "GetAdaptersAddresses() failed...");
-    return false;
+    return my_addr;
   }
   adapter_addresses = (PIP_ADAPTER_ADDRESSES)malloc(size);
 
@@ -343,10 +343,8 @@ endpoint_t getipaddr()
                             adapter_addresses, &size);
   if(rv == ERROR_SUCCESS) {
     for(aa = adapter_addresses; aa != NULL; aa = aa->Next) {
-      print_adapter(aa);
       for(ua = aa->FirstUnicastAddress; ua != NULL; ua = ua->Next) {
-	my_addr = aa->Address.lpSockaddr;
-        // memcpy(&my_addr, aa, sizeof(endpoint_t));
+	my_addr = ua->Address.lpSockaddr;
         free(adapter_addresses);
 	return my_addr;
       }
