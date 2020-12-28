@@ -326,21 +326,12 @@ endpoint_t getipaddr()
 {
   endpoint_t my_addr;
   memset(&my_addr, 0, sizeof(endpoint_t));
-  // struct ifaddrs* addrs;
-
-  // getifaddrs(&addrs);
+#if defined(WIN32) || defined(UNDER_CE)
   _IP_ADAPTER_ADDRESSES_LH* addrs;
   GetAdaptersAddresses(AF_UNSPEC, 0, NULL, addrs,
                        reinterpret_cast<PULONG>(addrs->Length));
-  // struct ifaddrs* tmp = addrs;
   _IP_ADAPTER_ADDRESSES_LH* tmp = addrs;
   while(tmp) {
-    /*if(tmp->ifa_addr && tmp->ifa_addr->sa_family == AF_INET &&
-       (!(tmp->ifa_flags & IFF_LOOPBACK))) {
-      memcpy(&my_addr, tmp->ifa_addr, sizeof(endpoint_t));
-      return my_addr;
-    }
-    tmp = tmp->ifa_next;*/
     if(tmp->IfIndex && tmp->IfIndex == AF_INET &&
        (!(tmp->IfType & IF_TYPE_SOFTWARE_LOOPBACK))) {
       memcpy(&my_addr, tmp, sizeof(endpoint_t));
@@ -348,8 +339,21 @@ endpoint_t getipaddr()
     }
     tmp = tmp->Next;
   }
-  // freeifaddrs(addrs);
   HeapFree(GetProcessHeap(), 0, (addrs));
+#else
+  struct ifaddrs* addrs;
+  getifaddrs(&addrs);
+  struct ifaddrs* tmp = addrs;
+  while(tmp) {
+    if(tmp->ifa_addr && tmp->ifa_addr->sa_family == AF_INET &&
+       (!(tmp->ifa_flags & IFF_LOOPBACK))) {
+      memcpy(&my_addr, tmp->ifa_addr, sizeof(endpoint_t));
+      return my_addr;
+    }
+    tmp = tmp->ifa_next;
+  }
+  freeifaddrs(addrs);
+#endif
   return my_addr;
 }
 
