@@ -5,8 +5,9 @@
 #include <atomic>
 #if defined(LINUX) || defined(linux)
 #include <netinet/ip.h>
-#endif
 #include <sys/socket.h>
+#endif
+
 #include <sys/types.h>
 
 #include <unistd.h>
