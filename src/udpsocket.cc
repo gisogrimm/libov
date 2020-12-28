@@ -344,9 +344,10 @@ endpoint_t getipaddr()
   if(rv == ERROR_SUCCESS) {
     for(aa = adapter_addresses; aa != NULL; aa = aa->Next) {
       for(ua = aa->FirstUnicastAddress; ua != NULL; ua = ua->Next) {
-	my_addr = ua->Address.lpSockaddr;
+        // my_addr = ua->Address.lpSockaddr;
+        memcpy(&my_addr, ua->Address.lpSockaddr, sizeof(endpoint_t));
         free(adapter_addresses);
-	return my_addr;
+        return my_addr;
       }
     }
   }

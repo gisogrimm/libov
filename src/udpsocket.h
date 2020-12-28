@@ -10,8 +10,8 @@
 
 #include <sys/types.h>
 
-#include <unistd.h>
 #include <string>
+#include <unistd.h>
 
 typedef struct sockaddr_in endpoint_t;
 
