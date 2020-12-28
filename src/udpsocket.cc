@@ -24,6 +24,10 @@
 #include <string>
 #include <strings.h>
 
+#if defined(__linux__)
+#include <linux/wireless.h>
+#endif
+
 #ifdef __APPLE__
 #include "MACAddressUtility.h"
 #define MSG_CONFIRM 0
@@ -159,37 +163,36 @@ endpoint_t udpsocket_t::getsockep()
   return my_addr;
 }
 
-size_t udpsocket_t::send(const char* buf, size_t len, int portno)
+ssize_t udpsocket_t::send(const char* buf, size_t len, int portno)
 {
   if(portno == 0)
     return len;
   serv_addr.sin_port = htons(portno);
-  // size_t tx(sendto(sockfd, buf, len, MSG_CONFIRM, (struct
-  // sockaddr*)&serv_addr,
-  //                 sizeof(serv_addr)));
-  size_t tx(sendto(sockfd, buf, len, 0, (struct sockaddr*)&serv_addr,
-                   sizeof(serv_addr)));
-  tx_bytes += tx;
+  ssize_t tx(sendto(sockfd, buf, len, MSG_CONFIRM, (struct sockaddr*)&serv_addr,
+                    sizeof(serv_addr)));
+  if(tx > 0)
+    tx_bytes += tx;
   return tx;
 }
 
-size_t udpsocket_t::send(const char* buf, size_t len, const endpoint_t& ep)
+ssize_t udpsocket_t::send(const char* buf, size_t len, const endpoint_t& ep)
 {
-  size_t tx(
-      // sendto(sockfd, buf, len, MSG_CONFIRM, (struct sockaddr*)&ep,
-      // sizeof(ep)));
-      sendto(sockfd, buf, len, 0, (struct sockaddr*)&ep, sizeof(ep)));
-  tx_bytes += tx;
+  ssize_t tx(
+      sendto(sockfd, buf, len, MSG_CONFIRM, (struct sockaddr*)&ep, sizeof(ep)));
+  if(tx > 0)
+    tx_bytes += tx;
   return tx;
 }
 
-size_t udpsocket_t::recvfrom(char* buf, size_t len, endpoint_t& addr)
+ssize_t udpsocket_t::recvfrom(char* buf, size_t len, endpoint_t& addr)
 {
   memset(&addr, 0, sizeof(endpoint_t));
   addr.sin_family = AF_INET;
   socklen_t socklen(sizeof(endpoint_t));
-  size_t rx(::recvfrom(sockfd, buf, len, 0, (struct sockaddr*)&addr, &socklen));
-  rx_bytes += rx;
+  ssize_t rx(
+      ::recvfrom(sockfd, buf, len, 0, (struct sockaddr*)&addr, &socklen));
+  if(rx > 0)
+    rx_bytes += rx;
   return rx;
 }
 
@@ -204,6 +207,11 @@ std::string addr2str(const struct in_addr& addr)
 std::string ep2str(const endpoint_t& ep)
 {
   return addr2str(ep.sin_addr) + "/" + std::to_string(ntohs(ep.sin_port));
+}
+
+std::string ep2ipstr(const endpoint_t& ep)
+{
+  return addr2str(ep.sin_addr);
 }
 
 ovbox_udpsocket_t::ovbox_udpsocket_t(secret_t secret) : secret(secret) {}
@@ -246,7 +254,12 @@ char* ovbox_udpsocket_t::recv_sec_msg(char* inputbuf, size_t& ilen, size_t& len,
                                       stage_device_id_t& cid, port_t& destport,
                                       sequence_t& seq, endpoint_t& addr)
 {
-  ilen = recvfrom(inputbuf, ilen, addr);
+  ssize_t ilens = recvfrom(inputbuf, ilen, addr);
+  if(ilens < 0) {
+    ilen = 0;
+    return NULL;
+  }
+  ilen = ilens;
   if(ilen < HEADERLEN)
     return NULL;
   // check secret:
@@ -282,7 +295,9 @@ std::string getmacaddr()
   struct ifreq* it = ifc.ifc_req;
   const struct ifreq* const end = it + (ifc.ifc_len / sizeof(struct ifreq));
   for(; it != end; ++it) {
+    DEBUG(it->ifr_name);
     strcpy(ifr.ifr_name, it->ifr_name);
+    DEBUG(ioctl(sock, SIOCGIWNAME, &ifr));
     if(ioctl(sock, SIOCGIFFLAGS, &ifr) == 0) {
       if(!(ifr.ifr_flags & IFF_LOOPBACK)) { // don't count loopback
         if(ioctl(sock, SIOCGIFHWADDR, &ifr) == 0) {

@@ -103,6 +103,8 @@ struct render_settings_t {
   double reverbgain;
   /// flag wether rendering of reverb is required or not:
   bool renderreverb;
+  /// flag wether rendering of image source model (ISM) or not:
+  bool renderism;
   /// flag wether rendering of virtual acoustics is required:
   bool rawmode;
   /// Receiver type, either ortf or hrtf:
@@ -122,6 +124,16 @@ struct render_settings_t {
   /// jitterbuffersize for second data receiver (e.g., for recording or
   /// broadcasting):
   double secrec;
+  /// load headtracking module:
+  bool headtracking;
+  /// apply head rotation:
+  bool headtrackingrot;
+  /// data logging port:
+  port_t headtrackingport;
+  // ambient sound file url:
+  std::string ambientsound;
+  // ambient sound file level in dB:
+  double ambientlevel;
 };
 
 bool operator!=(const render_settings_t& a, const render_settings_t& b);
@@ -165,6 +177,11 @@ public:
   const bool is_audio_active() const;
   const std::string& get_deviceid() const;
   virtual void getbitrate(double& txrate, double& rxrate);
+  virtual double get_load() const { return 0; };
+  virtual std::vector<std::string> get_input_channel_ids() const
+  {
+    return {"system:capture_1", "system:capture_2"};
+  };
 
 protected:
   audio_device_t audiodevice;
@@ -175,12 +192,17 @@ private:
   bool audio_active;
 };
 
+// This class manages the communication with the frontend and calls
+// the corresponding methods of the rendering backend. Current
+// realizations are ov_client_orlandoviols_t and
+// ov_client_digitalstage_t.
 class ov_client_base_t {
 public:
   ov_client_base_t(ov_render_base_t& backend) : backend(backend){};
   virtual ~ov_client_base_t(){};
-  virtual void start_service(){};
-  virtual void stop_service(){};
+  virtual void start_service() = 0;
+  virtual void stop_service() = 0;
+  virtual bool is_going_to_stop() const = 0;
 
 protected:
   ov_render_base_t& backend;

@@ -48,11 +48,16 @@ bool operator!=(const render_settings_t& a, const render_settings_t& b)
   return (a.id != b.id) || (a.roomsize != b.roomsize) ||
          (a.absorption != b.absorption) || (a.damping != b.damping) ||
          (a.reverbgain != b.reverbgain) || (a.renderreverb != b.renderreverb) ||
-         (a.rawmode != b.rawmode) || (a.rectype != b.rectype) ||
-         (a.egogain != b.egogain) || (a.peer2peer != b.peer2peer) ||
-         (a.outputport1 != b.outputport1) || (a.outputport2 != b.outputport2) ||
-         (a.secrec != b.secrec) || (a.xports != b.xports) ||
-         (a.xrecport != b.xrecport);
+         (a.renderism != b.renderism) || (a.rawmode != b.rawmode) ||
+         (a.rectype != b.rectype) || (a.egogain != b.egogain) ||
+         (a.peer2peer != b.peer2peer) || (a.outputport1 != b.outputport1) ||
+         (a.outputport2 != b.outputport2) || (a.secrec != b.secrec) ||
+         (a.xports != b.xports) || (a.xrecport != b.xrecport) ||
+         (a.headtracking != b.headtracking) ||
+         (a.headtrackingrot != b.headtrackingrot) ||
+         (a.headtrackingport != b.headtrackingport) ||
+         (a.ambientsound != b.ambientsound) ||
+         (a.ambientlevel != b.ambientlevel);
 }
 
 ov_render_base_t::ov_render_base_t(const std::string& deviceid)
@@ -67,6 +72,7 @@ ov_render_base_t::ov_render_base_t(const std::string& deviceid)
               -8,
               true,
               false,
+              false,
               "ortf",
               1,
               true,
@@ -74,6 +80,9 @@ ov_render_base_t::ov_render_base_t(const std::string& deviceid)
               "",
               std::unordered_map<std::string, std::string>(),
               std::vector<port_t>(),
+              0,
+              false,
+              true,
               0},
              deviceid,
              0}),
