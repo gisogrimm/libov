@@ -8,6 +8,13 @@
 #include <sys/socket.h>
 #endif
 
+#if defined(WIN32) || defined(UNDER_CE)
+#if defined(WIN32) || defined(UNDER_CE)
+#include <winsock2.h>
+
+#include <winsock.h>
+#endif
+
 #include <sys/types.h>
 
 #include <string>

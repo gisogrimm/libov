@@ -1,7 +1,4 @@
 #if defined(WIN32) || defined(UNDER_CE)
-#include <winsock2.h>
-
-#include <winsock.h>
 #include <ws2tcpip.h>
 // for ifaddrs.h
 #include <iphlpapi.h>
