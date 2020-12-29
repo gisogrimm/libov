@@ -16,7 +16,6 @@
 #include "MACAddressUtility.h"
 #include "common.h"
 #include "errmsg.h"
-#include "ov_types.cc"
 #include "udpsocket.h"
 #include <errno.h>
 
