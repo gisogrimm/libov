@@ -3,7 +3,7 @@ VERSION=0.5
 all: build lib
 
 CXXFLAGS = -Wall -Wno-deprecated-declarations -std=c++11 -pthread	\
--ggdb -fno-finite-math-only
+-ggdb -fno-finite-math-only -fPIC
 
 OSFLAG :=
 ifeq ($(OS),Windows_NT)
