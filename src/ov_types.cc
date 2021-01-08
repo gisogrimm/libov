@@ -85,7 +85,18 @@ ov_render_base_t::ov_render_base_t(const std::string& deviceid)
               true,
               0},
              deviceid,
-             0}),
+             0,
+             std::map<stage_device_id_t, stage_device_t>(),
+             {0,
+              "",
+              std::vector<device_channel_t>(),
+              {0, 0, 0},
+              {0, 0, 0},
+              0,
+              false,
+              5,
+              5,
+              true}}),
       session_active(false), audio_active(false)
 {
 }
@@ -139,6 +150,11 @@ void ov_render_base_t::configure_audio_backend(
         start_session();
     }
   }
+}
+
+void ov_render_base_t::set_thisdev(const stage_device_t& stagedevice)
+{
+  stage.thisdevice = stagedevice;
 }
 
 void ov_render_base_t::add_stage_device(const stage_device_t& stagedevice)

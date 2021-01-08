@@ -153,6 +153,8 @@ struct stage_t {
   stage_device_id_t thisstagedeviceid;
   /// Devices on the stage:
   std::map<stage_device_id_t, stage_device_t> stage;
+  /// This device, also valid if not in a room:
+  stage_device_t thisdevice;
 };
 
 class ov_render_base_t {
@@ -164,6 +166,7 @@ public:
   virtual void start_session();
   virtual void end_session();
   virtual void configure_audio_backend(const audio_device_t&);
+  virtual void set_thisdev(const stage_device_t& stagedevice);
   virtual void add_stage_device(const stage_device_t& stagedevice);
   virtual void rm_stage_device(stage_device_id_t stagedeviceid);
   virtual void clear_stage();

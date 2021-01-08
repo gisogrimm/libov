@@ -33,7 +33,6 @@
 #define MSG_CONFIRM 0
 #endif
 
-
 #define LISTEN_BACKLOG 512
 
 const size_t
