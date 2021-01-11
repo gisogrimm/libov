@@ -69,9 +69,10 @@ void ovboxclient_t::set_ping_callback(
   cb_ping_data = d;
 }
 
-void ovboxclient_t::add_receiverport(port_t srcxport,port_t destxport)
+void ovboxclient_t::add_receiverport(port_t srcxport, port_t destxport)
 {
-  xrecthread.emplace_back(std::thread(&ovboxclient_t::xrecsrv, this, srcxport, destxport));
+  xrecthread.emplace_back(
+      std::thread(&ovboxclient_t::xrecsrv, this, srcxport, destxport));
 }
 
 void ovboxclient_t::add_extraport(port_t dest)
