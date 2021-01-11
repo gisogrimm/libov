@@ -54,7 +54,8 @@ bool operator!=(const render_settings_t& a, const render_settings_t& b)
          (a.outputport2 != b.outputport2) || (a.secrec != b.secrec) ||
          (a.xports != b.xports) || (a.xrecport != b.xrecport) ||
          (a.headtracking != b.headtracking) ||
-         (a.headtrackingrot != b.headtrackingrot) ||
+         (a.headtrackingrotrec != b.headtrackingrotrec) ||
+         (a.headtrackingrotsrc != b.headtrackingrotsrc) ||
          (a.headtrackingport != b.headtrackingport) ||
          (a.ambientsound != b.ambientsound) ||
          (a.ambientlevel != b.ambientlevel);

@@ -126,8 +126,10 @@ struct render_settings_t {
   double secrec;
   /// load headtracking module:
   bool headtracking;
-  /// apply head rotation:
-  bool headtrackingrot;
+  /// apply head rotation to receiver:
+  bool headtrackingrotrec;
+  /// apply head rotation to source:
+  bool headtrackingrotsrc;
   /// data logging port:
   port_t headtrackingport;
   // ambient sound file url:

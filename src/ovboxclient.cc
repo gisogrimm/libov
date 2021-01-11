@@ -69,9 +69,9 @@ void ovboxclient_t::set_ping_callback(
   cb_ping_data = d;
 }
 
-void ovboxclient_t::add_receiverport(port_t xport)
+void ovboxclient_t::add_receiverport(port_t srcxport,port_t destxport)
 {
-  xrecthread.emplace_back(std::thread(&ovboxclient_t::xrecsrv, this, xport));
+  xrecthread.emplace_back(std::thread(&ovboxclient_t::xrecsrv, this, srcxport, destxport));
 }
 
 void ovboxclient_t::add_extraport(port_t dest)
@@ -300,13 +300,13 @@ void ovboxclient_t::recsrv()
 }
 
 // this thread receives local UDP messages and handles them:
-void ovboxclient_t::xrecsrv(port_t port)
+void ovboxclient_t::xrecsrv(port_t srcport, port_t destport)
 {
   try {
     udpsocket_t xlocal_server;
     xlocal_server.set_timeout_usec(100000);
     xlocal_server.destination("localhost");
-    xlocal_server.bind(port, true);
+    xlocal_server.bind(srcport, true);
     set_thread_prio(prio);
     char buffer[BUFSIZE];
     char msg[BUFSIZE];
@@ -318,7 +318,7 @@ void ovboxclient_t::xrecsrv(port_t port)
       if(n > 0) {
         ++seq;
         size_t un =
-            packmsg(msg, BUFSIZE, secret, callerid, port, seq, buffer, n);
+            packmsg(msg, BUFSIZE, secret, callerid, destport, seq, buffer, n);
         bool sendtoserver(!(mode & B_PEER2PEER));
         if(mode & B_PEER2PEER) {
           size_t ocid(0);

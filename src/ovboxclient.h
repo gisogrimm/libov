@@ -18,7 +18,7 @@ public:
   void announce_latency(stage_device_id_t cid, double lmin, double lmean,
                         double lmax, uint32_t received, uint32_t lost);
   void add_extraport(port_t dest);
-  void add_receiverport(port_t port_t);
+  void add_receiverport(port_t srcport_t, port_t destport_t);
   void set_ping_callback(
       std::function<void(stage_device_id_t, double, const endpoint_t&, void*)>
           f,
@@ -28,7 +28,7 @@ public:
 private:
   void sendsrv();
   void recsrv();
-  void xrecsrv(port_t port);
+  void xrecsrv(port_t srcport, port_t destport);
   void pingservice();
   void handle_endpoint_list_update(stage_device_id_t cid, const endpoint_t& ep);
   // real time priority:
