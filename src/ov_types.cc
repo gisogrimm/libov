@@ -20,7 +20,7 @@ bool operator!=(const audio_device_t& a, const audio_device_t& b)
 bool operator!=(const device_channel_t& a, const device_channel_t& b)
 {
   return (a.sourceport != b.sourceport) || (a.gain != b.gain) ||
-         (a.position != b.position);
+         (a.position != b.position) || (a.directivity != b.directivity);
 }
 
 bool operator!=(const std::vector<device_channel_t>& a,

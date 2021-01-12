@@ -59,6 +59,8 @@ struct device_channel_t {
   double gain;
   /// Position relative to stage device origin:
   pos_t position;
+  /// source directivity, e.g., omni, cardioid:
+  std::string directivity;
 };
 
 bool operator!=(const device_channel_t& a, const device_channel_t& b);
