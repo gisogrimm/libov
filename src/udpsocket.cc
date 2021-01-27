@@ -295,14 +295,17 @@ std::string getmacaddr()
   struct ifreq* it = ifc.ifc_req;
   const struct ifreq* const end = it + (ifc.ifc_len / sizeof(struct ifreq));
   for(; it != end; ++it) {
-    DEBUG(it->ifr_name);
     strcpy(ifr.ifr_name, it->ifr_name);
-    DEBUG(ioctl(sock, SIOCGIWNAME, &ifr));
+    // ioctl(sock, SIOCGIWNAME, &ifr);
     if(ioctl(sock, SIOCGIFFLAGS, &ifr) == 0) {
       if(!(ifr.ifr_flags & IFF_LOOPBACK)) { // don't count loopback
         if(ioctl(sock, SIOCGIFHWADDR, &ifr) == 0) {
-          success = 1;
-          break;
+          // exclude virtual docker devices:
+          if((ifr.ifr_hwaddr.sa_data[0] != 0x02) ||
+             (ifr.ifr_hwaddr.sa_data[1] != 0x42)) {
+            success = 1;
+            break;
+          }
         }
       }
     } else { /* handle error */
