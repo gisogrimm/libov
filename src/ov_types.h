@@ -189,6 +189,8 @@ public:
   {
     return {"system:capture_1", "system:capture_2"};
   };
+  // provide additional configuration as json string:
+  virtual void set_extra_config( const std::string& ) {};
 
 protected:
   audio_device_t audiodevice;
