@@ -1,4 +1,10 @@
 #include "ov_types.h"
+#include <iostream>
+#ifndef DEBUG
+#define DEBUG(x)                                                               \
+  std::cerr << __FILE__ << ":" << __LINE__ << ": " << __PRETTY_FUNCTION__      \
+            << " " << #x << "=" << x << std::endl
+#endif
 
 bool operator!=(const pos_t& a, const pos_t& b)
 {
@@ -116,6 +122,7 @@ void ov_render_base_t::start_audiobackend()
 {
   audio_active = true;
 }
+
 void ov_render_base_t::stop_audiobackend()
 {
   audio_active = false;
@@ -139,17 +146,20 @@ const std::string& ov_render_base_t::get_deviceid() const
 void ov_render_base_t::configure_audio_backend(
     const audio_device_t& audiodevice_)
 {
-  if(audiodevice != audiodevice_) {
+  // audio backend changed or was not active before:
+  if((audiodevice != audiodevice_) || (!audio_active)) {
     audiodevice = audiodevice_;
+    bool session_was_active(session_active);
+    // audio was active before, so we need to restart:
     if(audio_active) {
-      bool session_was_active(session_active);
       if(session_active)
         end_session();
       stop_audiobackend();
-      start_audiobackend();
-      if(session_was_active)
-        start_session();
     }
+    // now start audio:
+    start_audiobackend();
+    if(session_was_active)
+      start_session();
   }
 }
 
@@ -161,6 +171,12 @@ void ov_render_base_t::set_thisdev(const stage_device_t& stagedevice)
 void ov_render_base_t::add_stage_device(const stage_device_t& stagedevice)
 {
   stage.stage[stagedevice.id] = stagedevice;
+}
+
+void ov_render_base_t::set_stage(
+    const std::map<stage_device_id_t, stage_device_t>& s)
+{
+  stage.stage = s;
 }
 
 void ov_render_base_t::clear_stage()
@@ -209,6 +225,24 @@ void ov_render_base_t::getbitrate(double& txrate, double& rxrate) {}
 const char* get_libov_version()
 {
   return OVBOXVERSION;
+}
+
+bool operator!=(const std::map<stage_device_id_t, stage_device_t>& a,
+                const std::map<stage_device_id_t, stage_device_t>& b)
+{
+  if(a.size() != b.size())
+    return true;
+  auto a_it = a.begin();
+  auto b_it = b.begin();
+  while((a_it != a.end()) && (b_it != b.end())) {
+    if(a_it->first != b_it->first)
+      return true;
+    if(a_it->second != b_it->second)
+      return true;
+    ++a_it;
+    ++b_it;
+  }
+  return false;
 }
 
 /*

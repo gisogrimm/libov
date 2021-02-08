@@ -161,6 +161,9 @@ struct stage_t {
   stage_device_t thisdevice;
 };
 
+bool operator!=(const std::map<stage_device_id_t, stage_device_t>& a,
+                const std::map<stage_device_id_t, stage_device_t>& b);
+
 class ov_render_base_t {
 public:
   ov_render_base_t(const std::string& deviceid);
@@ -174,6 +177,7 @@ public:
   virtual void add_stage_device(const stage_device_t& stagedevice);
   virtual void rm_stage_device(stage_device_id_t stagedeviceid);
   virtual void clear_stage();
+  virtual void set_stage(const std::map<stage_device_id_t, stage_device_t>&);
   virtual void set_stage_device_gain(stage_device_id_t stagedeviceid,
                                      double gain);
   virtual void set_render_settings(const render_settings_t& rendersettings,
@@ -190,7 +194,7 @@ public:
     return {"system:capture_1", "system:capture_2"};
   };
   // provide additional configuration as json string:
-  virtual void set_extra_config( const std::string& ) {};
+  virtual void set_extra_config(const std::string&){};
 
 protected:
   audio_device_t audiodevice;
