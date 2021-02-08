@@ -143,9 +143,15 @@ const std::string& ov_render_base_t::get_deviceid() const
   return stage.thisdeviceid;
 }
 
+/**
+   \brief Update audio configuration, and start backend if changed or not yet started.
+
+ */
 void ov_render_base_t::configure_audio_backend(
     const audio_device_t& audiodevice_)
 {
+  DEBUG((audiodevice != audiodevice_));
+  DEBUG(audio_active);
   // audio backend changed or was not active before:
   if((audiodevice != audiodevice_) || (!audio_active)) {
     audiodevice = audiodevice_;
@@ -158,6 +164,7 @@ void ov_render_base_t::configure_audio_backend(
     }
     // now start audio:
     start_audiobackend();
+    // if a sesion was active then restart session:
     if(session_was_active)
       start_session();
   }
