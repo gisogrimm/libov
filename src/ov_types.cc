@@ -144,7 +144,8 @@ const std::string& ov_render_base_t::get_deviceid() const
 }
 
 /**
-   \brief Update audio configuration, and start backend if changed or not yet started.
+   \brief Update audio configuration, and start backend if changed or not yet
+   started.
 
  */
 void ov_render_base_t::configure_audio_backend(

@@ -16,7 +16,6 @@
 
 #include <sys/types.h>
 
-#include <string>
 #include <unistd.h>
 
 typedef struct sockaddr_in endpoint_t;

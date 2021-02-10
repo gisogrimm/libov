@@ -28,13 +28,13 @@ struct zyx_euler_t {
 
 bool operator!=(const zyx_euler_t& a, const zyx_euler_t& b);
 
-/// packet sequence type:
+/// packet sequence type
 typedef int16_t sequence_t;
-/// port number type:
+/// port number type
 typedef uint16_t port_t;
-/// pin code type:
+/// pin code type
 typedef uint32_t secret_t;
-/// stage device id type:
+/// stage device id type
 typedef uint8_t stage_device_id_t;
 
 struct audio_device_t {
@@ -147,7 +147,7 @@ struct stage_t {
   std::string host;
   /// relay server port:
   port_t port;
-  /// relay server PIN:
+  /// relay server PIN, a session key which is valid for one session:
   secret_t pin;
   /// rendering settings:
   render_settings_t rendersettings;
@@ -166,23 +166,80 @@ bool operator!=(const std::map<stage_device_id_t, stage_device_t>& a,
 
 class ov_render_base_t {
 public:
+  /**
+     \brief Create a new renderer.
+     \param deviceid Device ID string (alphanumeric, no whitespace)
+  */
   ov_render_base_t(const std::string& deviceid);
   virtual ~ov_render_base_t(){};
+  /**
+     \brief Configure the relay server (ov-server)
+     \param host IP address or host name of server
+     \param port Port number of server
+     \param pin Session key / PIN of session
+  */
   virtual void set_relay_server(const std::string& host, port_t port,
                                 secret_t pin);
+  /**
+     \brief Start a new session (requires a running audio backend)
+  */
   virtual void start_session();
+  /**
+     \brief End session
+  */
   virtual void end_session();
-  virtual void configure_audio_backend(const audio_device_t&);
+  /**
+     \brief Configure audio backend and start (or restart) if required
+     \param audio Audio device descriptor
+  */
+  virtual void configure_audio_backend(const audio_device_t& audio);
+  /**
+     \brief Setup the local device.
+     \param stagedevice Stage device descriptor
+
+     If required and already running, the session is restarted
+  */
   virtual void set_thisdev(const stage_device_t& stagedevice);
+  /**
+     \brief Add a new device to the session
+     \param stagedevice Device descriptor
+  */
   virtual void add_stage_device(const stage_device_t& stagedevice);
+  /**
+     \brief Remove a device from the stage
+  */
   virtual void rm_stage_device(stage_device_id_t stagedeviceid);
+  /**
+     \brief Remove all devices from a stage
+   */
   virtual void clear_stage();
+  /**
+     \brief Set all stage devices of a stage
+   */
   virtual void set_stage(const std::map<stage_device_id_t, stage_device_t>&);
+  /**
+     \brief Set output gain of a stage device
+     \param stagedeviceid Stage device ID
+     \param gain Linear gain
+     \todo Discuss exact gain definition
+   */
   virtual void set_stage_device_gain(stage_device_id_t stagedeviceid,
                                      double gain);
+  /**
+     \brief Set render settings of this device and stage combination
+     \param rendersettings Render settings including room acoustics, this device
+     gains, connections and similar \param thisstagedeviceid ID of this device
+   */
   virtual void set_render_settings(const render_settings_t& rendersettings,
                                    stage_device_id_t thisstagedeviceid);
+  /**
+     \brief Start audio backend
+  */
   virtual void start_audiobackend();
+  /**
+     \brief Stop audio backend
+     \note Make sure that the session is ended before stopping the audio backend
+   */
   virtual void stop_audiobackend();
   const bool is_session_active() const;
   const bool is_audio_active() const;
