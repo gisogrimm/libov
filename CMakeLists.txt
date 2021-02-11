@@ -10,8 +10,12 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 file(GLOB
-    SOURCE_FILES
+    HEADERS
     src/*.h
+)
+
+file(GLOB
+    SOURCES
     src/*.cc
 )
 
@@ -34,4 +38,13 @@ endif()
 add_compile_definitions(OVBOXVERSION="${PROJECT_VERSION}")
 add_compile_definitions(${CMAKE_SYSTEM_PROCESSOR})
 
-add_library(libov STATIC ${SOURCE_FILES})
+include_directories(src)
+
+add_library(libov STATIC ${SOURCES})
+
+set_target_properties(libov PROPERTIES
+    VERSION ${PROJECT_VERSION}
+    SOVERSION 1
+)
+
+install(FILES ${HEADERS} DESTINATION include/libov)
