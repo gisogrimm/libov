@@ -2,8 +2,6 @@
 #define OVBOXCLIENT
 
 #include "callerlist.h"
-#include "common.h"
-#include "udpsocket.h"
 #include <functional>
 
 class ovboxclient_t : public endpoint_list_t {
