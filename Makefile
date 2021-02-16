@@ -11,7 +11,7 @@ OBJ = ov_types errmsg common udpsocket callerlist ovboxclient		\
   ov_render_tascar soundcardtools
 
 CXXFLAGS = -Wall -Wno-deprecated-declarations -std=c++11 -pthread	\
--ggdb -fno-finite-math-only
+-ggdb -fno-finite-math-only -fPIC
 
 EXTERNALS = jack libxml++-2.6 liblo sndfile libcurl gsl samplerate fftw3f
 

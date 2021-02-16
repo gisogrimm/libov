@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.18.0)
 
 ## GLOBAL CONFIGURATION
-project(libov 
+project(ov 
     LANGUAGES CXX 
     VERSION 0.5 
     DESCRIPTION "common header files and library code for ov-client and ov-server"
@@ -43,8 +43,8 @@ add_compile_definitions(${CMAKE_SYSTEM_PROCESSOR})
 
 
 ## TARGET
-add_library(libov STATIC ${SOURCES})
-set_target_properties(libov PROPERTIES
+add_library(ov STATIC ${SOURCES})
+set_target_properties(ov PROPERTIES
     VERSION ${PROJECT_VERSION}
     SOVERSION 1
 )
