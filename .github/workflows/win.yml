@@ -13,5 +13,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: fetchtags
+      run: git fetch --unshallow --tags
     - name: make
       run: make
