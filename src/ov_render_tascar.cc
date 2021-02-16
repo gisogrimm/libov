@@ -3,6 +3,8 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 
+#define ZITAPATH ""
+
 bool ov_render_tascar_t::metronome_t::operator!=(const metronome_t& a)
 {
   return (a.bpb != bpb) || (a.bpm != bpm) || (a.bypass != bypass) ||
@@ -268,6 +270,9 @@ void ov_render_tascar_t::create_virtual_acoustics(xmlpp::Element* e_session,
   e_jackrec->set_attribute("url", "osc.udp://localhost:9000/");
   e_mods->add_child("touchosc");
   // create zita-n2j receivers:
+  // this variable holds the path to zita
+  // binaries, or empty (default) for system installed:
+  std::string zitapath(ZITAPATH);
   for(auto stagemember : stage.stage) {
     // only create a network receiver when the stage member is sending audio:
     if(stagemember.second.channels.size()) {
@@ -284,7 +289,7 @@ void ov_render_tascar_t::create_virtual_acoustics(xmlpp::Element* e_session,
         double buff(thisdev.receiverjitter + stagemember.second.senderjitter);
         // provide access to path!
         e_sys->set_attribute(
-            "command", "zita-n2j --chan " + chanlist + " --jname " +
+            "command", zitapath + "zita-n2j --chan " + chanlist + " --jname " +
                            clientname + "." + stage.thisdeviceid + " --buf " +
                            TASCAR::to_string(buff) + " 0.0.0.0 " +
                            TASCAR::to_string(4464 + 2 * stagemember.second.id));
@@ -314,8 +319,8 @@ void ov_render_tascar_t::create_virtual_acoustics(xmlpp::Element* e_session,
                         stagemember.second.senderjitter);
             e_sys->set_attribute(
                 "command",
-                "zita-n2j --chan " + chanlist + " --jname " + netclientname +
-                    "." + stage.thisdeviceid + " --buf " +
+                zitapath + "zita-n2j --chan " + chanlist + " --jname " +
+                    netclientname + "." + stage.thisdeviceid + " --buf " +
                     TASCAR::to_string(stage.rendersettings.secrec + buff) +
                     " 0.0.0.0 " +
                     TASCAR::to_string(4464 + 2 * stagemember.second.id + 100));
@@ -366,7 +371,7 @@ void ov_render_tascar_t::create_virtual_acoustics(xmlpp::Element* e_session,
     // create network sender:
     xmlpp::Element* e_sys = e_mods->add_child("system");
     e_sys->set_attribute(
-        "command", "zita-j2n --chan " +
+        "command", zitapath + "zita-j2n --chan " +
                        std::to_string(thisdev.channels.size()) + " --jname " +
                        stage.thisdeviceid + "_sender --16bit 127.0.0.1 " +
                        std::to_string(4464 + 2 * stage.thisstagedeviceid));
@@ -440,6 +445,7 @@ void ov_render_tascar_t::create_raw_dev(xmlpp::Element* e_session)
   e_mods->add_child("touchosc");
   //
   uint32_t chcnt(0);
+  std::string zitapath(ZITAPATH);
   for(auto stagemember : stage.stage) {
     std::string chanlist;
     for(uint32_t k = 0; k < stagemember.second.channels.size(); ++k) {
@@ -452,8 +458,8 @@ void ov_render_tascar_t::create_raw_dev(xmlpp::Element* e_session)
       xmlpp::Element* e_sys = e_mods->add_child("system");
       double buff(thisdev.receiverjitter + stagemember.second.senderjitter);
       e_sys->set_attribute(
-          "command", "zita-n2j --chan " + chanlist + " --jname " + clientname +
-                         "." + stage.thisdeviceid + " --buf " +
+          "command", zitapath + "zita-n2j --chan " + chanlist + " --jname " +
+                         clientname + "." + stage.thisdeviceid + " --buf " +
                          TASCAR::to_string(buff) + " 0.0.0.0 " +
                          TASCAR::to_string(4464 + 2 * stagemember.second.id));
       e_sys->set_attribute("onunload", "killall zita-n2j");
@@ -485,8 +491,8 @@ void ov_render_tascar_t::create_raw_dev(xmlpp::Element* e_session)
           double buff(thisdev.receiverjitter + stagemember.second.senderjitter);
           e_sys->set_attribute(
               "command",
-              "zita-n2j --chan " + chanlist + " --jname " + netclientname +
-                  "." + stage.thisdeviceid + " --buf " +
+              zitapath + "zita-n2j --chan " + chanlist + " --jname " +
+                  netclientname + "." + stage.thisdeviceid + " --buf " +
                   TASCAR::to_string(stage.rendersettings.secrec + buff) +
                   " 0.0.0.0 " +
                   TASCAR::to_string(4464 + 2 * stagemember.second.id + 100));
@@ -527,7 +533,7 @@ void ov_render_tascar_t::create_raw_dev(xmlpp::Element* e_session)
   if(thisdev.channels.size() > 0) {
     xmlpp::Element* e_sys = e_mods->add_child("system");
     e_sys->set_attribute(
-        "command", "zita-j2n --chan " +
+        "command", zitapath + "zita-j2n --chan " +
                        std::to_string(thisdev.channels.size()) +
                        " --jname sender --16bit 127.0.0.1 " +
                        std::to_string(4464 + 2 * stage.thisstagedeviceid));
