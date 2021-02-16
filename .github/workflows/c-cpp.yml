@@ -15,7 +15,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: fetchtags
       run: git fetch --unshallow --tags
-    - submodules:
+    - name: submodules
       run: git submodule init && git submodule update
     - name: make
       run: make
