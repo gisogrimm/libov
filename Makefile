@@ -113,16 +113,6 @@ showver: tascar/Makefile
 tascar/Makefile:
 	git submodule init && git submodule update
 
-CXXFLAGS += $(OSFLAG)
-
-ifeq "$(ARCH)" "x86_64"
-CXXFLAGS += -msse -msse2 -mfpmath=sse -ffast-math
-endif
-
-CPPFLAGS = -std=c++11
-BUILD_DIR = build
-SOURCE_DIR = src
-
 lib: build/libov.a
 
 build/libov.a: $(BUILD_OBJ) $(patsubst %,tascar/libtascar/build/%,$(TASCAROBJECTS)) $(patsubst %,tascar/libtascar/build/%,$(TASCARDMXOBJECTS))
@@ -140,7 +130,6 @@ build/%.o: src/%.cc $(wildcard src/*.h)
 tscbuild:
 	$(MAKE) -C tascar/libtascar build
 
-#$(BUILD_OBJ) $(patsubst %,tascar/libtascar/build/%,$(TASCAROBJECTS)): tscobj
 $(patsubst %,tascar/libtascar/build/%,$(TASCAROBJECTS)): tscobj
 
 tscver: tscbuild
