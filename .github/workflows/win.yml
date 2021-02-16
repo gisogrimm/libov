@@ -2,7 +2,7 @@ name: Windows make
 
 on:
   push:
-    branches: [ master, development, libov_win ]
+    branches: [ libov_win ]
   pull_request:
     branches: [ master ]
 
