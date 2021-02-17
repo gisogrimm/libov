@@ -30,7 +30,7 @@ public:
   class metronome_t {
   public:
     metronome_t();
-    metronome_t(nlohmann::json js);
+    metronome_t(const nlohmann::json& js);
     bool operator!=(const metronome_t& a);
     void set_xmlattr(xmlpp::Element* em, xmlpp::Element* ed) const;
     void update_osc(TASCAR::osc_server_t* srv, const std::string& dev) const;

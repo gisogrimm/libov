@@ -1,5 +1,4 @@
 #include "soundcardtools.h"
-#include <iostream>
 #ifndef __APPLE__
 #include <alsa/asoundlib.h>
 #endif

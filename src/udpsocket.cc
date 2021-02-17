@@ -14,14 +14,12 @@
 #endif
 
 #include "MACAddressUtility.h"
-#include "common.h"
 #include "errmsg.h"
 #include "udpsocket.h"
 #include <errno.h>
 
 #include <stdio.h>
 #include <string.h>
-#include <string>
 #include <strings.h>
 
 #if defined(__linux__)
