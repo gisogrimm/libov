@@ -3,7 +3,6 @@
 
 #include "udpsocket.h"
 #include <thread>
-#include <vector>
 
 // ping period time in milliseconds:
 #define PINGPERIODMS 100

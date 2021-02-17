@@ -1,7 +1,6 @@
 #include "ov_render_tascar.h"
 #include "soundcardtools.h"
 #include <fstream>
-#include <nlohmann/json.hpp>
 
 #define ZITAPATH ""
 
@@ -16,7 +15,7 @@ ov_render_tascar_t::metronome_t::metronome_t()
 {
 }
 
-ov_render_tascar_t::metronome_t::metronome_t(nlohmann::json js)
+ov_render_tascar_t::metronome_t::metronome_t(const nlohmann::json& js)
     : bpb(my_js_value(js, "bpb", 4)), bpm(my_js_value(js, "bpm", 120.0)),
       bypass(!my_js_value(js, "active", false)),
       delay(my_js_value(js, "delay", 40.0)),

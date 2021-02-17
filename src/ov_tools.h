@@ -16,7 +16,8 @@ std::string ovstrrep(std::string s, const std::string& pat,
 
 // robust json value function with default value:
 template <class T>
-T my_js_value(nlohmann::json& obj, const std::string& key, const T& defval)
+T my_js_value(const nlohmann::json& obj, const std::string& key,
+              const T& defval)
 {
   if(obj.is_object())
     return obj.value(key, defval);
