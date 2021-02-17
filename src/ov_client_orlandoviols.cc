@@ -288,7 +288,7 @@ void ov_client_orlandoviols_t::service()
   double gracetime(9.0);
   while(runservice) {
     std::string stagecfg(device_update(lobby, backend.get_deviceid(), hash));
-    if(!stagecfg.empty()) {
+    if(!stagecfg.empty() && (stagecfg[0] != '<')) {
       try {
         nlohmann::json js_stagecfg(nlohmann::json::parse(stagecfg));
         if(!js_stagecfg["frontendconfig"].is_null()) {
