@@ -23,22 +23,23 @@ include_directories(src)
 
 
 ## DEPENDENCIES
+find_package(CURL REQUIRED)
 find_package(cpprestsdk REQUIRED)
 find_package(nlohmann_json 3.2.0 REQUIRED)
-set(OPENSSL_USE_STATIC_LIBS TRUE)
+#find_package(LibXML++ REQUIRED)
+#set(OPENSSL_USE_STATIC_LIBS TRUE)
 #find_package(OpenSSL REQUIRED)
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(LIBXML++ REQUIRED libxml++-2.6)
+#find_package(PkgConfig REQUIRED)
+#pkg_check_modules(LIBXML++ REQUIRED libxml++-2.6)
 add_subdirectory(tascar/libtascar)
 add_library(tascar::tascar ALIAS tascar)
-
 
 ## COMPILER ADDONS
 if (LINUX)
     add_compile_definitions(LINUX)
 elseif (APPLE)
     add_compile_definitions(OSX)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -framework IOKit -framework CoreFoundation")
+    #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -framework IOKit -framework CoreFoundation")
 elseif (WIN32)
     add_compile_definitions(WIN32)
 endif ()
@@ -55,38 +56,48 @@ add_compile_definitions(${CMAKE_SYSTEM_PROCESSOR})
 
 
 ## TARGET
-add_library(ov SHARED ${SOURCES} ${HEADER})
+add_library(ov SHARED ${SOURCES})
+set_target_properties(tascar PROPERTIES PUBLIC_HEADER "${HEADER}")
 target_include_directories(ov
+        PRIVATE
+        ${PROJECT_SOURCE_DIR}/tascar/libtascar/include
         PUBLIC
         ${LIBXML++_INCLUDE_DIRS}
-        ${tascar_INCLUDE_DIRS}
         )
 target_link_libraries(ov
+        PRIVATE
+        tascar::tascar
         PUBLIC
         nlohmann_json::nlohmann_json
         cpprestsdk::cpprest
         OpenSSL::Crypto
-        tascar::tascar
         )
 set_target_properties(ov PROPERTIES
         VERSION ${PROJECT_VERSION}
         SOVERSION 1
         )
+if (APPLE)
+    target_link_libraries(ov
+            PUBLIC
+            "-framework IOKit"
+            "-framework CoreFoundation"
+            )
+endif ()
 
 
 # CMake package config
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
-set(generated_dir "${CMAKE_CURRENT_BINARY_DIR}/generated")
 set(TARGETS_EXPORT_NAME "${PROJECT_NAME}Target")
-write_basic_package_version_file(
-        "${generated_dir}/ovConfigVersion.cmake" COMPATIBILITY SameMajorVersion
-)
-set(TARGETS_EXPORT_NAME "ovTarget")
+set(INCLUDE_INSTALL_DIR "include/${PROJECT_NAME}" CACHE PATH "Install path for include files")
 configure_package_config_file(
         "cmake/Config.cmake.in"
-        "${generated_dir}/ovConfig.cmake"
-        INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/ov"
+        "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+        INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
+        PATH_VARS INCLUDE_INSTALL_DIR
+)
+write_basic_package_version_file(
+        "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake" COMPATIBILITY SameMajorVersion
 )
 install(
         TARGETS ov
@@ -95,13 +106,14 @@ install(
         ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
         RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
         INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+        PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}"
 )
 install(
-        FILES "${generated_dir}/ovConfig.cmake" "${generated_dir}/ovConfigVersion.cmake"
-        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/ov"
+        FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake" "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
 )
 install(
         EXPORT "${TARGETS_EXPORT_NAME}"
         NAMESPACE "ov::"
-        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/ov"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
 )
