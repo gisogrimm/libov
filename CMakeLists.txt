@@ -23,7 +23,7 @@ include_directories(src)
 
 ## DEPENDENCIES
 find_package(CURL REQUIRED)
-find_package(cpprestsdk REQUIRED)
+find_package(cpprestsdk REQUIRED NAMES cpprestsdk cpprest)
 find_package(nlohmann_json 3.2.0 REQUIRED)
 #find_package(LibXML++ REQUIRED)
 #set(OPENSSL_USE_STATIC_LIBS TRUE)
