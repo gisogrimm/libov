@@ -21,7 +21,6 @@ file(GLOB
         )
 include_directories(src)
 
-
 ## DEPENDENCIES
 find_package(CURL REQUIRED)
 find_package(cpprestsdk REQUIRED)
@@ -62,7 +61,7 @@ target_include_directories(ov
         PRIVATE
         ${PROJECT_SOURCE_DIR}/tascar/libtascar/include
         PUBLIC
-        ${LIBXML++_INCLUDE_DIRS}
+        ${CURL_INCLUDE_DIRS}
         )
 target_link_libraries(ov
         PRIVATE
@@ -71,6 +70,7 @@ target_link_libraries(ov
         nlohmann_json::nlohmann_json
         cpprestsdk::cpprest
         OpenSSL::Crypto
+        ${CURL_LIBRARIES}
         )
 set_target_properties(ov PROPERTIES
         VERSION ${PROJECT_VERSION}
