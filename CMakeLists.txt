@@ -25,11 +25,8 @@ include_directories(src)
 find_package(CURL REQUIRED)
 find_package(cpprestsdk REQUIRED NAMES cpprestsdk cpprest)
 find_package(nlohmann_json 3.2.0 REQUIRED)
-#find_package(LibXML++ REQUIRED)
-#set(OPENSSL_USE_STATIC_LIBS TRUE)
-#find_package(OpenSSL REQUIRED)
-#find_package(PkgConfig REQUIRED)
-#pkg_check_modules(LIBXML++ REQUIRED libxml++-2.6)
+
+# Only use libtascar here (however, ov-client and ds-client will add tascar and so also plugins)
 add_subdirectory(tascar/libtascar)
 add_library(tascar::tascar ALIAS tascar)
 
