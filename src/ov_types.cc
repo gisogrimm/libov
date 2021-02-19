@@ -151,8 +151,6 @@ const std::string& ov_render_base_t::get_deviceid() const
 void ov_render_base_t::configure_audio_backend(
     const audio_device_t& audiodevice_)
 {
-  DEBUG((audiodevice != audiodevice_));
-  DEBUG(audio_active);
   // audio backend changed or was not active before:
   if((audiodevice != audiodevice_) || (!audio_active)) {
     audiodevice = audiodevice_;
