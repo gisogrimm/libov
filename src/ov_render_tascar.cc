@@ -825,6 +825,7 @@ void ov_render_tascar_t::set_stage(
     end_session();
     start_session();
   }
+  // compare gains:
 }
 
 void ov_render_tascar_t::set_stage_device_gain(stage_device_id_t stagedeviceid,
