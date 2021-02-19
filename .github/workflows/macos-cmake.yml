@@ -20,7 +20,8 @@ jobs:
     - name: Install Dependencies
       run: brew install pkgconfig libxml2 glibmm libxml++ jack liblo libsndfile gtkmm3 eigen boost gsl fftw libsamplerate cpprestsdk nlohmann-json openssl coreutils
     - name: Configure
-      run: cmake .
+    # Fix necessary
+      run: cmake . -DOPENSSL_ROOT_DIR=/opt/homebrew/opt/openssl@1.1
     - name: Build
       run: make
 

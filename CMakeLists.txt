@@ -21,22 +21,34 @@ file(GLOB
         )
 #include_directories(src)
 
-# Only use libtascar here (however, ov-client and ds-client will add tascar and so also plugins)
-add_subdirectory(tascar/libtascar)
-add_library(tascar::tascar ALIAS tascar)
-
-## DEPENDENCIES
-find_package(CURL REQUIRED)
-find_package(cpprestsdk REQUIRED NAMES cpprestsdk cpprest)
-find_package(nlohmann_json 3.2.0 REQUIRED)
-
-add_subdirectory(tascar/libtascar)
+add_subdirectory(tascar/libtascar libtascar)
 if( TARGET tascar ) 
         add_library(tascar::tascar ALIAS tascar)
+        set(TASCAR_INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/tascar/libtascar/include)
 else()
         find_package(tascar REQUIRED)
 endif()
 
+## DEPENDENCIES
+if (APPLE)
+    find_program(BREW brew)
+    # only if OPENSSL_ROOT_DIR is not set yet
+        if (BREW AND NOT OPENSSL_ROOT_DIR AND NOT "$ENV{OPENSSL_ROOT_DIR}")
+                execute_process(COMMAND ${BREW} --prefix openssl
+                OUTPUT_VARIABLE BREW_OPENSSL_PREFIX
+                RESULT_VARIABLE BREW_OPENSSL_RESULT
+                ERROR_QUIET
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+                )
+                if (BREW_OPENSSL_RESULT EQUAL 0)
+                message(STATUS "Set OPENSSL_ROOT_DIR=${BREW_OPENSSL_PREFIX} (from brew)")
+                set(OPENSSL_ROOT_DIR "${BREW_OPENSSL_PREFIX}" CACHE PATH "")
+                endif()
+        endif()
+endif()
+find_package(CURL REQUIRED)
+find_package(cpprestsdk REQUIRED NAMES cpprestsdk cpprest)
+#find_package(nlohmann_json 3.2.0 REQUIRED)
 
 ## COMPILER ADDONS
 if (LINUX)
@@ -60,23 +72,19 @@ add_compile_definitions(${CMAKE_SYSTEM_PROCESSOR})
 
 
 ## TARGET
-add_library(ov ${SOURCES})
+add_library(ov SHARED ${SOURCES})
 set_target_properties(tascar PROPERTIES PUBLIC_HEADER "${HEADER}")
 target_include_directories(ov
-        PRIVATE
-        #${PROJECT_SOURCE_DIR}/tascar/libtascar/include
         PUBLIC
-        ${CURL_INCLUDE_DIRS}
-        ${JACK_INCLUDE_DIRS}
+        #${CURL_INCLUDE_DIRS}
         )
 target_link_libraries(ov
         PUBLIC
         tascar::tascar
-        nlohmann_json::nlohmann_json
         cpprestsdk::cpprest
         OpenSSL::Crypto
         ${CURL_LIBRARIES}
-        ${JACK_LIBRARIES}
+        #nlohmann_json::nlohmann_json
         )
 set_target_properties(ov PROPERTIES
         VERSION ${PROJECT_VERSION}
