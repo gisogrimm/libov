@@ -21,14 +21,15 @@ file(GLOB
         )
 include_directories(src)
 
+# Only use libtascar here (however, ov-client and ds-client will add tascar and so also plugins)
+add_subdirectory(tascar/libtascar)
+add_library(tascar::tascar ALIAS tascar)
+
 ## DEPENDENCIES
 find_package(CURL REQUIRED)
 find_package(cpprestsdk REQUIRED NAMES cpprestsdk cpprest)
 find_package(nlohmann_json 3.2.0 REQUIRED)
-
-# Only use libtascar here (however, ov-client and ds-client will add tascar and so also plugins)
-add_subdirectory(tascar/libtascar)
-add_library(tascar::tascar ALIAS tascar)
+find_package(Jack REQUIRED)
 
 ## COMPILER ADDONS
 if (LINUX)
@@ -52,13 +53,14 @@ add_compile_definitions(${CMAKE_SYSTEM_PROCESSOR})
 
 
 ## TARGET
-add_library(ov SHARED ${SOURCES})
+add_library(ov ${SOURCES})
 set_target_properties(tascar PROPERTIES PUBLIC_HEADER "${HEADER}")
 target_include_directories(ov
         PRIVATE
         ${PROJECT_SOURCE_DIR}/tascar/libtascar/include
         PUBLIC
         ${CURL_INCLUDE_DIRS}
+        ${JACK_INCLUDE_DIRS}
         )
 target_link_libraries(ov
         PRIVATE
@@ -68,6 +70,7 @@ target_link_libraries(ov
         cpprestsdk::cpprest
         OpenSSL::Crypto
         ${CURL_LIBRARIES}
+        ${JACK_LIBRARIES}
         )
 set_target_properties(ov PROPERTIES
         VERSION ${PROJECT_VERSION}
