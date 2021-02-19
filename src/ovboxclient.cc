@@ -1,9 +1,7 @@
 #include "ovboxclient.h"
 #include <condition_variable>
-#include <map>
 #include <string.h>
 #include <strings.h>
-#include <thread>
 
 ovboxclient_t::ovboxclient_t(const std::string& desthost, port_t destport,
                              port_t recport, port_t portoffset, int prio,
