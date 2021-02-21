@@ -1,5 +1,8 @@
 #include "callerlist.h"
 #include <string.h>
+#ifdef WIN32
+#include <algorithm> // min, max
+#endif
 
 ep_desc_t::ep_desc_t()
 {

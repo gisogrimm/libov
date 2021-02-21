@@ -2,7 +2,11 @@
 #include <condition_variable>
 #include <map>
 #include <string.h>
+#ifndef WIN32
 #include <strings.h>
+#else
+#include <algorithm> // min, max
+#endif
 #include <thread>
 
 ovboxclient_t::ovboxclient_t(const std::string& desthost, port_t destport,

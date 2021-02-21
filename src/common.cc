@@ -3,6 +3,12 @@
 #include <iomanip>
 #include <string.h>
 
+#ifdef WIN32
+// Why is this not required on Linux?
+#include "getopt.h"
+#include "pthread.h"
+#endif
+
 std::mutex logmutex;
 int verbose(1);
 
