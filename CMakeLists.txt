@@ -9,7 +9,11 @@ project(ov
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(POSITION_INDEPENDENT_CODE ON)
+set(PLUGINPREFIX ovclient)
 
+if( PLUGINPREFIX )
+        add_compile_definitions(PLUGINPREFIX="${PLUGINPREFIX}")
+endif()
 
 ## SOURCE MANAGEMENT
 file(GLOB
@@ -20,7 +24,6 @@ file(GLOB
         SOURCES
         src/*.cc
         )
-#include_directories(src)
 
 add_subdirectory(tascar/libtascar libtascar)
 if( TARGET tascar ) 
