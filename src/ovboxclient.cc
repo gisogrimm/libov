@@ -5,6 +5,8 @@
 #include <strings.h>
 #else
 #include <algorithm> // min, max
+#undef min
+#undef max
 #endif
 
 ovboxclient_t::ovboxclient_t(const std::string& desthost, port_t destport,
