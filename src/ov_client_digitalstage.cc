@@ -14,6 +14,8 @@ using namespace web::http::client; // HTTP client features
 using namespace concurrency::streams; // Asynchronous streams
 using namespace web::json;            // JSON library
 
+#undef U
+
 ov_client_digitalstage_t::ov_client_digitalstage_t(ov_render_base_t& backend)
     : ov_client_base_t(backend), runservice_(true), quitrequest_(false)
 {
@@ -49,12 +51,12 @@ std::string ov_client_digitalstage_t::signIn(const std::string& email,
   auto postJson =
       pplx::create_task([url, email, password]() {
         json::value jsonObject;
-        jsonObject[U("email")] = json::value::string(U(email));
-        jsonObject[U("password")] = json::value::string(U(password));
+        jsonObject[utility::conversions::to_string_t("email")] = json::value::string(utility::conversions::to_string_t(email));
+        jsonObject[utility::conversions::to_string_t("password")] = json::value::string(utility::conversions::to_string_t(password));
 
-        return http_client(U(url)).request(
-            methods::POST, uri_builder(U("login")).to_string(),
-            jsonObject.serialize(), U("application/json"));
+        return http_client(utility::conversions::to_string_t(url)).request(
+            methods::POST, uri_builder(utility::conversions::to_string_t("login")).to_string(),
+            jsonObject.serialize(), utility::conversions::to_string_t("application/json"));
       })
           .then([](http_response response) {
             // Check the status code.
@@ -70,7 +72,7 @@ std::string ov_client_digitalstage_t::signIn(const std::string& email,
 
   try {
     postJson.wait();
-    const std::string token = postJson.get();
+    const std::string token = utility::conversions::to_utf8string(postJson.get());
     return token;
   }
   catch(const std::exception& e) {
@@ -84,10 +86,10 @@ bool ov_client_digitalstage_t::signOut(const std::string& token)
   const std::string url = AUTH_SERVER;
   auto postJson =
       pplx::create_task([url, token]() {
-        http_client client(U(url + "/logout"));
+        http_client client(utility::conversions::to_string_t(url + "/logout"));
         http_request request(methods::POST);
-        request.headers().add(U("Content-Type"), U("application/json"));
-        request.headers().add(U("Authorization"), U("Bearer " + token));
+        request.headers().add(utility::conversions::to_string_t("Content-Type"), utility::conversions::to_string_t("application/json"));
+        request.headers().add(utility::conversions::to_string_t("Authorization"), utility::conversions::to_string_t("Bearer " + token));
         return client.request(request);
       }).then([](http_response response) {
         // Check the status code.
