@@ -1,7 +1,11 @@
 #include "ovboxclient.h"
 #include <condition_variable>
 #include <string.h>
+#ifndef WIN32
 #include <strings.h>
+#else
+#include <algorithm> // min, max
+#endif
 
 ovboxclient_t::ovboxclient_t(const std::string& desthost, port_t destport,
                              port_t recport, port_t portoffset, int prio,

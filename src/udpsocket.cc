@@ -20,7 +20,9 @@
 
 #include <stdio.h>
 #include <string.h>
+#ifndef WIN32
 #include <strings.h>
+#endif
 
 #if defined(__linux__)
 #include <linux/wireless.h>
@@ -234,17 +236,17 @@ void ovbox_udpsocket_t::send_registration(stage_device_id_t cid, epmode_t mode,
   std::string rver(OVBOXVERSION);
   {
     size_t buflen(HEADERLEN + rver.size() + 1);
-    char buffer[buflen];
-    size_t n(packmsg(buffer, buflen, secret, cid, PORT_REGISTER, mode,
+    std::vector<char> buffer(buflen);
+    size_t n(packmsg(buffer.data(), buflen, secret, cid, PORT_REGISTER, mode,
                      rver.c_str(), rver.size() + 1));
-    send(buffer, n, port);
+    send(buffer.data(), n, port);
   }
   {
-    size_t buflen(HEADERLEN + sizeof(endpoint_t));
-    char buffer[buflen];
-    size_t n(packmsg(buffer, buflen, secret, cid, PORT_SETLOCALIP, 0,
+    constexpr size_t buflen(HEADERLEN + sizeof(endpoint_t));
+    std::vector<char> buffer(buflen);
+    size_t n(packmsg(buffer.data(), buflen, secret, cid, PORT_SETLOCALIP, 0,
                      (const char*)(&localep), sizeof(endpoint_t)));
-    send(buffer, n, port);
+    send(buffer.data(), n, port);
   }
 }
 

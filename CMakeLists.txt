@@ -79,6 +79,8 @@ set_target_properties(tascar PROPERTIES PUBLIC_HEADER "${HEADER}")
 target_include_directories(ov
         PUBLIC
         #${CURL_INCLUDE_DIRS}
+		PRIVATE
+		 ${CMAKE_CURRENT_LIST_DIR}/../third_party/getopt-for-windows ${CMAKE_CURRENT_LIST_DIR}/../third_party/pthreads4w
         )
 target_link_libraries(ov
         PUBLIC

@@ -16,7 +16,12 @@
 
 #include <sys/types.h>
 
+#ifdef WIN32
+#include <io.h>
+typedef SSIZE_T ssize_t;
+#else
 #include <unistd.h>
+#endif
 
 typedef struct sockaddr_in endpoint_t;
 
