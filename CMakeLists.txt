@@ -9,11 +9,9 @@ project(ov
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(POSITION_INDEPENDENT_CODE ON)
-set(PLUGINPREFIX ovclient)
 
-if( PLUGINPREFIX )
-        add_compile_definitions(PLUGINPREFIX="${PLUGINPREFIX}")
-endif()
+set(PLUGINPREFIX "ovclient")
+add_compile_definitions(PLUGINPREFIX="ovclient")
 
 ## SOURCE MANAGEMENT
 file(GLOB
