@@ -26,10 +26,14 @@ nlohmann::json groups;        // jsonObject containing d-s groups
 nlohmann::json track_presets; // jsonObject containing d-s track presets
 nlohmann::json sound_cards;   // jsonObject array with sound_cards
 
-ov_ds_service_t::ov_ds_service_t(const std::string& api_url) : api_url_(api_url) {
+ov_ds_service_t::ov_ds_service_t(const std::string &api_url) : api_url_(api_url) {
 }
 
-void ov_ds_service_t::start(const std::string& token) {
+ov_ds_service_t::~ov_ds_service_t() {
+}
+
+
+void ov_ds_service_t::start(const std::string &token) {
     this->token_ = token;
     this->running_ = true;
     servicethread_ = std::thread(&ov_ds_service_t::service, this);
@@ -43,262 +47,107 @@ void ov_ds_service_t::stop() {
 }
 
 void ov_ds_service_t::service() {
-    wsclient.connect(U("wss://api.digital-stage.org")).wait();
+    wsclient.connect(U(this->api_url_)).wait();
 
     auto receive_task = create_task(tce);
 
     // handler for incoming d-s messages
     wsclient.set_message_handler([&](websocket_incoming_message ret_msg) {
-      // -----------------------------------------------
-      // -----    parse incoming message events    -----
-      // -----------------------------------------------
+        // -----------------------------------------------
+        // -----    parse incoming message events    -----
+        // -----------------------------------------------
 
-      auto ret_str = ret_msg.extract_string().get();
-      // ucout << "ret_str " << to_string_t(ret_str) << "\n";
+        auto ret_str = ret_msg.extract_string().get();
 
-      // we check if it's valid json
-      // if(!nlohmann::json::accept(ret_str)) {
-      //  std::cerr << "parse error" << std::endl;
-      //}
+        // hey is our ping, so exlude it
+        if (ret_str != "hey") {
+            try {
+                nlohmann::json j = nlohmann::json::parse(ret_str);
 
-      if(ret_str == "hey") {
-        ucout << "ret_str " << to_string_t(ret_str) << "\n";
-      } else {
-        try {
-          nlohmann::json j = nlohmann::json::parse(ret_str);
-          // ucout << "/----------------------Event--------------------------/"
-          //          << std::endl;
-          // ucout << j["data"].dump(4) << std::endl;
+                const std::string &event = j["data"][0];
+                const json payload = j["data"][1];
 
-          // 88   88 .dP"Y8 888888 88""Yb
-          // 88   88 `Ybo." 88__   88__dP
-          // Y8   8P o.`Y8b 88""   88"Yb
-          //`YbodP' 8bodP' 888888 88  Yb
+                ucout << "[" << event << "] " << payload.dump() << std::endl;
+                if (event == "local-device-ready") {
 
-          // ----------------------------
-          // -----    user ready    -----
-          // ----------------------------
+                } else if (event == "stage-joined") {
+                    const json customGroups = payload["customGroups"].get<std::vector<custom_group_t>>();
+                } else if (event == "stage-left") {
 
-          if(j["data"][0] == "user-ready") {
-            ucout << "\n/--  USER_READY --/\n" << std::endl;
-            ucout << j["data"][1].dump(4) << std::endl;
+                } else if (event == "user-ready") {
 
-            // we get user data from incoming json event message
-            // and put the data into user json object for later use
-            user = j["data"][1];
-            // we can get single json entry fron nlohmann::json like this:
-            ucout << "_id:  " << user["_id"] << std::endl;
+                } else if (event == "group-added") {
 
-            // or we can dump nlohmann::json objects like this:
-            ucout << "user:  " << user.dump(4) << std::endl;
-          }
+                } else if (event == "group-changed") {
 
-          // ------------------------------
-          // -----    user-changed    -----
-          // ------------------------------
+                } else if (event == "group-removed") {
 
-          if(j["data"][0] == "user-changed") {
-            ucout << "\n/--  USER_CHANGED --/\n" << std::endl;
-            ucout << j["data"][1].dump(4) << std::endl;
+                } else if (event == "stage-member-added") {
 
-            ucout << "old user: \n" + user.dump(4) << std::endl;
+                } else if (event == "stage-member-changed") {
 
-            // we shall here manipulate the user jsonObject
-            // to get new data in
-          }
+                } else if (event == "stage-member-removed") {
 
-          // 8888b.  888888 Yb    dP 88  dP""b8 888888
-          // 8I  Yb 88__    Yb  dP  88 dP   `" 88__
-          // 8I  dY 88""     YbdP   88 Yb      88""
-          // 8888Y"  888888    YP    88  YboodP 888888
+                } else if (event == "custom-stage-member-added") {
 
-          // ------------------------------------
-          // -----    local-device-ready    -----
-          // ------------------------------------
+                } else if (event == "custom-stage-member-changed") {
 
-          if(j["data"][0] == "local-device-ready") {
-            ucout << "\n/--  LOCAL_DEVICE_READY --/\n" << std::endl;
-            ucout << j["data"][1].dump(4) << std::endl;
-          }
+                } else if (event == "custom-stage-member-removed") {
 
-          // ----------------------------------
-          // -----    sound-card-added    -----
-          // ----------------------------------
+                } else if (event == "stage-member-ov-added") {
 
-          if(j["data"][0] == "sound-card-added") {
-            ucout << "\n/--  SOUND_CARD_ADDED --/\n" << std::endl;
-            ucout << j["data"][1].dump(4) << std::endl;
+                } else if (event == "stage-member-ov-changed") {
 
-            // we add the sound-card to sound_cards inMemory array jsonObject
-            sound_cards.push_back(j["data"][1]);
+                } else if (event == "stage-member-ov-removed") {
 
-            // print sound_cards jsonObject array
-            ucout << "sound_cards:\n" << sound_cards.dump(4) << std::endl;
-          }
-          // ------------------------------
-          // -----    device-added    -----
-          // ------------------------------
+                } else if (event == "custom-stage-member-ov-added") {
 
-          if(j["data"][0] == "device-added") {
-            ucout << "\n/--  DEVICE_ADDED --/\n" << std::endl;
-            ucout << j["data"][1].dump(4) << std::endl;
-          }
+                } else if (event == "custom-stage-member-ov-changed") {
 
-          // --------------------------------
-          // -----    device-changed    -----
-          // --------------------------------
-          if(j["data"][0] == "device-changed") {
-            ucout << "\n/--  DEVICE_CHANGED --/\n" << std::endl;
-            ucout << j["data"][1].dump(4) << std::endl;
+                } else if (event == "custom-stage-member-ov-removed") {
 
-            // TODO:manage device-changed event; perhaps here there is a functions
-            //      events mismatch for sound-card and device ?
-          }
+                } else if (event == "sound-card-added") {
 
-          //.dP"Y8 888888    db     dP""b8 888888
-          //`Ybo."   88     dPYb   dP   `" 88__
-          // o.`Y8b   88    dP__Yb  Yb  "88 88""
-          // 8bodP'   88   dP""""Yb  YboodP 888888
+                } else if (event == "sound-card-changed") {
 
-          // -----------------------------
-          // -----    stage-added    -----
-          // -----------------------------
-          if(j["data"][0] == "stage-added") {
-            ucout << "\n/--  STAGE_ADDED --/\n" << std::endl;
-            ucout << j["data"][1].dump(4) << std::endl;
+                } else if (event == "sound-card-removed") {
 
-            // we add the stage to the stages inMemory array jsonObject
-            stages.push_back(j["data"][1]);
+                } else if (event == "track-preset-added") {
 
-            // print stages jsonObject array
-            ucout << "stages:\n" << stages.dump(4) << std::endl;
-          }
+                } else if (event == "track-preset-changed") {
 
-          // ------------------------------
-          // -----    stage joined    -----
-          // ------------------------------
+                } else if (event == "track-preset-removed") {
 
-          if(j["data"][0] == "stage-joined") {
-            ucout << "\n/--  STAGE_JOINED --/\n" << std::endl;
-            // put stage data into our stage jsonObject
-            stage = j["data"][1];
-            // print our stage
-            ucout << "STAGE:\n" << stage.dump(4) << std::endl;
+                } else if (event == "track-added") {
 
-            // here we shall probably start a new tascar renderer
-          }
+                } else if (event == "track-changed") {
 
-          // ----------------------------
-          // -----    stage-left    -----
-          // ----------------------------
+                } else if (event == "track-removed") {
 
-          if(j["data"][0] == "stage-left") {
-            ucout << "\n/--  STAGE_LEFT --/\n" << std::endl;
-            // we clear the stage jsonObject
-            stage.clear();
-            // print our stage
-            ucout << "STAGE:\n" << stage.dump(4) << std::endl;
-          }
-
-          // 8b    d8 888888 8b    d8 88""Yb 888888 88""Yb .dP"Y8
-          // 88b  d88 88__   88b  d88 88__dP 88__   88__dP `Ybo."
-          // 88YbdP88 88""   88YbdP88 88""Yb 88""   88"Yb  o.`Y8b
-          // 88 YY 88 888888 88 YY 88 88oodP 888888 88  Yb 8bodP'
-
-          // -------------------------------
-          // -----  stage-member-added -----
-          // -------------------------------
-          if(j["data"] == "stage-member-added") {
-            ucout << "/-- STAGE_MEMBER_ADDED_EVENT --/" << std::endl;
-            stage_members.push_back(j["data"][1]);
-
-            // print stage_members jsonObject array
-            ucout << "stage-members:\n" << stage_members.dump(4) << std::endl;
-          }
-
-          // ------------------------------------------
-          // -----    stage-member-audio-added    -----
-          // ------------------------------------------
-
-          if(j["data"] == "stage-member-audio-added") {
-            ucout << "/-- STAGE_MEMBER_AUDIO_ADDED --/" << std::endl;
-          }
-
-          // --------------------------------------
-          // -----    stage-member-changed    -----
-          // --------------------------------------
-
-          if(j["data"] == "stage-member-changed") {
-            ucout << "/-- STAGE_MEMBER_CHANGED --/" << std::endl;
-          }
-
-          // --------------------------------------
-          // -----    stage-member-removed    -----
-          // --------------------------------------
-          if(j["data"] == "stage-member-removed") {
-            ucout << "/-- STAGE_MEMBER_REMOVED --/" << std::endl;
-          }
-
-          // dP""b8 88""Yb  dP"Yb  88   88 88""Yb
-          // dP   `" 88__dP dP   Yb 88   88 88__dP
-          // Yb  "88 88"Yb  Yb   dP Y8   8P 88"""
-          // YboodP 88  Yb  YbodP  `YbodP' 88
-
-          // -----------------------------
-          // -----    group-added    -----
-          // -----------------------------
-          if(j["data"][0] == "group-added") {
-            ucout << "\n/--  GROUP_ADDED --/\n" << std::endl;
-            ucout << j["data"][1].dump(4) << std::endl;
-
-            // we add the group to groups inMemory array jsonObject
-            groups.push_back(j["data"][1]);
-
-            // print groups jsonObject array
-            ucout << "groups:\n" << groups.dump(4) << std::endl;
-          }
-
-          // 888888 88""Yb    db     dP""b8 88  dP
-          //  88   88__dP   dPYb   dP   `" 88odP
-          //  88   88"Yb   dP__Yb  Yb      88"Yb
-          //  88   88  Yb dP""""Yb  YboodP 88  Yb
-
-          // ------------------------------------
-          // -----    track-preset-added    -----
-          // ------------------------------------
-          if(j["data"][0] == "track-preset-added") {
-            ucout << "\n/--  TRACK_PRESET_ADDED --/\n" << std::endl;
-            ucout << j["data"][1].dump(4) << std::endl;
-
-            // we add the group to groups inMemory array jsonObject
-            track_presets.push_back(j["data"][1]);
-
-            // print groups jsonObject array
-            ucout << "track-presets:\n" << track_presets.dump(4) << std::endl;
-          }
+                } else {
+                    ucout << "Not supported: [" << event << "] " << payload.dump() << std::endl;
+                }
+            } catch (const std::exception &e) {
+                std::cerr << "std::exception: " << e.what() << std::endl;
+            } catch (...) {
+                std::cerr << "error parsing" << std::endl;
+            }
         }
-        catch(const std::exception& e) {
-          std::cerr << "std::exception: " << e.what() << std::endl;
-        }
-        catch(...) {
-          std::cerr << "error parsing" << std::endl;
-        }
-      }
     });
 
     utility::string_t close_reason;
     wsclient.set_close_handler([&close_reason](websocket_close_status status,
-                                               const utility::string_t& reason,
-                                               const std::error_code& code) {
-      ucout << " closing reason..." << reason << "\n";
-      ucout << "connection closed, reason: " << reason
-            << " close status: " << int(status) << " error code " << code
-            << std::endl;
+                                               const utility::string_t &reason,
+                                               const std::error_code &code) {
+        ucout << " closing reason..." << reason << "\n";
+        ucout << "connection closed, reason: " << reason
+              << " close status: " << int(status) << " error code " << code
+              << std::endl;
     });
 
+    // Read mac and ip address
     std::string macaddress(getmacaddr());
-
-    std::cout << "MAC Address: " << macaddress << '\n';
+    std::cout << "MAC Address: " << macaddress << " IP: " << ep2ipstr(getipaddr()) << '\n';
 
     nlohmann::json token_json;
 
@@ -307,11 +156,11 @@ void ov_ds_service_t::service() {
     deviceJson["mac"] = macaddress;
     deviceJson["canVideo"] = false;
     deviceJson["canAudio"] = true;
-    deviceJson["canOv"] = true;
-    deviceJson["sendAudio"] = true;
-    deviceJson["sendVideo"] = false;
-    deviceJson["receiveAudio"] = true;
-    deviceJson["receiveVideo"] = false;
+    deviceJson["canOv"] = "true";
+    deviceJson["sendAudio"] = "true";
+    deviceJson["sendVideo"] = "false";
+    deviceJson["receiveAudio"] = "true";
+    deviceJson["receiveVideo"] = "false";
     deviceJson["inputVideoDevices"] = nlohmann::json::array();
     deviceJson["inputAudioDevices"] = nlohmann::json::array();
     deviceJson["outputAudioDevices"] = nlohmann::json::array();
@@ -332,9 +181,9 @@ void ov_ds_service_t::service() {
     // this part is never reached as receive_task.wait() is blocking the thread
     // until ov_client_digitalstage_t::stop_service() is called
     // this part is for reference only ! @Giso we can delete the while loop
-    while(running_) {
-      std::cerr << "Error: not yet implemented." << std::endl;
-      quitrequest_ = true;
-      std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    while (running_) {
+        std::cerr << "Error: not yet implemented." << std::endl;
+        quitrequest_ = true;
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 }
