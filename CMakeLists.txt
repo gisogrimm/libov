@@ -10,6 +10,9 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(POSITION_INDEPENDENT_CODE ON)
 
+# Include useful scripts for CMake
+include(FetchContent)
+
 set(PLUGINPREFIX "ovclient")
 add_compile_definitions(PLUGINPREFIX="ovclient")
 
@@ -23,12 +26,12 @@ file(GLOB
         src/*.cc
         )
 
-add_subdirectory(tascar/libtascar libtascar)
+#add_subdirectory(tascar/libtascar libtascar)
 if( TARGET tascar ) 
         add_library(tascar::tascar ALIAS tascar)
         set(TASCAR_INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/tascar/libtascar/include)
 else()
-        find_package(tascar REQUIRED)
+        #find_package(tascar REQUIRED)
 endif()
 
 ## DEPENDENCIES
@@ -47,9 +50,40 @@ if (APPLE)
                 set(OPENSSL_ROOT_DIR "${BREW_OPENSSL_PREFIX}" CACHE PATH "")
                 endif()
         endif()
+elseif(WIN32)
+    # OpenSSL for boost
+	FetchContent_Declare(
+	  openssl
+	  URL "https://mirror.firedaemon.com/OpenSSL/openssl-1.1.1k-dev.zip"
+	)
+	FetchContent_MakeAvailable(openssl)
+	set(OPENSSL_ROOT_DIR "${openssl_SOURCE_DIR}/x64/lib")
+	set(OPENSSL_INCLUDE_DIR "${openssl_SOURCE_DIR}/x64/include")
+
+	# ZLib for CPPREST
+	FetchContent_Declare(
+	  zlib
+	  URL "https://www.bruot.org/hp/media/files/libraries/zlib_1_2_11_msvc2017_64.zip"
+	)
+	FetchContent_MakeAvailable(zlib)
+	set(ZLIB_LIBRARY "${zlib_SOURCE_DIR}/msvc2017_64/lib/zlib/zlib.lib")
+
+	# Boost we download
+	FetchContent_Declare(
+	  boost
+	  URL "https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.zip"
+	)
+	FetchContent_MakeAvailable(boost)
+	get_filename_component(BOOST_ABSOLUTE_PATH "${boost_SOURCE_DIR}" ABSOLUTE)
+	set(Boost_INCLUDE_DIR "${BOOST_ABSOLUTE_PATH}")
+	set(BOOST_LIBRARYDIR "${boost_SOURCE_DIR}/lib")
+	#set(Boost_INCLUDE_DIR "${boost_SOURCE_DIR}/")
+	# CPPREST we have included as git submodule recursive
+	#set(Boost_DEBUG 1)
+	add_subdirectory(third_party/cpprestsdk)
 endif()
-find_package(CURL REQUIRED)
-find_package(cpprestsdk REQUIRED NAMES cpprestsdk cpprest)
+##find_package(CURL REQUIRED)
+##find_package(cpprestsdk REQUIRED NAMES cpprestsdk cpprest)
 #find_package(nlohmann_json 3.2.0 REQUIRED)
 
 ## COMPILER ADDONS
@@ -65,7 +99,7 @@ if (CMAKE_SYSTEM_PROCESSOR MATCHES arm*)
     add_compile_definitions(ARM)
 elseif (CMAKE_SYSTEM_PROCESSOR MATCHES x86_64)
     add_compile_definitions(AMD64)
-elseif (CMAKE_SYSTEM_PROCESSOR MATCHES *86)
+elseif (CMAKE_SYSTEM_PROCESSOR MATCHES .*86)
     add_compile_definitions(IA32)
 endif ()
 set(OVBOXVERSION ${PROJECT_VERSION})
@@ -75,7 +109,7 @@ add_compile_definitions(${CMAKE_SYSTEM_PROCESSOR})
 
 ## TARGET
 add_library(ov SHARED ${SOURCES})
-set_target_properties(tascar PROPERTIES PUBLIC_HEADER "${HEADER}")
+##set_target_properties(tascar PROPERTIES PUBLIC_HEADER "${HEADER}")
 target_include_directories(ov
         PUBLIC
         #${CURL_INCLUDE_DIRS}
@@ -84,9 +118,9 @@ target_include_directories(ov
         )
 target_link_libraries(ov
         PUBLIC
-        tascar::tascar
-        cpprestsdk::cpprest
-        OpenSSL::Crypto
+        ##tascar::tascar
+        cpprest
+        ##OpenSSL::Crypto
         ${CURL_LIBRARIES}
         #nlohmann_json::nlohmann_json
         )

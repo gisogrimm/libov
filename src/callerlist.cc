@@ -2,6 +2,8 @@
 #include <string.h>
 #ifdef WIN32
 #include <algorithm> // min, max
+#undef min
+#undef max
 #endif
 
 ep_desc_t::ep_desc_t()
