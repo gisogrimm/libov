@@ -1,6 +1,8 @@
 #include "soundcardtools.h"
 #ifndef __APPLE__
+#ifndef WIN32
 #include <alsa/asoundlib.h>
+#endif
 #endif
 #include "common.h"
 
@@ -8,6 +10,7 @@ std::vector<snddevname_t> list_sound_devices()
 {
   std::vector<snddevname_t> retv;
 #ifndef __APPLE__
+#ifndef WIN32
   char** hints;
   int err;
   char** n;
@@ -56,6 +59,7 @@ std::vector<snddevname_t> list_sound_devices()
       }
     }
   }
+#endif
 #endif
   return retv;
 }
