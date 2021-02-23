@@ -37,29 +37,6 @@ void ov_ds_service_t::stop() {
 }
 
 void ov_ds_service_t::service() {
-    //TODO: @gisogrim please help here:
-    // I want to bind the member function on_sound_devices_change to this->soundio->on_device_change
-    //void (ov_ds_service_t::*fptr) () = &ov_ds_service_t::on_sound_devices_change;
-    //std::bind(this->soundio->on_devices_change, &ov_ds_service_t::on_sound_devices_change);
-    this->soundio->on_devices_change = [](struct SoundIo *soundio) {
-        ucout << "SOUNDCARD UPDATE" << std::endl;
-        // Tried to access this here, with [this] is was not possible ...
-    };
-
-    // Get audio devices
-    const std::vector<ds::soundcard> input_sound_devices = this->get_input_sound_devices();
-    const std::vector<ds::soundcard> output_sound_devices = this->get_output_sound_devices();
-
-    ucout << "Have " << input_sound_devices.size() << " devices";
-    for (auto &input_sound_device : input_sound_devices) {
-        ucout << "SOUNDCARD " << input_sound_device.id << ": " << input_sound_device.name << std::endl;
-    }
-
-    // Get mac address and local ip
-    std::string macaddress(getmacaddr());
-    std::string localIpAddress(ep2ipstr(getipaddr()));
-    std::cout << "MAC Address: " << macaddress << " IP: " << localIpAddress << '\n';
-
     wsclient.connect(U(this->api_url_)).wait();
 
     auto receive_task = create_task(tce);
@@ -244,9 +221,19 @@ void ov_ds_service_t::service() {
               << std::endl;
     });
 
-    nlohmann::json token_json;
-    nlohmann::json deviceJson;
+    // Register sound card handler
+    //this->soundio->on_devices_change = this->on_sound_devices_change;
 
+    const std::vector<ds::soundcard> input_sound_devices = this->get_input_sound_devices();
+    //const std::vector<ds::soundcard> output_sound_devices = this->get_output_sound_devices();
+
+    // Get mac address and local ip
+    std::string macaddress(getmacaddr());
+    std::string localIpAddress(ep2ipstr(getipaddr()));
+    std::cout << "MAC Address: " << macaddress << " IP: " << localIpAddress << '\n';
+
+    // Initial call with device
+    nlohmann::json deviceJson;
     deviceJson["mac"] = macaddress;
     deviceJson["canVideo"] = false;
     deviceJson["canAudio"] = true;
@@ -258,18 +245,31 @@ void ov_ds_service_t::service() {
     deviceJson["inputVideoDevices"] = nlohmann::json::array();
     deviceJson["inputAudioDevices"] = nlohmann::json::array();
     deviceJson["outputAudioDevices"] = nlohmann::json::array();
-    deviceJson["soundCardIds"] = nlohmann::json::array();
+    for(int i = 0; i < input_sound_devices.size(); i++) {
+        deviceJson["soundCardIds"].push_back(input_sound_devices[i].id);
+    }
 
-    ucout << "Print device json string: \n" + deviceJson.dump() << std::endl;
-    ucout << "PrettyPrint device json: \n" + deviceJson.dump(4) << std::endl;
+    nlohmann::json identificationJson;
+    identificationJson["token"] = this->token_;
+    identificationJson["device"] = deviceJson;
+    this->sendAsync("token", identificationJson.dump());
 
-    std::string body_str("{\"type\":0,\"data\":[\"token\",{\"token\":\"" + this->token_ +
-                         "\"}]}");
+    // Now send sound cards
+    for(int i = 0; i < input_sound_devices.size(); i++) {
+        deviceJson["soundCardIds"].push_back(input_sound_devices[i].id);
 
-    ucout << "token / device msg: " << body_str << std::endl;
-    websocket_outgoing_message msg;
-    msg.set_utf8_message(body_str);
-    wsclient.send(msg).wait();
+        nlohmann::json soundcard;
+        soundcard["name"] = input_sound_devices[i].id;
+        soundcard["initial"] = {
+                {"name", input_sound_devices[i].name},
+                {"label", input_sound_devices[i].name},
+                {"numInputChannels", input_sound_devices[i].channel_count},
+                {"numOutputChannels", 2}, // Not more supported
+                {"sampleRate", input_sound_devices[i].sample_rate_current}
+        };
+        this->sendAsync("add-sound-card", soundcard.dump());
+    }
+
     receive_task.wait();
 }
 
@@ -326,4 +326,20 @@ std::vector<ds::soundcard> ov_ds_service_t::get_output_sound_devices() {
 void ov_ds_service_t::on_sound_devices_change() {
     ucout << "SOUNDCARD CHANGED" << std::endl;
     ucout << "Have now " << this->get_input_sound_devices().size() << " input soundcards" << std::endl;
+}
+
+void ov_ds_service_t::send(const std::string &event, const std::string &message) {
+    websocket_outgoing_message msg;
+    std::string body_str("{\"type\":0,\"data\":[\"" + event + "\"," + message + "]}");
+    msg.set_utf8_message(body_str);
+    ucout << "[SENDING] " << body_str << std::endl;
+    wsclient.send(msg).wait();
+}
+
+void ov_ds_service_t::sendAsync(const std::string &event, const std::string &message) {
+    websocket_outgoing_message msg;
+    std::string body_str("{\"type\":0,\"data\":[\"" + event + "\"," + message + "]}");
+    msg.set_utf8_message(body_str);
+    ucout << "[SENDING] " << body_str << std::endl;
+    wsclient.send(msg);
 }

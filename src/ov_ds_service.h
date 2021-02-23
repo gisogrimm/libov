@@ -69,6 +69,8 @@ private:
 
     void on_sound_devices_change();
 
+    void send(const std::string &event, const std::string &message);
+    void sendAsync(const std::string &event, const std::string &message);
 
     // Threading
     bool running_;
