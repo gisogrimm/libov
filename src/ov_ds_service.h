@@ -7,6 +7,9 @@
 #include <thread>
 #include <nlohmann/json.hpp>
 #include <soundio/soundio.h>
+#include <cpprest/ws_client.h>
+
+using namespace web::websockets::client;
 
 struct ov_ds_store_t {
     // Digital Stage, from detailed to outer scope
@@ -38,13 +41,15 @@ namespace ds {
     struct soundcard {
         std::string id;
         std::string name;
-        int layout_count;
+        int channel_count;
+        int sample_rate_current;
+        std::vector<int> supported_sample_rates;
+        double software_latency_current;
         bool is_default;
     };
 }
 
 class ov_ds_service_t {
-
 
 public:
     ov_ds_service_t(const std::string &api_url);
@@ -58,27 +63,25 @@ public:
 private:
     void service();
 
-    void watch_sound_devices();
+    std::vector<ds::soundcard> get_input_sound_devices();
 
-    static std::vector<SoundIoDevice> get_input_sound_devices(SoundIo *soundio);
+    std::vector<ds::soundcard> get_output_sound_devices();
 
-    static std::vector<SoundIoDevice> get_output_sound_devices(SoundIo *soundio);
+    void on_sound_devices_change();
 
-    static void on_sound_devices_change(SoundIo *soundio);
 
-    //TODO: REMOVE
-    static void print_channel_layout(const SoundIoChannelLayout *layout);
-    static void print_device(SoundIoDevice device);
-    // END OF TODO
-
+    // Threading
     bool running_;
     std::thread servicethread_;
-    std::thread devicewatcherthread_;
-    std::string api_url_;
-    std::string token_;
     std::atomic<bool> quitrequest_;
 
-    SoundIo* soundio;
+    // Soundcard related
+    struct SoundIo *soundio;
+
+    // Connection related
+    websocket_callback_client wsclient;
+    std::string api_url_;
+    std::string token_;
 
     ov_ds_store_t store;
 };

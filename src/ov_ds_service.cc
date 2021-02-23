@@ -1,19 +1,16 @@
 #include "ov_ds_service.h"
 #include <pplx/pplxtasks.h>
-#include <cpprest/ws_client.h>
 #include "udpsocket.h"
 
 using namespace utility;
 using namespace web;
 using namespace web::http;
 using namespace utility::conversions;
-using namespace web::websockets::client;
 using namespace pplx;
 using namespace concurrency::streams;
 
-
 task_completion_event<void> tce; // used to terminate async PPLX listening task
-websocket_callback_client wsclient;
+
 
 ov_ds_service_t::ov_ds_service_t(const std::string &api_url) : api_url_(api_url) {
     this->soundio = soundio_create();
@@ -21,6 +18,7 @@ ov_ds_service_t::ov_ds_service_t(const std::string &api_url) : api_url_(api_url)
 }
 
 ov_ds_service_t::~ov_ds_service_t() {
+    soundio_disconnect(this->soundio);
     delete this->soundio;
 }
 
@@ -29,26 +27,32 @@ void ov_ds_service_t::start(const std::string &token) {
     this->token_ = token;
     this->running_ = true;
     this->servicethread_ = std::thread(&ov_ds_service_t::service, this);
-    this->devicewatcherthread_ = std::thread(&ov_ds_service_t::watch_sound_devices, this);
 }
 
 void ov_ds_service_t::stop() {
     this->running_ = false;
     tce.set();        // task completion event is set closing wss listening task
-    wsclient.close(); // wss client is closed
+    this->wsclient.close(); // wss client is closed
     this->servicethread_.join(); // thread is joined
 }
 
 void ov_ds_service_t::service() {
-    // Get audio devices
-    std::vector<SoundIoDevice> input_sound_devices = get_input_sound_devices(this->soundio);
-    std::vector<SoundIoDevice> output_sound_devices = get_output_sound_devices(this->soundio);
+    //TODO: @gisogrim please help here:
+    // I want to bind the member function on_sound_devices_change to this->soundio->on_device_change
+    //void (ov_ds_service_t::*fptr) () = &ov_ds_service_t::on_sound_devices_change;
+    //std::bind(this->soundio->on_devices_change, &ov_ds_service_t::on_sound_devices_change);
+    this->soundio->on_devices_change = [](struct SoundIo *soundio) {
+        ucout << "SOUNDCARD UPDATE" << std::endl;
+        // Tried to access this here, with [this] is was not possible ...
+    };
 
+    // Get audio devices
+    const std::vector<ds::soundcard> input_sound_devices = this->get_input_sound_devices();
+    const std::vector<ds::soundcard> output_sound_devices = this->get_output_sound_devices();
+
+    ucout << "Have " << input_sound_devices.size() << " devices";
     for (auto &input_sound_device : input_sound_devices) {
-        print_device(input_sound_device);
-    }
-    for (auto &output_sound_device : output_sound_devices) {
-        print_device(output_sound_device);
+        ucout << "SOUNDCARD " << input_sound_device.id << ": " << input_sound_device.name << std::endl;
     }
 
     // Get mac address and local ip
@@ -241,7 +245,6 @@ void ov_ds_service_t::service() {
     });
 
     nlohmann::json token_json;
-
     nlohmann::json deviceJson;
 
     deviceJson["mac"] = macaddress;
@@ -268,117 +271,59 @@ void ov_ds_service_t::service() {
     msg.set_utf8_message(body_str);
     wsclient.send(msg).wait();
     receive_task.wait();
-
-    /*
-    // this part is never reached as receive_task.wait() is blocking the thread
-    // until ov_client_digitalstage_t::stop_service() is called
-    // this part is for reference only ! @Giso we can delete the while loop
-    while (running_) {
-        std::cerr << "Error: not yet implemented." << std::endl;
-        quitrequest_ = true;
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    }*/
 }
 
-void ov_ds_service_t::watch_sound_devices() {
-    // Start sound card watcher
-    this->soundio->on_devices_change = on_sound_devices_change;
-    while (this->running_) {
-        soundio_wait_events(this->soundio);
-    }
-}
-
-std::vector<SoundIoDevice> ov_ds_service_t::get_input_sound_devices(SoundIo *soundio) {
-    int input_count = soundio_input_device_count(soundio);
-    std::vector<SoundIoDevice> devices = std::vector<SoundIoDevice>();
+std::vector<ds::soundcard> ov_ds_service_t::get_input_sound_devices() {
+    soundio_flush_events(this->soundio); // Flush the sound devices
+    int input_count = soundio_input_device_count(this->soundio);
+    int default_input = soundio_default_input_device_index(this->soundio);
+    std::vector<ds::soundcard> input_sound_devices;
     for (int i = 0; i < input_count; i += 1) {
-        struct SoundIoDevice *device = soundio_get_input_device(soundio, i);
-        devices.push_back(*device);
+        SoundIoDevice *device = soundio_get_input_device(this->soundio, i);
+        ucout << "Processing " << device->name << std::endl;
+        ds::soundcard soundcard;
+        soundcard.id = std::string(device->id);
+        soundcard.name = std::string(device->name);
+        soundcard.channel_count = device->current_layout.channel_count;
+        soundcard.is_default = default_input == i;
+        soundcard.sample_rate_current = device->sample_rate_current;
+        for (int j = 0; j < device->sample_rate_count; j += 1) {
+            struct SoundIoSampleRateRange *range = &device->sample_rates[i];
+            soundcard.supported_sample_rates.push_back(range->min);
+        }
+        soundcard.software_latency_current = device->software_latency_current;
+        input_sound_devices.push_back(soundcard);
         soundio_device_unref(device);
     }
-    ucout << "Have " << devices.size() << " device" << std::endl;
-    return devices;
+    return input_sound_devices;
 }
 
-std::vector<SoundIoDevice> ov_ds_service_t::get_output_sound_devices(SoundIo *soundio) {
-    int output_count = soundio_output_device_count(soundio);
-    std::vector<SoundIoDevice> devices = std::vector<SoundIoDevice>();
+std::vector<ds::soundcard> ov_ds_service_t::get_output_sound_devices() {
+    soundio_flush_events(this->soundio); // Flush the sound devices
+    int output_count = soundio_output_device_count(this->soundio);
+    int default_output = soundio_default_output_device_index(this->soundio);
+    std::vector<ds::soundcard> output_sound_devices;
     for (int i = 0; i < output_count; i += 1) {
-        struct SoundIoDevice *device = soundio_get_output_device(soundio, i);
-        devices.push_back(*device);
+        SoundIoDevice *device = soundio_get_input_device(this->soundio, i);
+        ucout << "Processing " << device->name << std::endl;
+        ds::soundcard soundcard;
+        soundcard.id = std::string(device->id);
+        soundcard.name = std::string(device->name);
+        soundcard.channel_count = device->current_layout.channel_count;
+        soundcard.is_default = default_output == i;
+        soundcard.sample_rate_current = device->sample_rate_current;
+        for (int j = 0; j < device->sample_rate_count; j += 1) {
+            struct SoundIoSampleRateRange *range = &device->sample_rates[i];
+            soundcard.supported_sample_rates.push_back(range->min);
+        }
+        soundcard.software_latency_current = device->software_latency_current;
+        output_sound_devices.push_back(soundcard);
         soundio_device_unref(device);
     }
-    return devices;
+    return output_sound_devices;
 }
 
-void ov_ds_service_t::on_sound_devices_change(struct SoundIo *soundio) {
+void ov_ds_service_t::on_sound_devices_change() {
     ucout << "SOUNDCARD CHANGED" << std::endl;
-
-    std::vector<SoundIoDevice> input_sound_devices = get_input_sound_devices(soundio);
-    std::vector<SoundIoDevice> output_sound_devices = get_output_sound_devices(soundio);
-
-    for (auto &input_sound_device : input_sound_devices) {
-        print_device(input_sound_device);
-    }
-    for (auto &output_sound_device : output_sound_devices) {
-        print_device(output_sound_device);
-    }
-    //TODO: Update device and create soundcard entities for all available devices
-}
-
-void ov_ds_service_t::print_channel_layout(const struct SoundIoChannelLayout *layout) {
-    if (layout->name) {
-        fprintf(stderr, "%s", layout->name);
-    } else {
-        fprintf(stderr, "%s", soundio_get_channel_name(layout->channels[0]));
-        for (int i = 1; i < layout->channel_count; i += 1) {
-            fprintf(stderr, ", %s", soundio_get_channel_name(layout->channels[i]));
-        }
-    }
-}
-
-void ov_ds_service_t::print_device(SoundIoDevice device) {
-    const char *raw_str = device.is_raw ? " (raw)" : "";
-    fprintf(stderr, "%s%s\n", device.name, raw_str);
-    fprintf(stderr, "  id: %s\n", device.id);
-
-    if (device.probe_error) {
-        fprintf(stderr, "  probe error: %s\n", soundio_strerror(device.probe_error));
-    } else {
-        fprintf(stderr, "  channel layouts:\n");
-        for (int i = 0; i < device.layout_count; i += 1) {
-            fprintf(stderr, "    ");
-            print_channel_layout(&device.layouts[i]);
-            fprintf(stderr, "\n");
-        }
-        if (device.current_layout.channel_count > 0) {
-            fprintf(stderr, "  current layout: ");
-            print_channel_layout(&device.current_layout);
-            fprintf(stderr, "\n");
-        }
-
-        fprintf(stderr, "  sample rates:\n");
-        for (int i = 0; i < device.sample_rate_count; i += 1) {
-            struct SoundIoSampleRateRange *range = &device.sample_rates[i];
-            fprintf(stderr, "    %d - %d\n", range->min, range->max);
-
-        }
-        if (device.sample_rate_current)
-            fprintf(stderr, "  current sample rate: %d\n", device.sample_rate_current);
-        fprintf(stderr, "  formats: ");
-        for (int i = 0; i < device.format_count; i += 1) {
-            const char *comma = (i == device.format_count - 1) ? "" : ", ";
-            fprintf(stderr, "%s%s", soundio_format_string(device.formats[i]), comma);
-        }
-        fprintf(stderr, "\n");
-        if (device.current_format != SoundIoFormatInvalid)
-            fprintf(stderr, "  current format: %s\n", soundio_format_string(device.current_format));
-
-        fprintf(stderr, "  min software latency: %0.8f sec\n", device.software_latency_min);
-        fprintf(stderr, "  max software latency: %0.8f sec\n", device.software_latency_max);
-        if (device.software_latency_current != 0.0)
-            fprintf(stderr, "  current software latency: %0.8f sec\n", device.software_latency_current);
-
-    }
-    fprintf(stderr, "\n");
+    ucout << "Have now " << this->get_input_sound_devices().size() << " input soundcards" << std::endl;
 }
