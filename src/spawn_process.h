@@ -14,7 +14,11 @@ public:
 private:
   // on Linux we start the process in a pipe:
   FILE* h_pipe;
+#ifdef WIN32
+  int pid;
+#else
   pid_t pid;
+#endif
 };
 
 #endif

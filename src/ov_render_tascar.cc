@@ -756,7 +756,7 @@ void ov_render_tascar_t::start_audiobackend()
 #endif
     h_jack = new spawn_process_t(cmd);
     // replace sleep by testing for jack presence with timeout:
-    sleep(7);
+    usleep(7 * 1000 * 1000);
   }
   // get list of input ports:
   jack_client_t* jc;
