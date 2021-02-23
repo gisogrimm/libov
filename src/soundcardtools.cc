@@ -4,6 +4,7 @@
 #endif
 #include "common.h"
 
+
 std::vector<snddevname_t> list_sound_devices()
 {
   std::vector<snddevname_t> retv;
@@ -56,6 +57,8 @@ std::vector<snddevname_t> list_sound_devices()
       }
     }
   }
+#else
+
 #endif
   return retv;
 }
@@ -79,6 +82,7 @@ std::string url2localfilename(const std::string& url)
   }
   return std::to_string(std::hash<std::string>{}(url)) + extension;
 }
+
 
 /*
  * Local Variables:
