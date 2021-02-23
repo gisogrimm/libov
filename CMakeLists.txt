@@ -65,6 +65,7 @@ elseif (APPLE)
     #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -framework IOKit -framework CoreFoundation")
 elseif (WIN32)
     add_compile_definitions(WIN32)
+	add_definitions(-D_USE_MATH_DEFINES) # For M_PI
 endif ()
 if (CMAKE_SYSTEM_PROCESSOR MATCHES arm*)
     add_compile_definitions(ARM)
@@ -91,7 +92,7 @@ target_include_directories(ov
         )
 target_link_libraries(ov
         PUBLIC
-        ##tascar::tascar
+        tascar::tascar
         cpprestsdk::cpprest
         ##OpenSSL::Crypto
         ${CURL_LIBRARIES}
