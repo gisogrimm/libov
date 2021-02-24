@@ -20,7 +20,7 @@ jobs:
     - name: Install Dependencies
       run: sudo add-apt-repository ppa:team-xbmc/ppa &&
            sudo apt update &&
-           sudo apt install --assume-yes git zita-njbridge liblo-dev nodejs libcurl4-openssl-dev build-essential libasound2-dev libeigen3-dev libfftw3-dev libfftw3-double3 libfftw3-single3 libgsl-dev libjack-jackd2-dev libltc-dev libmatio-dev libsndfile1-dev libsamplerate0-dev libboost-all-dev libxml++2.6-dev libcpprest-dev nlohmann-json3-dev libsoundio-dev
+           sudo apt install --assume-yes git zita-njbridge liblo-dev nodejs libcurl4-openssl-dev build-essential libasound2-dev libeigen3-dev libfftw3-dev libfftw3-double3 libfftw3-single3 libgsl-dev libjack-jackd2-dev libltc-dev libmatio-dev libsndfile1-dev libsamplerate0-dev libboost-all-dev libxml++2.6-dev libcpprest-dev nlohmann-json-dev nlohmann-json3-dev libsoundio-dev
     - name: Configure 
     # Ubuntu delivers cmake finders to wrong path, will be fixed soon, see https://github.com/microsoft/cpprestsdk/issues/686#issuecomment-581013055
       run: cmake . -DCMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu/cmake:/usr/lib/cmake/
