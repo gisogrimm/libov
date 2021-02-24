@@ -15,7 +15,7 @@ namespace ds {
     class ds_service_t {
 
     public:
-        ds_service_t(ov_render_base_t& backend, const std::string &api_url);
+        ds_service_t(ov_render_base_t& backend, std::string api_url);
 
         ~ds_service_t();
 
@@ -23,6 +23,8 @@ namespace ds {
 
         void stop();
 
+    protected:
+        ov_render_base_t& backend_;
 
     private:
         void service();
@@ -45,7 +47,6 @@ namespace ds {
 
         sound_card_tools_t *sound_card_tools;
         ds_store_t store;
-        ov_render_base_t& backend_;
     };
 }
 

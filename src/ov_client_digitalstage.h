@@ -16,7 +16,7 @@
 
 class ov_client_digitalstage_t : public ov_client_base_t {
 public:
-    ov_client_digitalstage_t(ov_render_base_t &backend);
+    ov_client_digitalstage_t(ov_render_base_t &backend, const std::string &token);
 
     ~ov_client_digitalstage_t();
 
@@ -29,11 +29,14 @@ public:
     bool is_going_to_stop() const { return quitrequest_; };
 
 private:
+    void service();
+
     bool runservice_;
     std::atomic<bool> quitrequest_;
     std::string token_;
-    ds::ds_auth_service_t *auth_service_;
-    ds::ds_service_t *api_service_;
+    std::thread servicethread_;
+    //ds::ds_auth_service_t *auth_service_;
+    //ds::ds_service_t *api_service_;
 };
 
 #endif

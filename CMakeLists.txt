@@ -50,7 +50,7 @@ if (APPLE)
     endif ()
 endif ()
 find_package(CURL REQUIRED)
-find_package(nlohmann_json REQUIRED)
+find_package(nlohmann_json 3.2.0 REQUIRED)
 find_package(cpprestsdk REQUIRED NAMES cpprestsdk cpprest)
 find_package(SoundIo REQUIRED)
 

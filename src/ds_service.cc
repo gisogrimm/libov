@@ -2,6 +2,7 @@
 #include <pplx/pplxtasks.h>
 #include "udpsocket.h"
 #include <nlohmann/json.hpp>
+#include <utility>
 
 using namespace utility;
 using namespace web;
@@ -12,9 +13,10 @@ using namespace concurrency::streams;
 
 task_completion_event<void> tce; // used to terminate async PPLX listening task
 
-ds::ds_service_t::ds_service_t(ov_render_base_t &backend, const std::string &api_url) : backend_(backend),
-                                                                                        api_url_(api_url) {
+ds::ds_service_t::ds_service_t(ov_render_base_t &backend, std::string api_url) : backend_(backend),
+                                                                                 api_url_(std::move(api_url)) {
     this->sound_card_tools = new sound_card_tools_t();
+    std::cout << this->backend_.get_deviceid() << std::endl;
 }
 
 ds::ds_service_t::~ds_service_t() {
@@ -25,7 +27,7 @@ ds::ds_service_t::~ds_service_t() {
 void ds::ds_service_t::start(const std::string &token) {
     this->token_ = token;
     this->running_ = true;
-    this->servicethread_ = std::thread(&ds_service_t::service, this);
+    this->servicethread_ = std::thread(&ds::ds_service_t::service, this);
 }
 
 void ds::ds_service_t::stop() {
