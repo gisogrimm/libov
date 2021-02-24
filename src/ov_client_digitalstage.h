@@ -1,7 +1,8 @@
 #ifndef OV_CLIENT_DIGITALSTAGE
 #define OV_CLIENT_DIGITALSTAGE
 
-#include "ov_ds_service.h"
+#include "ds_service.h"
+#include "ds_auth_service.h"
 #include "ov_types.h"
 #include <atomic>
 
@@ -15,20 +16,24 @@
 
 class ov_client_digitalstage_t : public ov_client_base_t {
 public:
-  ov_client_digitalstage_t(ov_render_base_t& backend);
-  void start_service();
-  void stop_service();
-  bool download_file(const std::string& url, const std::string& dest);
-  bool is_going_to_stop() const { return quitrequest_; };
+    ov_client_digitalstage_t(ov_render_base_t &backend);
+
+    ~ov_client_digitalstage_t();
+
+    void start_service();
+
+    void stop_service();
+
+    bool download_file(const std::string &url, const std::string &dest);
+
+    bool is_going_to_stop() const { return quitrequest_; };
 
 private:
-  std::string signIn(const std::string& email, const std::string& password);
-  bool signOut(const std::string& token);
-
-  bool runservice_;
-  ov_ds_service_t *service_;
-  std::atomic<bool> quitrequest_;
-  std::string token_;
+    bool runservice_;
+    std::atomic<bool> quitrequest_;
+    std::string token_;
+    ds::ds_auth_service_t *auth_service_;
+    ds::ds_service_t *api_service_;
 };
 
 #endif

@@ -18,7 +18,13 @@ using namespace web::json;            // JSON library
 ov_client_digitalstage_t::ov_client_digitalstage_t(ov_render_base_t& backend)
     : ov_client_base_t(backend), runservice_(true), quitrequest_(false)
 {
-  this->service_ = new ov_ds_service_t(API_SERVER);
+  this->api_service_ = new ds::ds_service_t(backend, API_SERVER);
+  this->auth_service_ = new ds::ds_auth_service_t(AUTH_SERVER);
+}
+
+ov_client_digitalstage_t::~ov_client_digitalstage_t() {
+    delete this->api_service_;
+    delete this->auth_service_;
 }
 
 void ov_client_digitalstage_t::start_service()
@@ -29,79 +35,19 @@ void ov_client_digitalstage_t::start_service()
   std::string email = "test@digital-stage.org";
   std::string password = "testesttest";
   // Fetch api token
-  this->token_ = this->signIn(email, password);
+  this->token_ = this->auth_service_->signIn(email, password);
 
   // Run service
-  this->service_->start(this->token_);
+  this->api_service_->start(this->token_);
 }
 
 void ov_client_digitalstage_t::stop_service()
 {
   if( !this->token_.empty() )
-    this->signOut(this->token_);
+    this->auth_service_->signOut(this->token_);
   runservice_ = false;
-  delete this->service_;
 }
 
-std::string ov_client_digitalstage_t::signIn(const std::string& email,
-                                             const std::string& password)
-{
-  const std::string url = AUTH_SERVER;
-  auto postJson =
-      pplx::create_task([url, email, password]() {
-        json::value jsonObject;
-        jsonObject[U("email")] = json::value::string(U(email));
-        jsonObject[U("password")] = json::value::string(U(password));
-
-        return http_client(U(url)).request(
-            methods::POST, uri_builder(U("login")).to_string(),
-            jsonObject.serialize(), U("application/json"));
-      })
-          .then([](http_response response) {
-            // Check the status code.
-            if(response.status_code() != 200) {
-              throw std::invalid_argument(
-                  "Returned " + std::to_string(response.status_code()));
-            }
-            // Convert the response body to JSON object.
-            return response.extract_json();
-          })
-          // Parse the user details.
-          .then([](json::value jsonObject) { return jsonObject.as_string(); });
-
-  try {
-    postJson.wait();
-    const std::string token = postJson.get();
-    return token;
-  }
-  catch(const std::exception& e) {
-    std::cout << "Failed to sign in" << e.what();
-  }
-  return "";
-}
-
-bool ov_client_digitalstage_t::signOut(const std::string& token)
-{
-  const std::string url = AUTH_SERVER;
-  auto postJson =
-      pplx::create_task([url, token]() {
-        http_client client(U(url + "/logout"));
-        http_request request(methods::POST);
-        request.headers().add(U("Content-Type"), U("application/json"));
-        request.headers().add(U("Authorization"), U("Bearer " + token));
-        return client.request(request);
-      }).then([](http_response response) {
-        // Check the status code.
-        if(response.status_code() != 200) {
-          return false;
-        }
-        // Convert the response body to JSON object.
-        return true;
-      });
-
-  postJson.wait();
-  return postJson.get();
-}
 /*
  * Local Variables:
  * compile-command: "make -C .."

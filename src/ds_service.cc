@@ -1,6 +1,7 @@
-#include "ov_ds_service.h"
+#include "ds_service.h"
 #include <pplx/pplxtasks.h>
 #include "udpsocket.h"
+#include <nlohmann/json.hpp>
 
 using namespace utility;
 using namespace web;
@@ -11,32 +12,30 @@ using namespace concurrency::streams;
 
 task_completion_event<void> tce; // used to terminate async PPLX listening task
 
-
-ov_ds_service_t::ov_ds_service_t(const std::string &api_url) : api_url_(api_url) {
-    this->soundio = soundio_create();
-    soundio_connect(this->soundio); // use default driver (not always jack)
+ds::ds_service_t::ds_service_t(ov_render_base_t &backend, const std::string &api_url) : backend_(backend),
+                                                                                        api_url_(api_url) {
+    this->sound_card_tools = new sound_card_tools_t();
 }
 
-ov_ds_service_t::~ov_ds_service_t() {
-    soundio_disconnect(this->soundio);
-    delete this->soundio;
+ds::ds_service_t::~ds_service_t() {
+    delete this->sound_card_tools;
 }
 
 
-void ov_ds_service_t::start(const std::string &token) {
+void ds::ds_service_t::start(const std::string &token) {
     this->token_ = token;
     this->running_ = true;
-    this->servicethread_ = std::thread(&ov_ds_service_t::service, this);
+    this->servicethread_ = std::thread(&ds_service_t::service, this);
 }
 
-void ov_ds_service_t::stop() {
+void ds::ds_service_t::stop() {
     this->running_ = false;
     tce.set();        // task completion event is set closing wss listening task
     this->wsclient.close(); // wss client is closed
     this->servicethread_.join(); // thread is joined
 }
 
-void ov_ds_service_t::service() {
+void ds::ds_service_t::service() {
     wsclient.connect(U(this->api_url_)).wait();
 
     auto receive_task = create_task(tce);
@@ -62,13 +61,13 @@ void ov_ds_service_t::service() {
                 if (event == "local-device-ready") {
                     this->store.localDevice = payload;
                     // UPDATE SOUND CARDS
-                    const std::vector<ds::soundcard> sound_devices = this->get_sound_devices();
+                    const std::vector<sound_card_t> sound_devices = this->sound_card_tools->get_sound_devices();
                     if (sound_devices.size() > 0) {
                         nlohmann::json deviceUpdate;
                         deviceUpdate["_id"] = this->store.localDevice["_id"];
                         for (const auto &sound_device : sound_devices) {
                             ucout << "[AUDIODEVICES] Have " << sound_device.id << std::endl;
-                            deviceUpdate["soundCardIds"].push_back(sound_device.id);
+                            deviceUpdate["soundCardNames"].push_back(sound_device.id);
                             nlohmann::json soundcard;
                             soundcard["name"] = sound_device.id;
                             soundcard["initial"] = {
@@ -84,6 +83,26 @@ void ov_ds_service_t::service() {
                         this->sendAsync("update-device", deviceUpdate.dump());
                     } else {
                         std::cerr << "WARNING: No soundcards available!" << std::endl;
+                    }
+                } else if (event == "device-hanged") {
+                    if (!this->store.localDevice.is_null() && this->store.localDevice["_id"] == payload["_id"]) {
+                        // The events refers this device
+                        std::cout << "DEVICE CHANGED" << std::endl;
+                        if (payload.contains("soundCardName") &&
+                            payload["soundCardName"] != this->store.localDevice["soundCardName"]) {
+                            // Soundcard changes
+                            //TODO: Restart JACK with soundCardName as identifier
+                        }
+
+                        if (payload.contains("sendAudio") &&
+                            payload["sendAudio"] != this->store.localDevice["sendAudio"]) {
+                            if (payload["sendAudio"]) {
+                                //TODO: Connect ov
+                            } else {
+                                //TODO: Disconnect ov
+                            }
+                        }
+                        this->store.localDevice.merge_patch(payload);
                     }
                 } else if (event == "stage-joined") {
 
@@ -249,13 +268,12 @@ void ov_ds_service_t::service() {
     //this->soundio->on_devices_change = this->on_sound_devices_change;
 
     // Get mac address and local ip
-    std::string macaddress(getmacaddr());
     std::string localIpAddress(ep2ipstr(getipaddr()));
-    std::cout << "MAC Address: " << macaddress << " IP: " << localIpAddress << '\n';
+    std::cout << "MAC Address: " << backend_.get_deviceid() << " IP: " << localIpAddress << '\n';
 
     // Initial call with device
     nlohmann::json deviceJson;
-    deviceJson["mac"] = macaddress;
+    deviceJson["mac"] = backend_.get_deviceid();    // MAC = device id (!)
     deviceJson["canVideo"] = false;
     deviceJson["canAudio"] = true;
     deviceJson["canOv"] = "true";
@@ -273,77 +291,13 @@ void ov_ds_service_t::service() {
     receive_task.wait();
 }
 
-std::vector<ds::soundcard> ov_ds_service_t::get_sound_devices() {
-    const std::vector<struct SoundIoDevice *> input_sound_devices = this->get_input_sound_devices();
-    const std::vector<struct SoundIoDevice *> output_sound_devices = this->get_output_sound_devices();
-    int default_input = soundio_default_input_device_index(this->soundio);
-
-    // JACK can only use one soundcard at a time (except on linux), so reduce the sound devices
-    std::vector<ds::soundcard> soundcards;
-    for (int i = 0; i < input_sound_devices.size(); i++) {
-        struct SoundIoDevice *input_sound_device = input_sound_devices[i];
-        struct SoundIoDevice *output_sound_device = nullptr;
-        for (auto output_sound_dev : output_sound_devices) {
-            if (strcmp(output_sound_dev->id, input_sound_device->id) == 0) {
-                std::cout << "FOUND OUTPUT FOR INPUT " << std::endl;
-                output_sound_device = output_sound_dev;
-            } else {
-                std::cerr << "OUTPUT does not match " << output_sound_dev->id << input_sound_device->id
-                          << std::endl;
-            }
-        }
-        if (output_sound_device != nullptr) {
-            ds::soundcard soundcard;
-            soundcard.id = std::string(input_sound_device->id);
-            soundcard.name = std::string(input_sound_device->name);
-            soundcard.num_input_channels = input_sound_device->current_layout.channel_count;
-            soundcard.num_output_channels = output_sound_device->current_layout.channel_count;
-            soundcard.sample_rate = input_sound_device->sample_rate_current;
-            for (int j = 0; j < input_sound_devices[i]->sample_rate_count; j += 1) {
-                struct SoundIoSampleRateRange *range = &input_sound_device->sample_rates[i];
-                soundcard.sample_rates.push_back(range->min);
-            }
-            soundcard.is_default = default_input == i;
-            soundcard.software_latency = input_sound_devices[i]->software_latency_current;
-            soundcards.push_back(soundcard);
-        } else {
-            std::cerr << "NO MATCHING OUTPUT FOUND FOR " << input_sound_device->id << std::endl;
-        }
-    }
-    return soundcards;
-}
-
-std::vector<struct SoundIoDevice *> ov_ds_service_t::get_input_sound_devices() {
-    soundio_flush_events(this->soundio); // Flush the sound devices
-    int input_count = soundio_input_device_count(this->soundio);
-    int default_input = soundio_default_input_device_index(this->soundio);
-    std::vector<struct SoundIoDevice *> input_sound_devices;
-    for (int i = 0; i < input_count; i += 1) {
-        struct SoundIoDevice *device = soundio_get_input_device(this->soundio, i);
-        input_sound_devices.push_back(device);
-        soundio_device_unref(device);
-    }
-    return input_sound_devices;
-}
-
-std::vector<struct SoundIoDevice *> ov_ds_service_t::get_output_sound_devices() {
-    soundio_flush_events(this->soundio); // Flush the sound devices
-    int output_count = soundio_output_device_count(this->soundio);
-    std::vector<struct SoundIoDevice *> output_sound_devices;
-    for (int i = 0; i < output_count; i += 1) {
-        struct SoundIoDevice *device = soundio_get_output_device(this->soundio, i);
-        output_sound_devices.push_back(device);
-        soundio_device_unref(device);
-    }
-    return output_sound_devices;
-}
-
-void ov_ds_service_t::on_sound_devices_change() {
+void ds::ds_service_t::on_sound_devices_change() {
     ucout << "SOUNDCARD CHANGED" << std::endl;
-    ucout << "Have now " << this->get_input_sound_devices().size() << " input soundcards" << std::endl;
+    ucout << "Have now " << this->sound_card_tools->get_input_sound_devices().size() << " input soundcards"
+          << std::endl;
 }
 
-void ov_ds_service_t::send(const std::string &event, const std::string &message) {
+void ds::ds_service_t::send(const std::string &event, const std::string &message) {
     websocket_outgoing_message msg;
     std::string body_str("{\"type\":0,\"data\":[\"" + event + "\"," + message + "]}");
     msg.set_utf8_message(body_str);
@@ -351,7 +305,7 @@ void ov_ds_service_t::send(const std::string &event, const std::string &message)
     wsclient.send(msg).wait();
 }
 
-void ov_ds_service_t::sendAsync(const std::string &event, const std::string &message) {
+void ds::ds_service_t::sendAsync(const std::string &event, const std::string &message) {
     websocket_outgoing_message msg;
     std::string body_str("{\"type\":0,\"data\":[\"" + event + "\"," + message + "]}");
     msg.set_utf8_message(body_str);

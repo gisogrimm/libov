@@ -1,0 +1,59 @@
+#ifndef DS_SERVICE
+#define DS_SERVICE
+
+#include "ds_json_types.h"
+#include "ov_types.h"
+#include <atomic>
+#include <thread>
+#include <cpprest/ws_client.h>
+#include "ds_store.h"
+#include "soundcardtools.h"
+
+using namespace web::websockets::client;
+
+namespace ds {
+    class ds_service_t {
+
+    public:
+        ds_service_t(ov_render_base_t& backend, const std::string &api_url);
+
+        ~ds_service_t();
+
+        void start(const std::string &token);
+
+        void stop();
+
+
+    private:
+        void service();
+
+        void on_sound_devices_change();
+
+        void send(const std::string &event, const std::string &message);
+
+        void sendAsync(const std::string &event, const std::string &message);
+
+        // Threading
+        bool running_;
+        std::thread servicethread_;
+        std::atomic<bool> quitrequest_;
+
+        // Connection related
+        websocket_callback_client wsclient;
+        std::string api_url_;
+        std::string token_;
+
+        sound_card_tools_t *sound_card_tools;
+        ds_store_t store;
+        ov_render_base_t& backend_;
+    };
+}
+
+#endif
+
+/*
+ * Local Variables:
+ * mode: c++
+ * compile-command: "make -C .."
+ * End:
+ */
