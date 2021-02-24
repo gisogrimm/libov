@@ -1,19 +1,5 @@
 #include "ov_client_digitalstage.h"
-#include <cpprest/filestream.h>
-#include <cpprest/http_client.h>
-#include <cpprest/http_msg.h>
-#include <cpprest/json.h>
-#include <cpprest/uri.h>
-#include <fstream>
-#include <iostream>
 #include <string>
-
-using namespace utility;           // Common utilities like string conversions
-using namespace web;               // Common features like URIs.
-using namespace web::http;         // Common HTTP functionality
-using namespace web::http::client; // HTTP client features
-using namespace concurrency::streams; // Asynchronous streams
-using namespace web::json;            // JSON library
 
 ov_client_digitalstage_t::ov_client_digitalstage_t(ov_render_base_t& backend)
     : ov_client_base_t(backend), runservice_(true), quitrequest_(false)

@@ -50,6 +50,7 @@ if (APPLE)
     endif ()
 endif ()
 find_package(CURL REQUIRED)
+find_package(nlohmann_json 3.2.0 REQUIRED)
 find_package(cpprestsdk REQUIRED NAMES cpprestsdk cpprest)
 find_package(SoundIo REQUIRED)
 
@@ -84,10 +85,11 @@ target_include_directories(ov
 target_link_libraries(ov
         PRIVATE
         tascar::tascar
-        ${SOUNDIO_LIBRARY}
-        cpprestsdk::cpprest
-        OpenSSL::Crypto
         ${CURL_LIBRARIES}
+        nlohmann_json::nlohmann_json
+        OpenSSL::Crypto
+        cpprestsdk::cpprest
+        ${SOUNDIO_LIBRARY}
         )
 set_target_properties(ov PROPERTIES
         VERSION ${PROJECT_VERSION}
