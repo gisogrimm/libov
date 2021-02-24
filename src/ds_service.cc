@@ -269,11 +269,12 @@ void ds::ds_service_t::service() {
 
     // Get mac address and local ip
     std::string localIpAddress(ep2ipstr(getipaddr()));
-    std::cout << "MAC Address: " << backend_.get_deviceid() << " IP: " << localIpAddress << '\n';
+    std::string mac(backend_.get_deviceid());
+    std::cout << "MAC Address: " << mac << " IP: " << localIpAddress << '\n';
 
     // Initial call with device
     nlohmann::json deviceJson;
-    deviceJson["mac"] = backend_.get_deviceid();    // MAC = device id (!)
+    deviceJson["mac"] = mac;    // MAC = device id (!)
     deviceJson["canVideo"] = false;
     deviceJson["canAudio"] = true;
     deviceJson["canOv"] = "true";
