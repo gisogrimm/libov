@@ -60,7 +60,31 @@ void ov_ds_service_t::service() {
                 ucout << "[" << event << "] " << payload.dump() << std::endl;
 
                 if (event == "local-device-ready") {
-
+                    this->store.localDevice = payload;
+                    // UPDATE SOUND CARDS
+                    const std::vector<ds::soundcard> sound_devices = this->get_sound_devices();
+                    if (sound_devices.size() > 0) {
+                        nlohmann::json deviceUpdate;
+                        deviceUpdate["_id"] = this->store.localDevice["_id"];
+                        for (const auto &sound_device : sound_devices) {
+                            ucout << "[AUDIODEVICES] Have " << sound_device.id << std::endl;
+                            deviceUpdate["soundCardIds"].push_back(sound_device.id);
+                            nlohmann::json soundcard;
+                            soundcard["name"] = sound_device.id;
+                            soundcard["initial"] = {
+                                    {"label",             sound_device.name},
+                                    {"numInputChannels",  sound_device.num_input_channels},
+                                    {"numOutputChannels", sound_device.num_output_channels},
+                                    {"sampleRate",        sound_device.sample_rate},
+                                    {"sampleRates",       sound_device.sample_rates},
+                                    {"isDefault",         sound_device.is_default}
+                            };
+                            this->sendAsync("set-sound-card", soundcard.dump());
+                        }
+                        this->sendAsync("update-device", deviceUpdate.dump());
+                    } else {
+                        std::cerr << "WARNING: No soundcards available!" << std::endl;
+                    }
                 } else if (event == "stage-joined") {
 
                     if (payload.contains("stages") && payload["stages"].is_array()) {
@@ -224,9 +248,6 @@ void ov_ds_service_t::service() {
     // Register sound card handler
     //this->soundio->on_devices_change = this->on_sound_devices_change;
 
-    const std::vector<ds::soundcard> input_sound_devices = this->get_input_sound_devices();
-    //const std::vector<ds::soundcard> output_sound_devices = this->get_output_sound_devices();
-
     // Get mac address and local ip
     std::string macaddress(getmacaddr());
     std::string localIpAddress(ep2ipstr(getipaddr()));
@@ -242,82 +263,76 @@ void ov_ds_service_t::service() {
     deviceJson["sendVideo"] = "false";
     deviceJson["receiveAudio"] = "true";
     deviceJson["receiveVideo"] = "false";
-    deviceJson["inputVideoDevices"] = nlohmann::json::array();
-    deviceJson["inputAudioDevices"] = nlohmann::json::array();
-    deviceJson["outputAudioDevices"] = nlohmann::json::array();
-    for(int i = 0; i < input_sound_devices.size(); i++) {
-        deviceJson["soundCardIds"].push_back(input_sound_devices[i].id);
-    }
 
     nlohmann::json identificationJson;
     identificationJson["token"] = this->token_;
     identificationJson["device"] = deviceJson;
     this->sendAsync("token", identificationJson.dump());
 
-    // Now send sound cards
-    for(int i = 0; i < input_sound_devices.size(); i++) {
-        deviceJson["soundCardIds"].push_back(input_sound_devices[i].id);
-
-        nlohmann::json soundcard;
-        soundcard["name"] = input_sound_devices[i].id;
-        soundcard["initial"] = {
-                {"name", input_sound_devices[i].name},
-                {"label", input_sound_devices[i].name},
-                {"numInputChannels", input_sound_devices[i].channel_count},
-                {"numOutputChannels", 2}, // Not more supported
-                {"sampleRate", input_sound_devices[i].sample_rate_current}
-        };
-        this->sendAsync("add-sound-card", soundcard.dump());
-    }
-
+    // RECEIVE TILL END
     receive_task.wait();
 }
 
-std::vector<ds::soundcard> ov_ds_service_t::get_input_sound_devices() {
+std::vector<ds::soundcard> ov_ds_service_t::get_sound_devices() {
+    const std::vector<struct SoundIoDevice *> input_sound_devices = this->get_input_sound_devices();
+    const std::vector<struct SoundIoDevice *> output_sound_devices = this->get_output_sound_devices();
+    int default_input = soundio_default_input_device_index(this->soundio);
+
+    // JACK can only use one soundcard at a time (except on linux), so reduce the sound devices
+    std::vector<ds::soundcard> soundcards;
+    for (int i = 0; i < input_sound_devices.size(); i++) {
+        struct SoundIoDevice *input_sound_device = input_sound_devices[i];
+        struct SoundIoDevice *output_sound_device = nullptr;
+        for (auto output_sound_dev : output_sound_devices) {
+            if (strcmp(output_sound_dev->id, input_sound_device->id) == 0) {
+                std::cout << "FOUND OUTPUT FOR INPUT " << std::endl;
+                output_sound_device = output_sound_dev;
+            } else {
+                std::cerr << "OUTPUT does not match " << output_sound_dev->id << input_sound_device->id
+                          << std::endl;
+            }
+        }
+        if (output_sound_device != nullptr) {
+            ds::soundcard soundcard;
+            soundcard.id = std::string(input_sound_device->id);
+            soundcard.name = std::string(input_sound_device->name);
+            soundcard.num_input_channels = input_sound_device->current_layout.channel_count;
+            soundcard.num_output_channels = output_sound_device->current_layout.channel_count;
+            soundcard.sample_rate = input_sound_device->sample_rate_current;
+            for (int j = 0; j < input_sound_devices[i]->sample_rate_count; j += 1) {
+                struct SoundIoSampleRateRange *range = &input_sound_device->sample_rates[i];
+                soundcard.sample_rates.push_back(range->min);
+            }
+            soundcard.is_default = default_input == i;
+            soundcard.software_latency = input_sound_devices[i]->software_latency_current;
+            soundcards.push_back(soundcard);
+        } else {
+            std::cerr << "NO MATCHING OUTPUT FOUND FOR " << input_sound_device->id << std::endl;
+        }
+    }
+    return soundcards;
+}
+
+std::vector<struct SoundIoDevice *> ov_ds_service_t::get_input_sound_devices() {
     soundio_flush_events(this->soundio); // Flush the sound devices
     int input_count = soundio_input_device_count(this->soundio);
     int default_input = soundio_default_input_device_index(this->soundio);
-    std::vector<ds::soundcard> input_sound_devices;
+    std::vector<struct SoundIoDevice *> input_sound_devices;
     for (int i = 0; i < input_count; i += 1) {
-        SoundIoDevice *device = soundio_get_input_device(this->soundio, i);
-        ucout << "Processing " << device->name << std::endl;
-        ds::soundcard soundcard;
-        soundcard.id = std::string(device->id);
-        soundcard.name = std::string(device->name);
-        soundcard.channel_count = device->current_layout.channel_count;
-        soundcard.is_default = default_input == i;
-        soundcard.sample_rate_current = device->sample_rate_current;
-        for (int j = 0; j < device->sample_rate_count; j += 1) {
-            struct SoundIoSampleRateRange *range = &device->sample_rates[i];
-            soundcard.supported_sample_rates.push_back(range->min);
-        }
-        soundcard.software_latency_current = device->software_latency_current;
-        input_sound_devices.push_back(soundcard);
+        struct SoundIoDevice *device = soundio_get_input_device(this->soundio, i);
+        input_sound_devices.push_back(device);
         soundio_device_unref(device);
     }
     return input_sound_devices;
 }
 
-std::vector<ds::soundcard> ov_ds_service_t::get_output_sound_devices() {
+std::vector<struct SoundIoDevice *> ov_ds_service_t::get_output_sound_devices() {
     soundio_flush_events(this->soundio); // Flush the sound devices
     int output_count = soundio_output_device_count(this->soundio);
-    int default_output = soundio_default_output_device_index(this->soundio);
-    std::vector<ds::soundcard> output_sound_devices;
+    std::vector<struct SoundIoDevice *> output_sound_devices;
     for (int i = 0; i < output_count; i += 1) {
-        SoundIoDevice *device = soundio_get_input_device(this->soundio, i);
-        ucout << "Processing " << device->name << std::endl;
-        ds::soundcard soundcard;
-        soundcard.id = std::string(device->id);
-        soundcard.name = std::string(device->name);
-        soundcard.channel_count = device->current_layout.channel_count;
-        soundcard.is_default = default_output == i;
-        soundcard.sample_rate_current = device->sample_rate_current;
-        for (int j = 0; j < device->sample_rate_count; j += 1) {
-            struct SoundIoSampleRateRange *range = &device->sample_rates[i];
-            soundcard.supported_sample_rates.push_back(range->min);
-        }
-        soundcard.software_latency_current = device->software_latency_current;
-        output_sound_devices.push_back(soundcard);
+        struct SoundIoDevice *device = soundio_get_output_device(this->soundio, i);
+        output_sound_devices.push_back(device);
         soundio_device_unref(device);
     }
     return output_sound_devices;
@@ -332,7 +347,7 @@ void ov_ds_service_t::send(const std::string &event, const std::string &message)
     websocket_outgoing_message msg;
     std::string body_str("{\"type\":0,\"data\":[\"" + event + "\"," + message + "]}");
     msg.set_utf8_message(body_str);
-    ucout << "[SENDING] " << body_str << std::endl;
+    ucout << std::endl << "[SENDING] " << body_str << std::endl << std::endl;
     wsclient.send(msg).wait();
 }
 
@@ -340,6 +355,6 @@ void ov_ds_service_t::sendAsync(const std::string &event, const std::string &mes
     websocket_outgoing_message msg;
     std::string body_str("{\"type\":0,\"data\":[\"" + event + "\"," + message + "]}");
     msg.set_utf8_message(body_str);
-    ucout << "[SENDING] " << body_str << std::endl;
+    ucout << std::endl << "[SENDING] " << body_str << std::endl << std::endl;
     wsclient.send(msg);
 }

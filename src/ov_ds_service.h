@@ -41,10 +41,11 @@ namespace ds {
     struct soundcard {
         std::string id;
         std::string name;
-        int channel_count;
-        int sample_rate_current;
-        std::vector<int> supported_sample_rates;
-        double software_latency_current;
+        int num_input_channels;
+        int num_output_channels;
+        int sample_rate;
+        std::vector<int> sample_rates;
+        double software_latency;
         bool is_default;
     };
 }
@@ -63,9 +64,11 @@ public:
 private:
     void service();
 
-    std::vector<ds::soundcard> get_input_sound_devices();
+    std::vector<ds::soundcard> get_sound_devices();
 
-    std::vector<ds::soundcard> get_output_sound_devices();
+    std::vector<struct SoundIoDevice*> get_input_sound_devices();
+
+    std::vector<struct SoundIoDevice*> get_output_sound_devices();
 
     void on_sound_devices_change();
 
