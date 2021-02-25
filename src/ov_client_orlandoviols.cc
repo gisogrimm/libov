@@ -305,7 +305,7 @@ void ov_client_orlandoviols_t::service()
           quitrequest_ = true;
         }
         if(!quitrequest_) {
-	  DEBUG("startloop");
+          DEBUG("startloop");
           nlohmann::json js_audio(js_stagecfg["audiocfg"]);
           if(!js_audio.is_null()) {
             audio_device_t audio;
@@ -426,7 +426,7 @@ void ov_client_orlandoviols_t::service()
               backend.set_extra_config(js_rendersettings["extracfg"].dump());
             nlohmann::json js_stagedevs(js_stagecfg["roomdev"]);
             std::map<stage_device_id_t, stage_device_t> newstage;
-	    DEBUG("stagemembers");
+            DEBUG("stagemembers");
             if(js_stagedevs.is_array()) {
               for(auto dev : js_stagedevs) {
                 auto sdev(get_stage_dev(dev));
@@ -439,7 +439,7 @@ void ov_client_orlandoviols_t::service()
             backend.start_audiobackend();
           if(!backend.is_session_active())
             backend.start_session();
-	  DEBUG("endloop");
+          DEBUG("endloop");
         }
         report_error(lobby, backend.get_deviceid(), "");
       }
