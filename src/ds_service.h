@@ -24,19 +24,14 @@ namespace ds {
         void stop();
 
     protected:
+        void service();
+        void on_sound_devices_change();
+        void send(const std::string &event, const std::string &message);
+        void sendAsync(const std::string &event, const std::string &message);
+
         ov_render_base_t& backend_;
 
     private:
-        void service();
-
-        bool is_sending_audio();
-
-        void on_sound_devices_change();
-
-        void send(const std::string &event, const std::string &message);
-
-        void sendAsync(const std::string &event, const std::string &message);
-
         // Threading
         bool running_;
         std::thread servicethread_;
@@ -49,6 +44,13 @@ namespace ds {
 
         sound_card_tools_t *sound_card_tools;
         ds_store_t store;
+
+        void update_stage_member(const std::string &stageMemberId);
+        void update_stage_member_track(const std::string &trackId);
+        //void rerender_stage_member(const std::string &stageMemberId);
+        bool is_sending_audio();
+
+        vector <string> getStageMemberIdsByGroupId(const string &groupId);
     };
 }
 

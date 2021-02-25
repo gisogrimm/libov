@@ -24,15 +24,8 @@ namespace ds {
         std::string currentStageId;
 
         // Helper
-        std::map<std::string, std::string> customTracksByTrack;
-        std::map<std::string, std::string> trackByStageMember;
-        std::map<std::string, std::string> customStageMemberByStageMember;
-        std::map<std::string, std::string> stageMemberByGroup;
-        std::map<std::string, std::string> groupByStage;
+        std::map<std::string, std::string> customStageMemberIdByStageMember;
 
-        // OV / Tascar
-        std::vector<stage_device_t> stageDevices;
-        std::map<std::string, int> stageDeviceByStageMember;
         stage_t stage;
     };
 }
