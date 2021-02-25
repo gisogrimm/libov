@@ -33,8 +33,14 @@ void ds::ds_service_t::start(const std::string& token)
   this->servicethread_ = std::thread(&ds::ds_service_t::service, this);
 }
 
-void ds::ds_service_t::stop()
-{
+void ds::ds_service_t::stop() {
+  if (this->backend_.is_session_active()) {
+    this->backend_.end_session();
+  }
+  if (this->backend_.is_audio_active()) {
+    this->backend_.stop_audiobackend();
+  }
+  this->backend_.clear_stage();
   this->running_ = false;
   tce.set(); // task completion event is set closing wss listening task
   this->wsclient.close();      // wss client is closed
