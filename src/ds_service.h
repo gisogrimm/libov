@@ -15,7 +15,7 @@ namespace ds {
     class ds_service_t {
 
     public:
-        ds_service_t(ov_render_base_t& backend, std::string api_url);
+        ds_service_t(ov_render_base_t &backend, std::string api_url);
 
         ~ds_service_t();
 
@@ -25,11 +25,14 @@ namespace ds {
 
     protected:
         void service();
+
         void on_sound_devices_change();
+
         void send(const std::string &event, const std::string &message);
+
         void sendAsync(const std::string &event, const std::string &message);
 
-        ov_render_base_t& backend_;
+        ov_render_base_t &backend_;
 
     private:
         // Threading
@@ -46,11 +49,13 @@ namespace ds {
         ds_store_t store;
 
         void update_stage_member(const std::string &stageMemberId);
+
         void update_stage_member_track(const std::string &trackId);
+
         //void rerender_stage_member(const std::string &stageMemberId);
         bool is_sending_audio();
 
-        vector <string> getStageMemberIdsByGroupId(const string &groupId);
+        std::vector<std::string> getStageMemberIdsByGroupId(const std::string &groupId);
     };
 }
 
