@@ -7,3 +7,4 @@ build
 .ov_minor_version
 .ov_full_version
 builds/
+.vscode/

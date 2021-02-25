@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.16.0)
 
 ## GLOBAL CONFIGURATION
-project(ov
-        LANGUAGES CXX
-        VERSION 0.5
-        DESCRIPTION "common header files and library code for ov-client and ov-server"
-        )
+##project(ov
+        ##LANGUAGES CXX
+        ##VERSION 0.5
+        ##DESCRIPTION "common header files and library code for ov-client and ov-server"
+        ##)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(POSITION_INDEPENDENT_CODE ON)
@@ -80,14 +80,15 @@ add_compile_definitions(${CMAKE_SYSTEM_PROCESSOR})
 
 
 ## TARGET
-add_library(ov SHARED ${SOURCES})
-##set_target_properties(tascar PROPERTIES PUBLIC_HEADER "${HEADER}")
+add_library(ov ${SOURCES})
+##set_target_properties(ov PROPERTIES PUBLIC_HEADER "${HEADER}")
 target_include_directories(ov
         PUBLIC
+		src
         #${CURL_INCLUDE_DIRS}
 		PRIVATE
 		 ${CMAKE_CURRENT_LIST_DIR}/../third_party/getopt-for-windows
-		 ${CMAKE_CURRENT_LIST_DIR}/../third_party/pthreads4w
+		 # ${CMAKE_CURRENT_LIST_DIR}/../third_party/pthreads4w
 		 ${CMAKE_CURRENT_LIST_DIR}/../third_party/unistd
         )
 target_link_libraries(ov
@@ -112,6 +113,7 @@ endif ()
 
 
 # CMake package config
+if(CREATE_INSTALL)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 set(TARGETS_EXPORT_NAME "${PROJECT_NAME}Target")
@@ -125,6 +127,8 @@ configure_package_config_file(
 write_basic_package_version_file(
         "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake" COMPATIBILITY SameMajorVersion
 )
+endif()
+if(CREATE_INSTALL)
 install(
         TARGETS ov
         EXPORT "${TARGETS_EXPORT_NAME}"
@@ -143,3 +147,5 @@ install(
         NAMESPACE "ov::"
         DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
 )
+endif()
+
