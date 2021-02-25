@@ -107,7 +107,7 @@ std::vector<sound_card_t> sound_card_tools_t::get_sound_devices()
   // JACK can only use one soundcard at a time (except on linux), so reduce the
   // sound devices
   std::vector<sound_card_t> soundcards;
-  for(int i = 0; i < input_sound_devices.size(); i++) {
+  for(size_t i = 0; i < input_sound_devices.size(); i++) {
     struct SoundIoDevice* input_sound_device = input_sound_devices[i];
     struct SoundIoDevice* output_sound_device = nullptr;
     for(auto output_sound_dev : output_sound_devices) {
@@ -133,7 +133,7 @@ std::vector<sound_card_t> sound_card_tools_t::get_sound_devices()
             &input_sound_device->sample_rates[i];
         soundcard.sample_rates.push_back(range->min);
       }
-      soundcard.is_default = default_input == i;
+      soundcard.is_default = (size_t)default_input == i;
       soundcard.software_latency =
           input_sound_devices[i]->software_latency_current;
       soundcards.push_back(soundcard);
@@ -149,7 +149,7 @@ std::vector<struct SoundIoDevice*> sound_card_tools_t::get_input_sound_devices()
 {
   soundio_flush_events(this->soundio); // Flush the sound devices
   int input_count = soundio_input_device_count(this->soundio);
-  int default_input = soundio_default_input_device_index(this->soundio);
+  // int default_input = soundio_default_input_device_index(this->soundio);
   std::vector<struct SoundIoDevice*> input_sound_devices;
   for(int i = 0; i < input_count; i += 1) {
     struct SoundIoDevice* device = soundio_get_input_device(this->soundio, i);

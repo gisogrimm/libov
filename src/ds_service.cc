@@ -33,11 +33,12 @@ void ds::ds_service_t::start(const std::string& token)
   this->servicethread_ = std::thread(&ds::ds_service_t::service, this);
 }
 
-void ds::ds_service_t::stop() {
-  if (this->backend_.is_session_active()) {
+void ds::ds_service_t::stop()
+{
+  if(this->backend_.is_session_active()) {
     this->backend_.end_session();
   }
-  if (this->backend_.is_audio_active()) {
+  if(this->backend_.is_audio_active()) {
     this->backend_.stop_audiobackend();
   }
   this->backend_.clear_stage();

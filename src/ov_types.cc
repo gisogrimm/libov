@@ -273,6 +273,29 @@ bool operator!=(const std::map<stage_device_id_t, stage_device_t>& a,
   return false;
 }
 
+void ov_render_base_t::set_stage_device_channel_gain(
+    stage_device_id_t stagedeviceid, device_channel_id_t channeldeviceid,
+    double gain)
+{
+  DEBUG(stagedeviceid);
+  DEBUG(channeldeviceid);
+  DEBUG(gain);
+}
+
+void ov_render_base_t::set_stage_device_position(
+    stage_device_id_t stagedeviceid, pos_t position, zyx_euler_t orientation)
+{
+  DEBUG(stagedeviceid);
+}
+
+void ov_render_base_t::set_stage_device_channel_position(
+    stage_device_id_t stagedeviceid, device_channel_id_t channeldeviceid,
+    pos_t position)
+{
+  DEBUG(stagedeviceid);
+  DEBUG(channeldeviceid);
+}
+
 /*
  * Local Variables:
  * compile-command: "make -C .."

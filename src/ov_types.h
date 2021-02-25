@@ -56,6 +56,7 @@ struct audio_device_t {
 bool operator!=(const audio_device_t& a, const audio_device_t& b);
 
 struct device_channel_t {
+  /// unique channel ID (must be unique within one session):
   device_channel_id_t id;
   /// Source of channel (used locally only):
   std::string sourceport;
