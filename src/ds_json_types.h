@@ -36,8 +36,28 @@ namespace ds {
             double rY;
             double rZ;
         };
-
         NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(three_dimensional_t, volume, muted, x, y, z, rX, rY, rZ)
+
+        struct ov_server_t {
+            std::string router;
+            std::string ipv4;
+            std::string ipv6;
+            uint16_t port;
+            uint32_t pin;
+        };
+        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ov_server_t, router, ipv4, ipv6, port, pin)
+
+        struct stage_t {
+            std::string _id;
+            std::string name;
+            double width;
+            double length;
+            double height;
+            double absorption;
+            double damping;
+            ov_server_t ovServer;
+        };
+        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(stage_t, _id, name, width, length, height, absorption, damping)
 
         struct group_t {
             std::string _id;
@@ -144,10 +164,14 @@ namespace ds {
         struct stage_member_ov_t {
             std::string _id;
             std::string stageMemberId;
-            struct track_t track;
+            int ovId;
+            int channel;
+            double gain;
+            bool online;
+            std::string directivity;
         };
 
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(stage_member_ov_t, _id, stageMemberId, track)
+        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(stage_member_ov_t, _id, stageMemberId, ovId, channel, gain, online, directivity)
 
         struct user_t {
             std::string _id;

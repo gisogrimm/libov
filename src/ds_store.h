@@ -21,6 +21,8 @@ namespace ds {
         std::map<std::string, nlohmann::json> soundCards;
         std::map<std::string, nlohmann::json> trackPresets;
         nlohmann::json localDevice;
+        std::string currentStageId;
+
         // Helper
         std::map<std::string, std::string> customTracksByTrack;
         std::map<std::string, std::string> trackByStageMember;
