@@ -185,10 +185,13 @@ std::string ov_client_orlandoviols_t::device_update(std::string url,
   bool first(true);
   retv = "";
   while(std::getline(ss, to, '\n')) {
-    if(first)
+    if(first) {
+      if(!to.empty() && (to[0] == '<'))
+        throw ErrMsg("Invalid hash code, propably not a REST API response.");
       hash = to;
-    else
+    } else {
       retv += to + '\n';
+    }
     first = false;
   }
   if(retv.size())
@@ -291,7 +294,7 @@ void ov_client_orlandoviols_t::service()
   while(runservice) {
     try {
       std::string stagecfg(device_update(lobby, backend.get_deviceid(), hash));
-      if(!stagecfg.empty() && (stagecfg[0] != '<')) {
+      if(!stagecfg.empty()) {
         try {
           nlohmann::json js_stagecfg(nlohmann::json::parse(stagecfg));
           if(!js_stagecfg["frontendconfig"].is_null()) {
@@ -457,8 +460,8 @@ void ov_client_orlandoviols_t::service()
     }
     catch(const std::exception& e) {
       std::cerr << "Error: " << e.what() << std::endl;
-      std::cerr << "Retrying in 5 seconds." << std::endl;
-      sleep(5);
+      std::cerr << "Retrying in 15 seconds." << std::endl;
+      sleep(15);
     }
   }
 }
