@@ -228,7 +228,7 @@ public:
      \param gain Linear gain
      \todo Discuss exact gain definition
    */
-  virtual void set_stage_device_gain(stage_device_id_t stagedeviceid,
+  virtual void set_stage_device_gain(const stage_device_id_t& stagedeviceid,
                                      double gain);
   /**
      \brief Set output gain of a single device channel of an stage device
@@ -238,11 +238,10 @@ public:
      \todo @gisogrimm Is this easy to implement? And how should we identify the
      device channel? Could there maybe a simple string identifier?
    */
-  virtual void set_stage_device_channel_gain(
-      stage_device_id_t stagedeviceid,
-      device_channel_id_t
-          channeldeviceid, // vector index ... but maybe a string identifier?
-      double gain);
+  virtual void
+  set_stage_device_channel_gain(const stage_device_id_t& stagedeviceid,
+                                const device_channel_id_t& channeldeviceid,
+                                double gain);
 
   /**
      \brief Set position and orientation of a stage device
@@ -251,9 +250,9 @@ public:
      \param orientation Orientation of stage device inside stage
      \todo Please implement me ;)
    */
-  virtual void set_stage_device_position(stage_device_id_t stagedeviceid,
-                                         pos_t position,
-                                         zyx_euler_t orientation);
+  virtual void set_stage_device_position(const stage_device_id_t& stagedeviceid,
+                                         const pos_t& position,
+                                         const zyx_euler_t& orientation);
 
   /**
      \brief Set position and orientation of a stage device
@@ -263,9 +262,10 @@ public:
      \todo Please implement me ;)
    */
   virtual void
-  set_stage_device_channel_position(stage_device_id_t stagedeviceid,
-                                    device_channel_id_t channeldeviceid,
-                                    pos_t position);
+  set_stage_device_channel_position(const stage_device_id_t& stagedeviceid,
+                                    const device_channel_id_t& channeldeviceid,
+                                    const pos_t& position,
+                                    const zyx_euler_t& orientation);
 
   /**
      \brief Set render settings of this device and stage combination

@@ -855,6 +855,30 @@ void ov_render_tascar_t::set_stage_device_gain(stage_device_id_t stagedeviceid,
   }
 }
 
+void ov_render_tascar_t::set_stage_device_channel_gain(
+    stage_device_id_t stagedeviceid, device_channel_id_t channeldeviceid,
+    double gain)
+{
+  ov_render_base_t::set_stage_device_channel_gain(stagedeviceid,
+                                                  channeldeviceid, gain);
+  if(is_session_active() && tascar)
+    tascar->sound_by_id(channeldeviceid).set_gain_lin(gain);
+}
+
+void ov_render_tascar_t::set_stage_device_channel_position(
+    stage_device_id_t stagedeviceid, device_channel_id_t channeldeviceid,
+    pos_t position, zyx_euler_t orientation)
+{
+  ov_render_base_t::set_stage_device_channel_position(
+      stagedeviceid, channeldeviceid, position, orientation);
+  if(is_session_active() && tascar) {
+    tascar->sound_by_id(channeldeviceid).local_position =
+        TASCAR::pos_t(position.x, position.y, position.z);
+    tascar->sound_by_id(channeldeviceid).local_orientation =
+        TASCAR::zyx_euler_t(orientation.z, orientation.y, orientation.x);
+  }
+}
+
 void ov_render_tascar_t::set_render_settings(
     const render_settings_t& rendersettings,
     stage_device_id_t thisstagedeviceid)

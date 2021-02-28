@@ -214,8 +214,8 @@ void ov_render_base_t::rm_stage_device(stage_device_id_t stagedeviceid)
   stage.stage.erase(stagedeviceid);
 }
 
-void ov_render_base_t::set_stage_device_gain(stage_device_id_t stagedeviceid,
-                                             double gain)
+void ov_render_base_t::set_stage_device_gain(
+    const stage_device_id_t& stagedeviceid, double gain)
 {
   if(stage.stage.find(stagedeviceid) != stage.stage.end())
     stage.stage[stagedeviceid].gain = gain;
@@ -274,8 +274,8 @@ bool operator!=(const std::map<stage_device_id_t, stage_device_t>& a,
 }
 
 void ov_render_base_t::set_stage_device_channel_gain(
-    stage_device_id_t stagedeviceid, device_channel_id_t channeldeviceid,
-    double gain)
+    const stage_device_id_t& stagedeviceid,
+    const device_channel_id_t& channeldeviceid, double gain)
 {
   DEBUG(stagedeviceid);
   DEBUG(channeldeviceid);
@@ -283,14 +283,16 @@ void ov_render_base_t::set_stage_device_channel_gain(
 }
 
 void ov_render_base_t::set_stage_device_position(
-    stage_device_id_t stagedeviceid, pos_t position, zyx_euler_t orientation)
+    const stage_device_id_t& stagedeviceid, const pos_t& position,
+    const zyx_euler_t& orientation)
 {
   DEBUG(stagedeviceid);
 }
 
 void ov_render_base_t::set_stage_device_channel_position(
-    stage_device_id_t stagedeviceid, device_channel_id_t channeldeviceid,
-    pos_t position)
+    const stage_device_id_t& stagedeviceid,
+    const device_channel_id_t& channeldeviceid, const pos_t& position,
+    const zyx_euler_t& orientation)
 {
   DEBUG(stagedeviceid);
   DEBUG(channeldeviceid);
