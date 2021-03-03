@@ -6,7 +6,6 @@
 
 namespace ds {
     namespace json {
-        using nlohmann::json;
 
         struct device_t {
             std::string _id;
@@ -53,7 +52,7 @@ namespace ds {
             double serverJitter;
         };
 
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(stage_ov_server_t, router, ipv4, ipv6, port, pin)
+        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(stage_ov_server_t, router, ipv4, ipv6, port, pin, serverJitter)
 
         struct stage_t {
             std::string _id;
