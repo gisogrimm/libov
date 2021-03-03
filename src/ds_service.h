@@ -29,8 +29,6 @@ namespace ds {
     private:
         void service();
 
-        bool is_sending_audio();
-
         void on_sound_devices_change();
 
         void send(const std::string &event, const std::string &message);
@@ -38,17 +36,15 @@ namespace ds {
         void sendAsync(const std::string &event, const std::string &message);
 
         // Threading
-        bool running_;
         std::thread servicethread_;
-        std::atomic<bool> quitrequest_;
 
         // Connection related
         websocket_callback_client wsclient;
         std::string api_url_;
         std::string token_;
 
-        sound_card_tools_t *sound_card_tools;
-        ds_store_t store;
+        sound_card_tools_t *sound_card_tools_;
+        ds_store_t *store_;
     };
 }
 
