@@ -38,10 +38,7 @@ namespace ds {
             std::string soundCardId;
         };
 
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(device_t, _id, userId, online, mac, name, canVideo, canAudio, canOv,
-                                           sendVideo, sendAudio, receiveVideo, receiveAudio, receiverType, senderJitter,
-                                           receiverJitter, p2p, renderReverb, reverbGain, renderISM, rawMode, egoGain,
-                                           soundCardIds, soundCardId)
+        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(device_t, _id, userId, online, mac, name, canVideo, canAudio, canOv, sendVideo, sendAudio, receiveVideo, receiveAudio, receiverType, senderJitter, receiverJitter, p2p, renderReverb, reverbGain, renderISM, rawMode, egoGain, soundCardIds, soundCardId)
 
         struct stage_ov_server_t {
             std::string router;
@@ -70,8 +67,7 @@ namespace ds {
             stage_ov_server_t ovServer;
         };
 
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(stage_t, _id, name, width, length, height, absorption, damping,
-                                           renderAmbient, ambientSoundUrl, ambientLevel)
+        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(stage_t, _id, name, width, length, height, absorption, damping, renderAmbient, ambientSoundUrl, ambientLevel)
 
         struct group_t {
             std::string _id;
@@ -105,8 +101,7 @@ namespace ds {
             double rZ;
         };
 
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(custom_group_t, _id, userId, groupId, stageId, volume, muted, x, y, z, rX,
-                                           rY, rZ)
+        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(custom_group_t, _id, userId, groupId, stageId, volume, muted, x, y, z, rX, rY, rZ)
 
         struct stage_member_t {
             std::string _id;
@@ -127,8 +122,7 @@ namespace ds {
             double rZ;
         };
 
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(stage_member_t, _id, groupId, userId, online, isDirector, ovStageDeviceId,
-                                           sendlocal, stageId, volume, muted, x, y, z, rX, rY, rZ)
+        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(stage_member_t, _id, groupId, userId, online, isDirector, ovStageDeviceId, sendlocal, stageId, volume, muted, x, y, z, rX, rY, rZ)
 
         struct custom_stage_member_t {
             std::string _id;
@@ -145,9 +139,7 @@ namespace ds {
             double rZ;
         };
 
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(custom_stage_member_t, _id, userId, stageMemberId, stageId, volume, muted, x,
-                                           y, z, rX, rY,
-                                           rZ)
+        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(custom_stage_member_t, _id, userId, stageMemberId, stageId, volume, muted, x, y, z, rX, rY, rZ)
 
         struct soundcard_t {
             std::string _id;
@@ -170,9 +162,7 @@ namespace ds {
             std::string userId;
         };
 
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(soundcard_t, _id, deviceId, name, isDefault, driver, sampleRate, sampleRates,
-                                           periodSize, numPeriods, softwareLatency, numInputChannels, numOutputChannels,
-                                           inputChannels, outputChannels, userId)
+        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(soundcard_t, _id, deviceId, name, isDefault, driver, sampleRate, sampleRates,periodSize, numPeriods, softwareLatency, numInputChannels, numOutputChannels, inputChannels, outputChannels, userId)
 
         struct ov_track_t {
             std::string _id;
@@ -203,8 +193,7 @@ namespace ds {
             double rZ;
         };
 
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(remote_ov_track_t, _id, ovTrackId, stageMemberId, channel, online,
-                                           directivity, userId, stageId, volume, muted, x, y, z, rX, rY, rZ)
+        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(remote_ov_track_t, _id, ovTrackId, stageMemberId, channel, online, directivity, userId, stageId, volume, muted, x, y, z, rX, rY, rZ)
 
         struct custom_remote_ov_track_t {
             std::string _id;
@@ -223,8 +212,7 @@ namespace ds {
             double rZ;
         };
 
-        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(custom_remote_ov_track_t, _id, stageMemberId, remoteOvTrackId, directivity,
-                                           userId, stageId, volume, muted, x, y, z, rX, rY, rZ)
+        NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(custom_remote_ov_track_t, _id, stageMemberId, remoteOvTrackId, directivity, userId, stageId, volume, muted, x, y, z, rX, rY, rZ)
 
         struct user_t {
             std::string _id;

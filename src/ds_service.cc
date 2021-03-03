@@ -87,7 +87,7 @@ void ds::ds_service_t::service() {
                         std::cerr << "WARNING: No soundcards available!" << std::endl;
                     }
                 } else if (event == "device-changed") {
-                    boost::optional<const ds::json::device_t> localDevice = this->store_->getLocalDevice();
+                    boost::optional<ds::json::device_t> localDevice = this->store_->getLocalDevice();
                     if (localDevice && (*localDevice)._id == payload["_id"]) {
                         // The events refers this device
                         std::cout << "DEVICE CHANGED" << std::endl;
@@ -192,7 +192,7 @@ void ds::ds_service_t::service() {
                     this->store_->updateStage(stageId, payload);
                     if (currentStageId == stageId) {
                         //TODO: Verify, if just setting again works
-                        boost::optional<const ds::json::stage_t> stage = this->store_->readStage(currentStageId);
+                        boost::optional<ds::json::stage_t> stage = this->store_->readStage(currentStageId);
                         if( stage ) {
                             this->backend_.set_relay_server((*stage).ovServer.ipv4, (*stage).ovServer.port,
                                                             (*stage).ovServer.pin);

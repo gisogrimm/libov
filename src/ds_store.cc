@@ -21,7 +21,7 @@ void ds::ds_store_t::updateStage(const std::string &stageId, const nlohmann::jso
     this->stages_[stageId].merge_patch(update);
 }
 
-boost::optional<const ds::json::stage_t> ds::ds_store_t::readStage(const std::string &stageId) {
+boost::optional<ds::json::stage_t> ds::ds_store_t::readStage(const std::string &stageId) {
     auto lock = std::unique_lock<std::mutex>(this->stages_mutex_);
     if( !(this->stages_.count(stageId) > 0 ))
         return this->stages_[stageId].get<ds::json::stage_t>();
@@ -45,7 +45,7 @@ void ds::ds_store_t::updateGroup(const std::string &id, const nlohmann::json upd
     this->groups_[id].merge_patch(update);
 }
 
-boost::optional<const ds::json::group_t> ds::ds_store_t::readGroup(const std::string &id) {
+boost::optional<ds::json::group_t> ds::ds_store_t::readGroup(const std::string &id) {
     auto lock = std::unique_lock<std::mutex>(this->groups_mutex_);
     if( !(this->groups_.count(id) > 0 ))
         return this->groups_[id].get<ds::json::group_t>();
@@ -73,7 +73,7 @@ void ds::ds_store_t::setLocalDevice(const nlohmann::json localDevice) {
     this->localDevice_ = localDevice;
 }
 
-boost::optional<const ds::json::device_t> ds::ds_store_t::getLocalDevice() {
+boost::optional<ds::json::device_t> ds::ds_store_t::getLocalDevice() {
     auto lock = std::unique_lock<std::mutex>(this->local_device_mutex_);
     if( !(this->localDevice_.is_null()) )
         return this->localDevice_.get<ds::json::device_t>();
@@ -106,7 +106,7 @@ void ds::ds_store_t::updatCustomGroup(const std::string &id, const nlohmann::jso
     this->customGroups_[id].merge_patch(update);
 }
 
-boost::optional<const ds::json::custom_group_t> ds::ds_store_t::readCustomGroup(const std::string &id) {
+boost::optional<ds::json::custom_group_t> ds::ds_store_t::readCustomGroup(const std::string &id) {
     auto lock = std::unique_lock<std::mutex>(this->custom_groups_mutex_);
     if( !(this->customGroups_.count(id) > 0 ))
         return this->customGroups_[id].get<ds::json::custom_group_t>();
@@ -135,7 +135,7 @@ void ds::ds_store_t::updateStageMember(const std::string &id, const nlohmann::js
     this->stageMembers_[id].merge_patch(update);
 }
 
-boost::optional<const ds::json::stage_member_t> ds::ds_store_t::readStageMember(const std::string &id) {
+boost::optional<ds::json::stage_member_t> ds::ds_store_t::readStageMember(const std::string &id) {
     auto lock = std::unique_lock<std::mutex>(this->stage_members_mutex_);
     if( !(this->stageMembers_.count(id) > 0 ))
         return this->stageMembers_[id].get<ds::json::stage_member_t>();
@@ -164,7 +164,7 @@ void ds::ds_store_t::updateCustomStageMember(const std::string &id, const nlohma
     this->customStageMembers_[id].merge_patch(update);
 }
 
-boost::optional<const ds::json::custom_stage_member_t> ds::ds_store_t::readCustomStageMember(const std::string &id) {
+boost::optional<ds::json::custom_stage_member_t> ds::ds_store_t::readCustomStageMember(const std::string &id) {
     auto lock = std::unique_lock<std::mutex>(this->custom_stage_members_mutex_);
     if( !(this->customStageMembers_.count(id) > 0 ))
         return this->customStageMembers_[id].get<ds::json::custom_stage_member_t>();
@@ -193,7 +193,7 @@ void ds::ds_store_t::updateSoundCard(const std::string &id, const nlohmann::json
     this->soundCards_[id].merge_patch(update);
 }
 
-boost::optional<const ds::json::soundcard_t> ds::ds_store_t::readSoundCard(const std::string &id) {
+boost::optional<ds::json::soundcard_t> ds::ds_store_t::readSoundCard(const std::string &id) {
     auto lock = std::unique_lock<std::mutex>(this->sound_cards_mutex_);
     if( !(this->soundCards_.count(id) > 0 ))
         return this->soundCards_[id].get<ds::json::soundcard_t>();
@@ -221,7 +221,7 @@ void ds::ds_store_t::updateOvTrack(const std::string &id, const nlohmann::json u
     this->ovTracks_[id].merge_patch(update);
 }
 
-boost::optional<const ds::json::ov_track_t> ds::ds_store_t::readOvTrack(const std::string &id) {
+boost::optional<ds::json::ov_track_t> ds::ds_store_t::readOvTrack(const std::string &id) {
     auto lock = std::unique_lock<std::mutex>(this->ov_tracks_mutex_);
     if( !(this->ovTracks_.count(id) > 0 ))
         return this->ovTracks_[id].get<ds::json::ov_track_t>();
@@ -250,7 +250,7 @@ void ds::ds_store_t::updateRemoteOvTrack(const std::string &id, const nlohmann::
     this->remoteOvTracks_[id].merge_patch(update);
 }
 
-boost::optional<const ds::json::remote_ov_track_t> ds::ds_store_t::readRemoteOvTrack(const std::string &id) {
+boost::optional<ds::json::remote_ov_track_t> ds::ds_store_t::readRemoteOvTrack(const std::string &id) {
     auto lock = std::unique_lock<std::mutex>(this->remote_ov_tracks_mutex_);
     if( !(this->remoteOvTracks_.count(id) > 0 ))
         return this->remoteOvTracks_[id].get<ds::json::remote_ov_track_t>();
@@ -279,7 +279,7 @@ void ds::ds_store_t::updateCustomRemoteOvTrack(const std::string &id, const nloh
     this->customRemoteOvTracks_[id].merge_patch(update);
 }
 
-boost::optional<const ds::json::custom_remote_ov_track_t>
+boost::optional<ds::json::custom_remote_ov_track_t>
 ds::ds_store_t::readCustomRemoteOvTrack(const std::string &id) {
     auto lock = std::unique_lock<std::mutex>(this->custom_remote_ov_tracks_mutex_);
     if( !(this->customRemoteOvTracks_.count(id) > 0 ))
