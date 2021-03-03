@@ -91,8 +91,8 @@ void ds::ds_service_t::service() {
                     if (localDevice && (*localDevice)._id == payload["_id"]) {
                         // The events refers this device
                         std::cout << "DEVICE CHANGED" << std::endl;
-                        if (payload.contains("soundCardName") &&
-                            payload["soundCardName"] != (*localDevice).soundCardName) {
+                        if (payload.contains("soundCardId") &&
+                            payload["soundCardId"] != (*localDevice).soundCardId) {
                             // Soundcard changes
                             //TODO: Restart JACK with soundCardName as identifier
                         }

@@ -6,8 +6,14 @@
             << " " << #x << "=" << x << std::endl
 #endif
 
-#define DEBUGNEQ(a,b) if(a!=b)std::cerr << __FILE__ << ":" << __LINE__ << ": (" << #a << "==" << a << ")!=(" << #b << "==" << b << ")" << std::endl
-#define DEBUGNEQ2(a,b) if(a!=b)std::cerr << __FILE__ << ":" << __LINE__ << ": (" << #a << ")!=(" << #b << ")" << std::endl
+#define DEBUGNEQ(a, b)                                                         \
+  if(a != b)                                                                   \
+  std::cerr << __FILE__ << ":" << __LINE__ << ": (" << #a << "==" << a         \
+            << ")!=(" << #b << "==" << b << ")" << std::endl
+#define DEBUGNEQ2(a, b)                                                        \
+  if(a != b)                                                                   \
+  std::cerr << __FILE__ << ":" << __LINE__ << ": (" << #a << ")!=(" << #b      \
+            << ")" << std::endl
 
 bool operator!=(const pos_t& a, const pos_t& b)
 {
@@ -208,8 +214,8 @@ void ov_render_base_t::rm_stage_device(stage_device_id_t stagedeviceid)
   stage.stage.erase(stagedeviceid);
 }
 
-void ov_render_base_t::set_stage_device_gain(stage_device_id_t stagedeviceid,
-                                             double gain)
+void ov_render_base_t::set_stage_device_gain(
+    const stage_device_id_t& stagedeviceid, double gain)
 {
   if(stage.stage.find(stagedeviceid) != stage.stage.end())
     stage.stage[stagedeviceid].gain = gain;
@@ -249,22 +255,47 @@ const char* get_libov_version()
 bool operator!=(const std::map<stage_device_id_t, stage_device_t>& a,
                 const std::map<stage_device_id_t, stage_device_t>& b)
 {
-  DEBUGNEQ(a.size(),b.size());
+  DEBUGNEQ(a.size(), b.size());
   if(a.size() != b.size())
     return true;
   auto a_it = a.begin();
   auto b_it = b.begin();
   while((a_it != a.end()) && (b_it != b.end())) {
-    DEBUGNEQ(a_it->first,b_it->first);
+    DEBUGNEQ(a_it->first, b_it->first);
     if(a_it->first != b_it->first)
       return true;
-    DEBUGNEQ2(a_it->second,b_it->second);
+    DEBUGNEQ2(a_it->second, b_it->second);
     if(a_it->second != b_it->second)
       return true;
     ++a_it;
     ++b_it;
   }
   return false;
+}
+
+void ov_render_base_t::set_stage_device_channel_gain(
+    const stage_device_id_t& stagedeviceid,
+    const device_channel_id_t& channeldeviceid, double gain)
+{
+  DEBUG(stagedeviceid);
+  DEBUG(channeldeviceid);
+  DEBUG(gain);
+}
+
+void ov_render_base_t::set_stage_device_position(
+    const stage_device_id_t& stagedeviceid, const pos_t& position,
+    const zyx_euler_t& orientation)
+{
+  DEBUG(stagedeviceid);
+}
+
+void ov_render_base_t::set_stage_device_channel_position(
+    const stage_device_id_t& stagedeviceid,
+    const device_channel_id_t& channeldeviceid, const pos_t& position,
+    const zyx_euler_t& orientation)
+{
+  DEBUG(stagedeviceid);
+  DEBUG(channeldeviceid);
 }
 
 /*

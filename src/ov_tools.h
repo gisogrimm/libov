@@ -1,8 +1,8 @@
 #ifndef OV_TOOLS_H
 #define OV_TOOLS_H
 
-#include <nlohmann/json.hpp>
 #include "errmsg.h"
+#include <nlohmann/json.hpp>
 
 // Return true if this process is called from ovbox autorun scripts
 bool is_ovbox();
@@ -16,7 +16,8 @@ std::string ovstrrep(std::string s, const std::string& pat,
 
 // robust json value function with default value:
 template <class T>
-T my_js_value(const nlohmann::json& obj, const std::string& key, const T& defval)
+T my_js_value(const nlohmann::json& obj, const std::string& key,
+              const T& defval)
 {
   try {
     if(obj.is_object())
@@ -24,7 +25,8 @@ T my_js_value(const nlohmann::json& obj, const std::string& key, const T& defval
     return defval;
   }
   catch(const std::exception& e) {
-    throw ErrMsg(std::string(e.what()) + " ('" + obj.dump() + "', key: '"+key+"')");
+    throw ErrMsg(std::string(e.what()) + " ('" + obj.dump() + "', key: '" +
+                 key + "')");
   }
 }
 

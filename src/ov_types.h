@@ -36,6 +36,9 @@ typedef uint16_t port_t;
 typedef uint32_t secret_t;
 /// stage device id type
 typedef uint8_t stage_device_id_t;
+// stage device channel id type
+// TODO: Verify
+typedef std::string device_channel_id_t;
 
 struct audio_device_t {
   /// driver name, e.g. jack, ALSA, ASIO
@@ -53,6 +56,8 @@ struct audio_device_t {
 bool operator!=(const audio_device_t& a, const audio_device_t& b);
 
 struct device_channel_t {
+  /// unique channel ID (must be unique within one session):
+  device_channel_id_t id;
   /// Source of channel (used locally only):
   std::string sourceport;
   /// Linear playback gain:
@@ -223,8 +228,45 @@ public:
      \param gain Linear gain
      \todo Discuss exact gain definition
    */
-  virtual void set_stage_device_gain(stage_device_id_t stagedeviceid,
+  virtual void set_stage_device_gain(const stage_device_id_t& stagedeviceid,
                                      double gain);
+  /**
+     \brief Set output gain of a single device channel of an stage device
+     \param stagedeviceid Stage device ID
+     \param devicechannelid Device channel ID
+     \param gain Linear gain
+     \todo @gisogrimm Is this easy to implement? And how should we identify the
+     device channel? Could there maybe a simple string identifier?
+   */
+  virtual void
+  set_stage_device_channel_gain(const stage_device_id_t& stagedeviceid,
+                                const device_channel_id_t& channeldeviceid,
+                                double gain);
+
+  /**
+     \brief Set position and orientation of a stage device
+     \param stagedeviceid Stage device ID
+     \param position Position of stage device inside stage
+     \param orientation Orientation of stage device inside stage
+     \todo Please implement me ;)
+   */
+  virtual void set_stage_device_position(const stage_device_id_t& stagedeviceid,
+                                         const pos_t& position,
+                                         const zyx_euler_t& orientation);
+
+  /**
+     \brief Set position and orientation of a stage device
+     \param stagedeviceid Stage device ID
+     \param position Position of stage device inside stage
+     \param orientation Orientation of stage device inside stage
+     \todo Please implement me ;)
+   */
+  virtual void
+  set_stage_device_channel_position(const stage_device_id_t& stagedeviceid,
+                                    const device_channel_id_t& channeldeviceid,
+                                    const pos_t& position,
+                                    const zyx_euler_t& orientation);
+
   /**
      \brief Set render settings of this device and stage combination
      \param rendersettings Render settings including room acoustics, this device
