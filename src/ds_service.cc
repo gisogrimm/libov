@@ -18,7 +18,7 @@ ds::ds_service_t::ds_service_t(ov_render_base_t& backend, std::string api_url)
       quitrequest_(false)
 {
   this->sound_card_tools = new sound_card_tools_t();
-  std::cout << this->backend_.get_deviceid() << std::endl;
+  this->test();
 }
 
 ds::ds_service_t::~ds_service_t()
@@ -28,6 +28,7 @@ ds::ds_service_t::~ds_service_t()
 
 void ds::ds_service_t::start(const std::string& token)
 {
+  this->test();
   this->token_ = token;
   this->running_ = true;
   this->servicethread_ = std::thread(&ds::ds_service_t::service, this);
@@ -35,6 +36,7 @@ void ds::ds_service_t::start(const std::string& token)
 
 void ds::ds_service_t::stop()
 {
+  this->test();
   if(this->backend_.is_session_active()) {
     this->backend_.end_session();
   }
@@ -48,9 +50,16 @@ void ds::ds_service_t::stop()
   this->servicethread_.join(); // thread is joined
 }
 
+void ds::ds_service_t::test() {
+  const std::lock_guard<std::mutex> lock(this->store_mtx_);
+  std::cout << "THREADTEST " << this->backend_.get_deviceid() << std::endl;
+}
+
 void ds::ds_service_t::service()
 {
   wsclient.connect(U(this->api_url_)).wait();
+
+  this->test();
 
   auto receive_task = create_task(tce);
 
@@ -66,7 +75,7 @@ void ds::ds_service_t::service()
         const std::string& event = j["data"][0];
         const nlohmann::json payload = j["data"][1];
 
-        // ucout << "[" << event << "] " << payload.dump() << std::endl;
+        ucout << std::endl << "[" << event << "] " << payload.dump() << std::endl;
 
         if(event == "local-device-ready") {
           this->store.localDevice = payload;
@@ -153,29 +162,35 @@ void ds::ds_service_t::service()
               this->store.customStageMembers[_id] = i;
             }
           }
-          if(payload.contains("ovTracks") && payload["ovTracks"].is_array()) {
-            for(const nlohmann::json& i : payload["ovTracks"]) {
+          if(payload.contains("remoteOvTracks") && payload["remoteOvTracks"].is_array()) {
+            for(const nlohmann::json& i : payload["remoteOvTracks"]) {
               const std::string _id = i["_id"].get<std::string>();
               this->store.stageMemberTracks[_id] = i;
             }
           }
-          if(payload.contains("customOvTracks") &&
-             payload["customOvTracks"].is_array()) {
-            for(const nlohmann::json& i : payload["customOvTracks"]) {
+          if(payload.contains("customRemoteOvTracks") &&
+             payload["customRemoteOvTracks"].is_array()) {
+            for(const nlohmann::json& i : payload["customRemoteOvTracks"]) {
               const std::string _id = i["_id"].get<std::string>();
               this->store.customStageMemberTracks[_id] = i;
             }
           }
+          ucout << "PART FINISHED" << std::endl;
           if(this->is_sending_audio()) {
             if(this->store.stages.count(this->store.currentStageId) > 0) {
               nlohmann::json stage =
                   this->store.stages[this->store.currentStageId];
               std::cout << stage.dump() << std::endl;
               if(stage.contains("ovServer")) {
+                ucout << "Stage supports ov" << std::endl;
+                std::cout << this->backend_.get_deviceid() << std::endl;
+                ucout << "Set relay server" << std::endl;
                 this->backend_.set_relay_server(stage["ovServer"]["ipv4"],
                                                 stage["ovServer"]["port"],
                                                 stage["ovServer"]["pin"]);
+                ucout << "Starting audio backend" << std::endl;
                 this->backend_.start_audiobackend();
+                ucout << "Starting session" << std::endl;
                 this->backend_.start_session();
                 std::cout << "[TODO] Start sending and receiving" << std::endl;
               }
@@ -183,6 +198,7 @@ void ds::ds_service_t::service()
               std::cerr << "Could not find current stage" << std::endl;
             }
           }
+          ucout << "FINISHED" << std::endl;
         } else if(event == "stage-left") {
           std::cout << "[TODO] Stop sending and receiving" << std::endl;
           // TODO: check: STOP SENDING

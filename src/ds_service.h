@@ -46,6 +46,7 @@ namespace ds {
     std::string token_;
 
     sound_card_tools_t* sound_card_tools;
+    mutable std::mutex store_mtx_;
     ds_store_t store;
 
     void update_stage_member(const std::string& stageMemberId);
@@ -57,6 +58,8 @@ namespace ds {
 
     std::vector<std::string>
     getStageMemberIdsByGroupId(const std::string& groupId);
+
+    void test();
   };
 } // namespace ds
 
