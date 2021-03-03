@@ -35,6 +35,8 @@ namespace ds {
 
         void sendAsync(const std::string &event, const std::string &message);
 
+        bool isSendingAudio();
+
         // Threading
         std::thread servicethread_;
 
