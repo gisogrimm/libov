@@ -25,8 +25,6 @@ namespace ds {
 
     // Helper
     std::map<std::string, std::string> customStageMemberIdByStageMember;
-
-    stage_t stage;
   };
 } // namespace ds
 

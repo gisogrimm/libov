@@ -460,8 +460,8 @@ void ds::ds_service_t::update_stage_member(const std::string& stageMemberId)
       stageDeviceId,
       {stageMember["x"].get<double>(), stageMember["y"].get<double>(),
        stageMember["z"].get<double>()},
-      {stageMember["rX"].get<double>(), stageMember["rY"].get<double>(),
-       stageMember["rZ"].get<double>()});
+      {stageMember["rZ"].get<double>(), stageMember["rY"].get<double>(),
+       stageMember["rX"].get<double>()});
 }
 
 void ds::ds_service_t::update_stage_member_track(const std::string& trackId)
@@ -473,7 +473,7 @@ void ds::ds_service_t::update_stage_member_track(const std::string& trackId)
   this->backend_.set_stage_device_channel_gain(stageDeviceId, trackId,
                                                track["gain"]);
   this->backend_.set_stage_device_channel_position(
-      stageDeviceId, trackId, {track["x"], track["y"], track["z"]});
+      stageDeviceId, trackId, {track["x"].get<double>(), track["y"].get<double>(), track["z"].get<double>()}, {track["rZ"].get<double>(), track["rY"].get<double>(), track["rX"].get<double>()});
 }
 /*
 void ds::ds_service_t::add_stage_member(const std::string &stageMemberId) {
