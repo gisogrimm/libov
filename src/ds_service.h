@@ -37,11 +37,15 @@ namespace ds {
 
         bool isSendingAudio();
 
+        void createTrack(const std::string &soundCardId, int channel);
+
+        void removeTrack(const std::string &id);
+
         // Threading
         std::thread servicethread_;
 
         // Connection related
-        websocket_callback_client wsclient;
+        websocket_callback_client wsclient_;
         std::string api_url_;
         std::string token_;
 

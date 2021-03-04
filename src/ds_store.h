@@ -87,6 +87,8 @@ namespace ds {
 
         boost::optional<ds::json::ov_track_t> readOvTrack(const std::string &id);
 
+        std::vector<ds::json::ov_track_t> readOvTracks();
+
         void removeOvTrack(const std::string &id);
 
         void removeOvTracks();
