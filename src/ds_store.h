@@ -10,154 +10,214 @@
 #include <nlohmann/json.hpp>
 
 namespace ds {
-    class ds_store_t {
-    public:
-        ds_store_t();
-        ~ds_store_t();
+  class ds_store_t {
+  public:
+    ds_store_t();
+    ~ds_store_t();
 
-        void setLocalDevice(const nlohmann::json localDevice);
+    void setLocalDevice(const nlohmann::json localDevice);
 
-        void updateLocalDevice(const nlohmann::json update);
+    void updateLocalDevice(const nlohmann::json update);
 
-        boost::optional<ds::json::device_t> getLocalDevice();
+    boost::optional<const ds::json::device_t> getLocalDevice();
 
-        void createStage(const nlohmann::json stage);
+    void setLocalUser(const nlohmann::json localUser);
 
-        void updateStage(const std::string &stageId, const nlohmann::json update);
+    boost::optional<const ds::json::user_t> getLocalUser();
 
-        boost::optional<ds::json::stage_t> readStage(const std::string &stageId);
+    void createUser(const nlohmann::json user);
 
-        void removeStage(const std::string &stageId);
+    void updateUser(const std::string& id, const nlohmann::json update);
 
-        void removeStages();
+    boost::optional<const ds::json::user_t> readUser(const std::string& id);
 
-        void createGroup(const nlohmann::json group);
+    void removeUser(const std::string& id);
 
-        void updateGroup(const std::string &id, const nlohmann::json update);
+    void removeUsers();
 
-        boost::optional<ds::json::group_t> readGroup(const std::string &id);
+    void createStage(const nlohmann::json stage);
 
-        void removeGroup(const std::string &id);
+    void updateStage(const std::string& stageId, const nlohmann::json update);
 
-        void removeGroups();
+    boost::optional<const ds::json::stage_t>
+    readStage(const std::string& stageId);
 
-        void createCustomGroup(const nlohmann::json customGroup);
+    void removeStage(const std::string& stageId);
 
-        void updatCustomGroup(const std::string &id, const nlohmann::json update);
+    void removeStages();
 
-        boost::optional<ds::json::custom_group_t> readCustomGroup(const std::string &id);
+    void createGroup(const nlohmann::json group);
 
-        void removeCustomGroup(const std::string &id);
+    void updateGroup(const std::string& id, const nlohmann::json update);
 
-        void removeCustomGroups();
+    boost::optional<const ds::json::group_t> readGroup(const std::string& id);
 
-        void createStageMember(const nlohmann::json stageMember);
+    void removeGroup(const std::string& id);
 
-        void updateStageMember(const std::string &id, const nlohmann::json update);
+    void removeGroups();
 
-        boost::optional<ds::json::stage_member_t> readStageMember(const std::string &id);
+    void createCustomGroup(const nlohmann::json customGroup);
 
-        void removeStageMember(const std::string &id);
+    void updateCustomGroup(const std::string& id, const nlohmann::json update);
 
-        void removeStageMembers();
+    boost::optional<const ds::json::custom_group_t>
+    readCustomGroup(const std::string& id);
 
-        void createCustomStageMember(const nlohmann::json customStageMember);
+    void removeCustomGroup(const std::string& id);
 
-        void updateCustomStageMember(const std::string &id, const nlohmann::json update);
+    void removeCustomGroups();
 
-        boost::optional<ds::json::custom_stage_member_t> readCustomStageMember(const std::string &id);
+    void createStageMember(const nlohmann::json stageMember);
 
-        void removeCustomStageMember(const std::string &id);
+    void updateStageMember(const std::string& id, const nlohmann::json update);
 
-        void removeCustomStageMembers();
+    boost::optional<const ds::json::stage_member_t>
+    readStageMember(const std::string& id);
 
-        void createSoundCard(const nlohmann::json soundCard);
+    const std::vector<const ds::json::stage_member_t>
+    readStageMembersByStage(const std::string& stageId);
 
-        void updateSoundCard(const std::string &id, const nlohmann::json update);
+    void removeStageMember(const std::string& id);
 
-        boost::optional<ds::json::soundcard_t> readSoundCard(const std::string &id);
+    void removeStageMembers();
 
-        void removeSoundCard(const std::string &id);
+    void createCustomStageMember(const nlohmann::json customStageMember);
 
-        void removeSoundCards();
+    void updateCustomStageMember(const std::string& id,
+                                 const nlohmann::json update);
 
-        void createOvTrack(const nlohmann::json ovTrack);
+    boost::optional<const ds::json::custom_stage_member_t>
+    readCustomStageMember(const std::string& id);
 
-        void updateOvTrack(const std::string &id, const nlohmann::json update);
+    boost::optional<const ds::json::custom_stage_member_t>
+    readCustomStageMemberByStageMember(const std::string& stageMemberId);
 
-        boost::optional<ds::json::ov_track_t> readOvTrack(const std::string &id);
+    void removeCustomStageMember(const std::string& id);
 
-        std::vector<ds::json::ov_track_t> readOvTracks();
+    void removeCustomStageMembers();
 
-        void removeOvTrack(const std::string &id);
+    void createSoundCard(const nlohmann::json soundCard);
 
-        void removeOvTracks();
+    void updateSoundCard(const std::string& id, const nlohmann::json update);
 
-        void createRemoteOvTrack(const nlohmann::json remoteOvTrack);
+    boost::optional<const ds::json::soundcard_t>
+    readSoundCard(const std::string& id);
 
-        void updateRemoteOvTrack(const std::string &id, const nlohmann::json update);
+    boost::optional<const ds::json::soundcard_t>
+    readSoundCardByName(const std::string& name);
 
-        boost::optional<ds::json::remote_ov_track_t> readRemoteOvTrack(const std::string &id);
+    void removeSoundCard(const std::string& id);
 
-        void removeRemoteOvTrack(const std::string &id);
+    void removeSoundCards();
 
-        void removeRemoteOvTracks();
+    void createOvTrack(const nlohmann::json ovTrack);
 
-        void createCustomRemoteOvTrack(const nlohmann::json customRemoteOvTrack);
+    void updateOvTrack(const std::string& id, const nlohmann::json update);
 
-        void updateCustomRemoteOvTrack(const std::string &id, const nlohmann::json update);
+    boost::optional<const ds::json::ov_track_t>
+    readOvTrack(const std::string& id);
 
-        boost::optional<ds::json::custom_remote_ov_track_t> readCustomRemoteOvTrack(const std::string &id);
+    const std::vector<ds::json::ov_track_t> readOvTracks();
 
-        void removeCustomRemoteOvTrack(const std::string &id);
+    void removeOvTrack(const std::string& id);
 
-        void removeCustomRemoteOvTracks();
+    void removeOvTracks();
 
-        const std::string& getCurrentStageId();
+    void createRemoteOvTrack(const nlohmann::json remoteOvTrack);
 
-        void setCurrentStageId(const std::string& stageId);
+    void updateRemoteOvTrack(const std::string& id,
+                             const nlohmann::json update);
 
-    private:
-        std::mutex local_device_mutex_;
-        std::mutex stages_mutex_;
-        std::mutex groups_mutex_;
-        std::mutex custom_groups_mutex_;
-        std::mutex stage_members_mutex_;
-        std::mutex custom_stage_members_mutex_;
-        std::mutex sound_cards_mutex_;
-        std::mutex ov_tracks_mutex_;
-        std::mutex remote_ov_tracks_mutex_;
-        std::mutex custom_remote_ov_tracks_mutex_;
-        std::mutex current_stage_id_mutex_;
+    boost::optional<const ds::json::remote_ov_track_t>
+    readRemoteOvTrack(const std::string& id);
 
-        // Digital Stage, from detailed to outer scope
-        std::map<std::string, nlohmann::json> customRemoteOvTracks_;
-        std::map<std::string, nlohmann::json> remoteOvTracks_;
-        std::map<std::string, nlohmann::json> customStageMemberTracks_;
-        std::map<std::string, nlohmann::json> stageMemberTracks_;
-        std::map<std::string, nlohmann::json> customStageMembers_;
-        std::map<std::string, nlohmann::json> stageMembers_;
-        std::map<std::string, nlohmann::json> customGroups_;
-        std::map<std::string, nlohmann::json> groups_;
-        std::map<std::string, nlohmann::json> stages_;
+    void removeRemoteOvTrack(const std::string& id);
 
-        std::map<std::string, nlohmann::json> ovTracks_;
-        std::map<std::string, nlohmann::json> soundCards_;
-        nlohmann::json localDevice_;
-        std::string currentStageId_;
+    void removeRemoteOvTracks();
 
-        // Helper
-        std::map<std::string, std::string> customTracksByTrack_;
-        std::map<std::string, std::string> trackByStageMember_;
-        std::map<std::string, std::string> customStageMemberByStageMember_;
-        std::map<std::string, std::string> stageMemberByGroup_;
-        std::map<std::string, std::string> groupByStage_;
+    void createCustomRemoteOvTrack(const nlohmann::json customRemoteOvTrack);
 
-        // OV / Tascar
-        //std::vector<stage_device_t> stageDevices_;
-        //std::map<std::string, int> stageDeviceByStageMember_;
-        //stage_t stage_;
-    };
-}
+    void updateCustomRemoteOvTrack(const std::string& id,
+                                   const nlohmann::json update);
 
-#endif //DS_STORE_H
+    boost::optional<const ds::json::custom_remote_ov_track_t>
+    readCustomRemoteOvTrack(const std::string& id);
+
+    void removeCustomRemoteOvTrack(const std::string& id);
+
+    void removeCustomRemoteOvTracks();
+
+    /* CUSTOMIZED METHODS */
+
+    const std::string& getCurrentStageId();
+
+    void setCurrentStageId(const std::string& stageId);
+
+    boost::optional<const ds::json::stage_t> getCurrentStage();
+
+    boost::optional<const ds::json::stage_member_t> getCurrentStageMember();
+
+    boost::optional<const ds::json::custom_stage_member_t>
+    getCustomStageMemberByStageMemberId(const std::string& stageMemberId);
+
+    boost::optional<const ds::json::custom_group_t>
+    getCustomGroupByGroupId(const std::string& customStageMemberId);
+
+    boost::optional<const ds::json::custom_remote_ov_track_t>
+    getCustomOvTrackByOvTrackId(const std::string& ovTrackId);
+
+    const std::vector<const ds::json::remote_ov_track_t>
+    getRemoteOvTracksByStageMemberId(const std::string& stageMemberId);
+
+  private:
+    std::mutex local_device_mutex_;
+    std::mutex local_user_mutex_;
+    std::mutex users_mutex_;
+    std::mutex stages_mutex_;
+    std::mutex groups_mutex_;
+    std::mutex custom_groups_mutex_;
+    std::mutex stage_members_mutex_;
+    std::mutex custom_stage_members_mutex_;
+    std::mutex sound_cards_mutex_;
+    std::mutex ov_tracks_mutex_;
+    std::mutex remote_ov_tracks_mutex_;
+    std::mutex custom_remote_ov_tracks_mutex_;
+    std::mutex current_stage_id_mutex_;
+
+    // Internal data store
+    std::map<std::string, nlohmann::json> customRemoteOvTracks_;
+    std::map<std::string, nlohmann::json> remoteOvTracks_;
+    std::map<std::string, nlohmann::json> customStageMemberTracks_;
+    std::map<std::string, nlohmann::json> stageMemberTracks_;
+    std::map<std::string, nlohmann::json> customStageMembers_;
+    std::map<std::string, nlohmann::json> stageMembers_;
+    std::map<std::string, nlohmann::json> customGroups_;
+    std::map<std::string, nlohmann::json> groups_;
+    std::map<std::string, nlohmann::json> stages_;
+    std::map<std::string, nlohmann::json> ovTracks_;
+    std::map<std::string, nlohmann::json> soundCards_;
+    std::map<std::string, nlohmann::json> users_;
+    nlohmann::json localDevice_;
+    nlohmann::json localUser_;
+    std::string currentStageId_;
+    std::string currentStageMemberId_;
+
+    // Helper data stores
+    std::map<std::string, std::string> customGroupIdByGroupId_;
+    std::map<std::string, std::vector<std::string>> stageMemberIdsByStageId_;
+    std::map<std::string, std::vector<std::string>>
+        remoteOvTrackIdsByStageMemberId_;
+    std::map<std::string, std::string> customStageMemberIdByStageMemberId_;
+    std::map<std::string, std::string> customOvTrackIdByOvTrackId_;
+    std::map<std::string, std::string> soundCardIdByName_;
+    /*
+    std::map<std::string, std::string> customTracksByTrack_;
+    std::map<std::string, std::string> trackByStageMember_;
+    std::map<std::string, std::string> customStageMemberByStageMember_;
+    std::map<std::string, std::string> stageMemberByGroup_;
+    std::map<std::string, std::string> groupByStage_;
+     */
+  };
+} // namespace ds
+
+#endif // DS_STORE_H

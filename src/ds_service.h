@@ -37,9 +37,11 @@ namespace ds {
 
         bool isSendingAudio();
 
-        void createTrack(const std::string &soundCardId, int channel);
+        void createTrack(const std::string &soundCardId, unsigned int channel);
 
-        void removeTrack(const std::string &id);
+        //TODO: Replace this later with a more detailes TASCAR control
+        void syncLocalStageMember();
+       void syncRemoteStageMembers();
 
         // Threading
         std::thread servicethread_;
