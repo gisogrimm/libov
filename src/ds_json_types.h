@@ -39,7 +39,7 @@ struct device_t {
   std::vector<std::string> soundCardNames;
 };
 
-inline void to_json(nlohmann::json &j, const device_t &p) {
+__unused inline void to_json(nlohmann::json &j, const device_t &p) {
   j = nlohmann::json{{"_id", p._id},
                      {"userId", p.userId},
                      {"online", p.online},
@@ -67,7 +67,7 @@ inline void to_json(nlohmann::json &j, const device_t &p) {
   }
 }
 
-inline void from_json(const nlohmann::json &j, device_t &p) {
+__unused inline void from_json(const nlohmann::json &j, device_t &p) {
   j.at("_id").get_to(p._id);
   j.at("_id").get_to(p._id);
   j.at("userId").get_to(p.userId);
@@ -107,7 +107,7 @@ struct stage_ov_server_t {
   double serverJitter;
 };
 
-inline void to_json(nlohmann::json &j, const stage_ov_server_t &p) {
+__unused inline void to_json(nlohmann::json &j, const stage_ov_server_t &p) {
   j = nlohmann::json{{"router", p.router},
                      {"ipv4", p.ipv4},
                      {"port", p.port},
@@ -119,7 +119,7 @@ inline void to_json(nlohmann::json &j, const stage_ov_server_t &p) {
     j["serverJitter"] = p.serverJitter;
   }
 }
-inline void from_json(const nlohmann::json &j, stage_ov_server_t &p) {
+__unused inline void from_json(const nlohmann::json &j, stage_ov_server_t &p) {
   j.at("router").get_to(p.router);
   j.at("ipv4").get_to(p.ipv4);
   j.at("port").get_to(p.port);
@@ -153,7 +153,7 @@ struct stage_t {
   stage_ov_server_t ovServer;
 };
 
-inline void to_json(nlohmann::json &j, const stage_t &p) {
+__unused inline void to_json(nlohmann::json &j, const stage_t &p) {
   j = nlohmann::json{{"_id", p._id},
                      {"name", p.name},
                      {"admins", p.admins},
@@ -171,7 +171,7 @@ inline void to_json(nlohmann::json &j, const stage_t &p) {
   }
 }
 
-inline void from_json(const nlohmann::json &j, stage_t &p) {
+__unused inline void from_json(const nlohmann::json &j, stage_t &p) {
   j.at("_id").get_to(p._id);
   j.at("name").get_to(p.name);
   j.at("admins").get_to(p.admins);
@@ -364,7 +364,7 @@ struct user_t {
   std::string stageMemberId;
 };
 
-inline void to_json(nlohmann::json &j, const user_t &p) {
+__unused inline void to_json(nlohmann::json &j, const user_t &p) {
   j = nlohmann::json{{"_id", p._id},
                      {"name", p.name}};
   if (!p.avatarUrl.empty()) {
@@ -378,7 +378,7 @@ inline void to_json(nlohmann::json &j, const user_t &p) {
   }
 }
 
-inline void from_json(const nlohmann::json &j, user_t &p) {
+__unused inline void from_json(const nlohmann::json &j, user_t &p) {
   j.at("_id").get_to(p._id);
   j.at("name").get_to(p.name);
   if (j.count("avatarUrl") != 0) {

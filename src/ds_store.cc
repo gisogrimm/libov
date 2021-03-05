@@ -1,5 +1,4 @@
 #include "ds_store.h"
-//TODO: REMOVE ME:
 #include <iostream>
 
 ds::ds_store_t::ds_store_t() {}
@@ -87,8 +86,6 @@ boost::optional<const ds::json::device_t> ds::ds_store_t::getLocalDevice()
 {
   auto lock = std::unique_lock<std::mutex>(this->local_device_mutex_);
   if(!(this->localDevice_.is_null())){
-    std::cout << "DEVICE: " << std::endl;
-    std::cout << this->localDevice_.dump(2) << std::endl;
     return this->localDevice_.get<ds::json::device_t>();
   }
   return boost::none;
@@ -173,6 +170,7 @@ void ds::ds_store_t::createStageMember(const nlohmann::json stageMember)
   this->stageMemberIdsByStageId_[stageMember["stageId"]].push_back(_id);
   const auto localUser = this->getLocalUser();
   if(localUser && localUser->_id == stageMember["userId"]) {
+    std::cout << "FOUND CURRENT STAGE MEMBER!" << std::endl;
     this->currentStageMemberId_ = _id;
   }
 }
@@ -188,8 +186,9 @@ boost::optional<const ds::json::stage_member_t>
 ds::ds_store_t::readStageMember(const std::string& id)
 {
   auto lock = std::unique_lock<std::mutex>(this->stage_members_mutex_);
-  if(!(this->stageMembers_.count(id) > 0))
+  if(this->stageMembers_.count(id) > 0) {
     return this->stageMembers_[id].get<ds::json::stage_member_t>();
+  }
   return boost::none;
 }
 
