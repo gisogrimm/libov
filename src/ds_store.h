@@ -77,6 +77,9 @@ namespace ds {
     const std::vector<const ds::json::stage_member_t>
     readStageMembersByStage(const std::string& stageId);
 
+    const std::vector<const ds::json::stage_member_t>
+    readStageMembersByGroup(const std::string& groupId);
+
     void removeStageMember(const std::string& id);
 
     void removeStageMembers();
@@ -169,20 +172,22 @@ namespace ds {
     const std::vector<const ds::json::remote_ov_track_t>
     getRemoteOvTracksByStageMemberId(const std::string& stageMemberId);
 
+    void dump();
+
   private:
-    std::mutex local_device_mutex_;
-    std::mutex local_user_mutex_;
-    std::mutex users_mutex_;
-    std::mutex stages_mutex_;
-    std::mutex groups_mutex_;
-    std::mutex custom_groups_mutex_;
-    std::mutex stage_members_mutex_;
-    std::mutex custom_stage_members_mutex_;
-    std::mutex sound_cards_mutex_;
-    std::mutex ov_tracks_mutex_;
-    std::mutex remote_ov_tracks_mutex_;
-    std::mutex custom_remote_ov_tracks_mutex_;
-    std::mutex current_stage_id_mutex_;
+    std::recursive_mutex local_device_mutex_;
+    std::recursive_mutex local_user_mutex_;
+    std::recursive_mutex users_mutex_;
+    std::recursive_mutex stages_mutex_;
+    std::recursive_mutex groups_mutex_;
+    std::recursive_mutex custom_groups_mutex_;
+    std::recursive_mutex stage_members_mutex_;
+    std::recursive_mutex custom_stage_members_mutex_;
+    std::recursive_mutex sound_cards_mutex_;
+    std::recursive_mutex ov_tracks_mutex_;
+    std::recursive_mutex remote_ov_tracks_mutex_;
+    std::recursive_mutex custom_remote_ov_tracks_mutex_;
+    std::recursive_mutex current_stage_id_mutex_;
 
     // Internal data store
     std::map<std::string, nlohmann::json> customRemoteOvTracks_;
@@ -205,6 +210,7 @@ namespace ds {
     // Helper data stores
     std::map<std::string, std::string> customGroupIdByGroupId_;
     std::map<std::string, std::vector<std::string>> stageMemberIdsByStageId_;
+    std::map<std::string, std::vector<std::string>> stageMemberIdsByGroupId_;
     std::map<std::string, std::vector<std::string>>
         remoteOvTrackIdsByStageMemberId_;
     std::map<std::string, std::string> customStageMemberIdByStageMemberId_;

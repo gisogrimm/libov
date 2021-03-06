@@ -112,11 +112,7 @@ std::vector<sound_card_t> sound_card_tools_t::get_sound_devices()
     struct SoundIoDevice* output_sound_device = nullptr;
     for(auto output_sound_dev : output_sound_devices) {
       if(strcmp(output_sound_dev->id, input_sound_device->id) == 0) {
-        std::cout << "FOUND OUTPUT FOR INPUT " << std::endl;
         output_sound_device = output_sound_dev;
-      } else {
-        std::cerr << "OUTPUT does not match " << output_sound_dev->id
-                  << input_sound_device->id << std::endl;
       }
     }
     if(output_sound_device != nullptr) {
@@ -137,9 +133,6 @@ std::vector<sound_card_t> sound_card_tools_t::get_sound_devices()
       soundcard.software_latency =
           input_sound_devices[i]->software_latency_current;
       soundcards.push_back(soundcard);
-    } else {
-      std::cerr << "NO MATCHING OUTPUT FOUND FOR " << input_sound_device->id
-                << std::endl;
     }
   }
   return soundcards;
