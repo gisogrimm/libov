@@ -193,7 +193,11 @@ namespace ds {
       j.at("height").get_to(p.height);
       j.at("absorption").get_to(p.absorption);
       j.at("damping").get_to(p.damping);
-      j.at("ambientLevel").get_to(p.ambientLevel);
+      if(j.contains("ambientLevel") ) {
+        j.at("ambientLevel").get_to(p.ambientLevel);
+      } else {
+        p.ambientLevel = 0.6;
+      }
       if(j.contains("renderAmbient")) {
         j.at("renderAmbient").get_to(p.renderAmbient);
       } else {
@@ -216,8 +220,8 @@ namespace ds {
       std::string name;
       std::string color;
       std::string stageId;
-      double volume;
-      bool muted;
+      double volume = 1;
+      bool muted = false;
       double x;
       double y;
       double z;
@@ -260,15 +264,16 @@ namespace ds {
       std::string _id;
       std::string userId;
       std::string groupId;
-      std::string stageId;
-      double volume;
-      bool muted;
-      double x;
-      double y;
-      double z;
-      double rX;
-      double rY;
-      double rZ;
+      bool customizeVolume = false;
+      bool customizePosition = false;
+      double volume = 1;
+      bool muted = false;
+      double x = std::numeric_limits<double>::lowest();
+      double y = std::numeric_limits<double>::lowest();
+      double z = std::numeric_limits<double>::lowest();
+      double rX = std::numeric_limits<double>::lowest();
+      double rY = std::numeric_limits<double>::lowest();
+      double rZ = std::numeric_limits<double>::lowest();
     };
 
     __unused inline void to_json(nlohmann::json& j, const custom_group_t& p)
@@ -276,7 +281,8 @@ namespace ds {
       j = nlohmann::json{{"_id", p._id},
                          {"userId", p.userId},
                          {"groupId", p.groupId},
-                         {"stageId", p.stageId},
+                         {"customizeVolume", p.customizeVolume},
+                         {"customizePosition", p.customizePosition},
                          {"volume", p.volume},
                          {"muted", p.muted},
                          {"x", p.x},
@@ -292,15 +298,20 @@ namespace ds {
       j.at("_id").get_to(p._id);
       j.at("userId").get_to(p.userId);
       j.at("groupId").get_to(p.groupId);
-      j.at("stageId").get_to(p.stageId);
-      j.at("volume").get_to(p.volume);
-      j.at("muted").get_to(p.muted);
-      j.at("x").get_to(p.x);
-      j.at("y").get_to(p.y);
-      j.at("z").get_to(p.z);
-      j.at("rX").get_to(p.rX);
-      j.at("rY").get_to(p.rY);
-      j.at("rZ").get_to(p.rZ);
+      j.at("customizeVolume").get_to(p.customizeVolume);
+      j.at("customizePosition").get_to(p.customizePosition);
+      if(p.customizeVolume) {
+        j.at("volume").get_to(p.volume);
+        j.at("muted").get_to(p.muted);
+      }
+      if(p.customizePosition) {
+        j.at("x").get_to(p.x);
+        j.at("y").get_to(p.y);
+        j.at("z").get_to(p.z);
+        j.at("rX").get_to(p.rX);
+        j.at("rY").get_to(p.rY);
+        j.at("rZ").get_to(p.rZ);
+      }
     }
 
     struct stage_member_t {
@@ -349,7 +360,11 @@ namespace ds {
       j.at("userId").get_to(p.userId);
       j.at("online").get_to(p.online);
       j.at("isDirector").get_to(p.isDirector);
-      j.at("ovStageDeviceId").get_to(p.ovStageDeviceId);
+      if(j.contains("ovStageDeviceId")) {
+        j.at("ovStageDeviceId").get_to(p.ovStageDeviceId);
+      } else {
+        p.ovStageDeviceId = 255;  // "Invalid"
+      }
       j.at("sendlocal").get_to(p.sendlocal);
       j.at("stageId").get_to(p.stageId);
       j.at("volume").get_to(p.volume);
@@ -366,15 +381,16 @@ namespace ds {
       std::string _id;
       std::string userId;
       std::string stageMemberId;
-      std::string stageId;
-      double volume;
-      bool muted;
-      double x;
-      double y;
-      double z;
-      double rX;
-      double rY;
-      double rZ;
+      bool customizeVolume = false;
+      bool customizePosition = false;
+      double volume = 1;
+      bool muted = false;
+      double x = std::numeric_limits<double>::lowest();
+      double y = std::numeric_limits<double>::lowest();
+      double z = std::numeric_limits<double>::lowest();
+      double rX = std::numeric_limits<double>::lowest();
+      double rY = std::numeric_limits<double>::lowest();
+      double rZ = std::numeric_limits<double>::lowest();
     };
 
     __unused inline void to_json(nlohmann::json& j,
@@ -383,9 +399,10 @@ namespace ds {
       j = nlohmann::json{{"_id", p._id},
                          {"userId", p.userId},
                          {"stageMemberId", p.stageMemberId},
-                         {"stageId", p.stageId},
                          {"volume", p.volume},
                          {"muted", p.muted},
+                         {"customizeVolume", p.customizeVolume},
+                         {"customizePosition", p.customizePosition},
                          {"x", p.x},
                          {"y", p.y},
                          {"z", p.z},
@@ -400,15 +417,20 @@ namespace ds {
       j.at("_id").get_to(p._id);
       j.at("userId").get_to(p.userId);
       j.at("stageMemberId").get_to(p.stageMemberId);
-      j.at("stageId").get_to(p.stageId);
-      j.at("volume").get_to(p.volume);
-      j.at("muted").get_to(p.muted);
-      j.at("x").get_to(p.x);
-      j.at("y").get_to(p.y);
-      j.at("z").get_to(p.z);
-      j.at("rX").get_to(p.rX);
-      j.at("rY").get_to(p.rY);
-      j.at("rZ").get_to(p.rZ);
+      j.at("customizeVolume").get_to(p.customizeVolume);
+      j.at("customizePosition").get_to(p.customizePosition);
+      if(p.customizeVolume) {
+        j.at("volume").get_to(p.volume);
+        j.at("muted").get_to(p.muted);
+      }
+      if(p.customizePosition) {
+        j.at("x").get_to(p.x);
+        j.at("y").get_to(p.y);
+        j.at("z").get_to(p.z);
+        j.at("rX").get_to(p.rX);
+        j.at("rY").get_to(p.rY);
+        j.at("rZ").get_to(p.rZ);
+      }
     }
 
     struct soundcard_t {
@@ -417,7 +439,7 @@ namespace ds {
       std::string name;
       std::string label;
       bool isDefault;
-      std::string driver; //'JACK' | 'ALSA' | 'ASIO' | 'WEBRTC'
+      std::string driver; //'jack' | 'alsa' | 'asio' | 'webrtc'
       double sampleRate;
       std::vector<double> sampleRates;
       unsigned int periodSize;
@@ -513,8 +535,6 @@ namespace ds {
       int channel;
       bool online;
       std::string directivity; // Will be omni or cardoid
-      std::string userId;
-      std::string stageId;
       double volume;
       bool muted;
       double x;
@@ -523,6 +543,8 @@ namespace ds {
       double rX;
       double rY;
       double rZ;
+      std::string userId;
+      std::string stageId;
     };
 
     __unused inline void to_json(nlohmann::json& j, const remote_ov_track_t& p)
@@ -533,8 +555,6 @@ namespace ds {
                          {"channel", p.channel},
                          {"online", p.online},
                          {"directivity", p.directivity},
-                         {"userId", p.userId},
-                         {"stageId", p.stageId},
                          {"volume", p.volume},
                          {"muted", p.muted},
                          {"x", p.x},
@@ -542,7 +562,9 @@ namespace ds {
                          {"z", p.z},
                          {"rX", p.rX},
                          {"rY", p.rY},
-                         {"rZ", p.rZ}};
+                         {"rZ", p.rZ},
+                         {"userId", p.userId},
+                         {"stageId", p.stageId}};
     }
 
     __unused inline void from_json(const nlohmann::json& j,
@@ -570,17 +592,19 @@ namespace ds {
       std::string _id;
       std::string stageMemberId;
       std::string remoteOvTrackId;
-      std::string directivity; // Will be omni or cardoid
+      std::string directivity = "cardoid"; // Will be omni or cardoid
       std::string userId;
       std::string stageId;
-      double volume;
-      bool muted;
-      double x;
-      double y;
-      double z;
-      double rX;
-      double rY;
-      double rZ;
+      bool customizeVolume = false;
+      bool customizePosition = false;
+      double volume = 1;
+      bool muted = false;
+      double x = std::numeric_limits<double>::lowest();
+      double y = std::numeric_limits<double>::lowest();
+      double z = std::numeric_limits<double>::lowest();
+      double rX = std::numeric_limits<double>::lowest();
+      double rY = std::numeric_limits<double>::lowest();
+      double rZ = std::numeric_limits<double>::lowest();
     };
 
     __unused inline void to_json(nlohmann::json& j,
@@ -594,6 +618,8 @@ namespace ds {
                          {"stageId", p.stageId},
                          {"volume", p.volume},
                          {"muted", p.muted},
+                         {"customizeVolume", p.customizeVolume},
+                         {"customizePosition", p.customizePosition},
                          {"x", p.x},
                          {"y", p.y},
                          {"z", p.z},
@@ -608,17 +634,23 @@ namespace ds {
       j.at("_id").get_to(p._id);
       j.at("stageMemberId").get_to(p.stageMemberId);
       j.at("remoteOvTrackId").get_to(p.remoteOvTrackId);
-      j.at("directivity").get_to(p.directivity);
       j.at("userId").get_to(p.userId);
       j.at("stageId").get_to(p.stageId);
-      j.at("volume").get_to(p.volume);
-      j.at("muted").get_to(p.muted);
-      j.at("x").get_to(p.x);
-      j.at("y").get_to(p.y);
-      j.at("z").get_to(p.z);
-      j.at("rX").get_to(p.rX);
-      j.at("rY").get_to(p.rY);
-      j.at("rZ").get_to(p.rZ);
+      j.at("customizeVolume").get_to(p.customizeVolume);
+      j.at("customizePosition").get_to(p.customizePosition);
+      if(p.customizeVolume) {
+        j.at("volume").get_to(p.volume);
+        j.at("muted").get_to(p.muted);
+        j.at("directivity").get_to(p.directivity);
+      }
+      if(p.customizePosition) {
+        j.at("x").get_to(p.x);
+        j.at("y").get_to(p.y);
+        j.at("z").get_to(p.z);
+        j.at("rX").get_to(p.rX);
+        j.at("rY").get_to(p.rY);
+        j.at("rZ").get_to(p.rZ);
+      }
     }
 
     struct user_t {

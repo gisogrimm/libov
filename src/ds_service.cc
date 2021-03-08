@@ -95,7 +95,7 @@ void ds::ds_service_t::service()
               nlohmann::json soundCard = {
                   {"name", sound_device.id},
                   {"label", sound_device.name},
-                  {"driver", "JACK"},
+                  {"driver", "jack"},
                   {"numInputChannels", sound_device.num_input_channels},
                   {"numOutputChannels", sound_device.num_output_channels},
                   {"sampleRate", sound_device.sample_rate},
@@ -306,6 +306,24 @@ void ds::ds_service_t::service()
           const std::string _id = payload.get<std::string>();
           this->store_->removeGroup(_id);
           // TODO: Check if triggers are necessary here
+        } else if(event == "custom-group-added") {
+          const std::string _id = payload.at("_id").get<std::string>();
+          this->store_->createCustomGroup(payload);
+          if(this->isInsideStage()) {
+            this->syncGroupPosition(_id);
+            this->syncGroupVolume(_id);
+          }
+        } else if(event == "custom-group-changed") {
+          const std::string _id = payload.at("_id").get<std::string>();
+          this->store_->updateCustomGroup(_id, payload);
+          if(this->isInsideStage()) {
+            this->syncGroupPosition(_id);
+            this->syncGroupVolume(_id);
+          }
+        } else if(event == "custom-group-removed") {
+          const std::string _id = payload.get<std::string>();
+          this->store_->removeCustomGroup(_id);
+          // TODO: Check if triggers are necessary here
         } else if(event == "stage-member-added") {
           this->store_->createStageMember(payload);
           this->syncRemoteStageMembers();
@@ -346,12 +364,12 @@ void ds::ds_service_t::service()
                 this->store_->readCustomStageMember(_id);
             if(customStageMember) {
               if(payload.contains("volume") || payload.contains("muted")) {
-                this->syncStageMemberVolume(customStageMember->stageId);
+                this->syncStageMemberVolume(customStageMember->stageMemberId);
               }
               if(payload.contains("x") || payload.contains("z") ||
                  payload.contains("y") || payload.contains("rX") ||
                  payload.contains("rY") || payload.contains("yZ")) {
-                this->syncStageMemberPosition(customStageMember->stageId);
+                this->syncStageMemberPosition(customStageMember->stageMemberId);
               }
             } else {
               std::cerr << "[ERROR] custom stage member not available"
@@ -365,8 +383,8 @@ void ds::ds_service_t::service()
           this->store_->removeCustomStageMember(_id);
           if(this->isInsideStage()) {
             if(customStageMember) {
-              this->syncStageMemberVolume(customStageMember->stageId);
-              this->syncStageMemberPosition(customStageMember->stageId);
+              this->syncStageMemberVolume(customStageMember->stageMemberId);
+              this->syncStageMemberPosition(customStageMember->stageMemberId);
             } else {
               std::cerr << "[ERROR] custom stage member not available"
                         << std::endl;
@@ -657,11 +675,13 @@ void ds::ds_service_t::syncLocalStageMember()
     boost::optional<const ds::json::custom_stage_member_t> customStageMember =
         this->store_->getCustomStageMemberByStageMemberId(
             currentStageMember->_id);
+    std::cout << "AFTER?" << std::endl;
     boost::optional<const ds::json::custom_group_t> customGroup =
         this->store_->getCustomGroupByGroupId(group->_id);
 
     const std::vector<const ds::json::remote_ov_track_t> tracks =
         this->store_->getRemoteOvTracksByStageMemberId(currentStageMember->_id);
+
 
     std::vector<device_channel_t> deviceChannels;
     // Now for all tracks
@@ -739,12 +759,16 @@ void ds::ds_service_t::syncLocalStageMember()
       };
     }
 
+    if( currentStageMember->ovStageDeviceId == 255 ) {
+      std::cerr << "OV not available" << std::endl;
+      return;
+    }
     this->backend_.set_thisdev({
-        currentStageMember->ovStageDeviceId, localUser->name, deviceChannels,
-        position, orientation, gain, muted, localDevice->senderJitter,
-        localDevice->receiverJitter,
-        true // sendlocal always true?
-    });
+                                   currentStageMember->ovStageDeviceId, localUser->name, deviceChannels,
+                                   position, orientation, gain, muted, localDevice->senderJitter,
+                                   localDevice->receiverJitter,
+                                   true // sendlocal always true?
+                               });
   } else {
     std::cout << "[TRACE] Nothing to do here - not on a stage" << std::endl;
   }

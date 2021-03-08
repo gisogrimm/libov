@@ -277,12 +277,9 @@ void ds::ds_store_t::updateCustomStageMember(const std::string& id,
 boost::optional<const ds::json::custom_stage_member_t>
 ds::ds_store_t::readCustomStageMember(const std::string& id)
 {
-  std::cout << "BLABLA?" << std::endl;
   std::lock_guard<std::recursive_mutex>(this->custom_stage_members_mutex_);
-  std::cout << "BLABLA?" << std::endl;
   if(this->customStageMembers_.count(id) > 0) {
     const ds::json::custom_stage_member_t customStageMember =  this->customStageMembers_[id].get<ds::json::custom_stage_member_t>();
-    std::cout << "BLABLABLA" << std::endl;
     return customStageMember;
   }
   return boost::none;
@@ -526,7 +523,6 @@ ds::ds_store_t::getCustomStageMemberByStageMemberId(
   std::lock_guard<std::recursive_mutex>(this->custom_stage_members_mutex_);
   if(this->customStageMemberIdByStageMemberId_.count(stageMemberId) > 0) {
     const std::string customStageMemberId = this->customStageMemberIdByStageMemberId_[stageMemberId];
-    std::cout << "HUI" << customStageMemberId << std::endl;
     boost::optional<const ds::json::custom_stage_member_t> customStageMember = this->readCustomStageMember(
         customStageMemberId);
     return customStageMember;
