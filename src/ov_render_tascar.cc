@@ -746,11 +746,11 @@ void ov_render_tascar_t::start_audiobackend()
     char cmd[1024];
 #ifdef __APPLE__
     // Check if jack is already running
-    //const char *client_name = "run_test";
+    // const char *client_name = "run_test";
     jack_options_t options = JackNullOption;
     jack_status_t status;
-    jack_client_t *jackClient = jack_client_open("run_test", options, &status);
-    if( jackClient != nullptr ) {
+    jack_client_t* jackClient = jack_client_open("run_test", options, &status);
+    if(jackClient != nullptr) {
       std::cout << "JACK IS ALREADY RUNNING" << std::endl;
       return;
     }

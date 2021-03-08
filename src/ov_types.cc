@@ -15,6 +15,80 @@
   std::cerr << __FILE__ << ":" << __LINE__ << ": (" << #a << ")!=(" << #b      \
             << ")" << std::endl
 
+pos_t default_pos = {
+    0.0, // x
+    0.0, // y
+    0.0, // z
+};
+
+pos_t default_roomsize = {
+    7.5,  // x
+    13.0, // y
+    5.0,  // z
+};
+
+zyx_euler_t default_rot = {
+    0.0,
+    0.0,
+    0.0,
+};
+
+stage_device_t default_device = {
+    0,           // stage_device_id_t id
+    "",          // std::string label;
+    {},          // std::vector<device_channel_t> channels;
+    default_pos, // pos_t position;
+    default_rot, // zyx_euler_t orientation;
+    1.0,         // double gain;
+    false,       // bool mute;
+    5.0,         // double senderjitter;
+    5.0,         // double receiverjitter;
+    true,        // bool sendlocal;
+};
+
+render_settings_t default_rendersettings = {
+    0,                // stage_device_id_t id;
+    default_roomsize, // pos_t roomsize;
+    0.6,              // double absorption;
+    0.7,              // double damping;
+    1.0,              // double reverbgain;
+    true,             // bool renderreverb;
+    false,            // bool renderism;
+    false,            // bool rawmode;
+    "hrtf",           // std::string rectype;
+    1.0,              // double egogain;
+    true,             // bool peer2peer;
+    "",               // std::string outputport1;
+    "",               // std::string outputport2;
+    std::unordered_map<std::string,
+                       std::string>(), // std::unordered_map<std::string,
+                                       // std::string> xports;
+    std::vector<port_t>(),             // std::vector<port_t> xrecport;
+    0,                                 // double secrec;
+    false,                             // bool headtracking;
+    true,                              // bool headtrackingrotrec;
+    true,                              // bool headtrackingrotsrc;
+    0,                                 // port_t headtrackingport;
+    "",                                // std::string ambientsound;
+    50,                                // double ambientlevel;
+};
+
+network_settings_t default_networksettings = {};
+
+stage_t default_stage = {
+    "",                      // std::string host;
+    0,                       // port_t port;
+    0,                       // secret_t pin;
+    default_rendersettings,  // render_settings_t rendersettings;
+    default_networksettings, // network_settings_t networksettings;
+    "",                      // std::string thisdeviceid;
+    0,                       // stage_device_id_t thisstagedeviceid;
+    std::map<stage_device_id_t,
+             stage_device_t>(), // std::map<stage_device_id_t,
+                                // stage_device_t> stage;
+    default_device,             // stage_device_t thisdevice;
+};
+
 bool operator!=(const pos_t& a, const pos_t& b)
 {
   return (a.x != b.x) || (a.y != b.y) || (a.z != b.z);
@@ -87,42 +161,7 @@ bool operator!=(const render_settings_t& a, const render_settings_t& b)
 }
 
 ov_render_base_t::ov_render_base_t(const std::string& deviceid)
-    : audiodevice({"", "", 48000, 96, 2}),
-      stage({"",
-             0,
-             0,
-             {0,
-              {0, 0, 0},
-              0.6,
-              0.7,
-              -8,
-              true,
-              false,
-              false,
-              "ortf",
-              1,
-              true,
-              "",
-              "",
-              std::unordered_map<std::string, std::string>(),
-              std::vector<port_t>(),
-              0,
-              false,
-              true,
-              0},
-             deviceid,
-             0,
-             std::map<stage_device_id_t, stage_device_t>(),
-             {0,
-              "",
-              std::vector<device_channel_t>(),
-              {0, 0, 0},
-              {0, 0, 0},
-              0,
-              false,
-              5,
-              5,
-              true}}),
+    : audiodevice({"", "", 48000, 96, 2}), stage(default_stage),
       session_active(false), audio_active(false)
 {
 }

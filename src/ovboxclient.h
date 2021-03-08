@@ -23,9 +23,10 @@ public:
      \param secret access code of relay server session
      \param callerid ID of caller (unique number of device in stage, max 30)
      \param peer2peer use peer-to-peer mode for this client
-     \param donotsend do not request data messages from server or peers (e.g., in proxy mode)
-     \param downmixonly send downmix only, not individual tracks (not yet fully implemented)
-     \param sendlocal allow sending to local IP address if in same network
+     \param donotsend do not request data messages from server or peers (e.g.,
+     in proxy mode) \param downmixonly send downmix only, not individual tracks
+     (not yet fully implemented) \param sendlocal allow sending to local IP
+     address if in same network
    */
   ovboxclient_t(const std::string& desthost, port_t destport, port_t recport,
                 port_t portoffset, int prio, secret_t secret,

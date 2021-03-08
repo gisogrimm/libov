@@ -6,23 +6,29 @@
 #include <unordered_map>
 #include <vector>
 
-// cartesian coordinates in meters, e.g., for room positions:
+/**
+    \brief cartesian coordinates in meters, e.g., for room positions.
+ */
 struct pos_t {
-  // x is forward direction
+  /// x is forward direction
   double x;
-  // y is left direction
+  /// y is left direction
   double y;
-  // z is up direction
+  /// z is up direction
   double z;
 };
 
 bool operator!=(const pos_t& a, const pos_t& b);
 
-// Euler angles for rotation, in radians:
+/**
+   \brief Euler angles for rotation, in radians.
+ */
 struct zyx_euler_t {
-  // rotation around z axis:
+  /// rotation around z axis
   double z;
+  /// rotation around y axis
   double y;
+  /// rotation around x axis
   double x;
 };
 
@@ -30,16 +36,30 @@ bool operator!=(const zyx_euler_t& a, const zyx_euler_t& b);
 
 /// packet sequence type
 typedef int16_t sequence_t;
+
 /// port number type
 typedef uint16_t port_t;
+
 /// pin code type
 typedef uint32_t secret_t;
-/// unique device ID number in a stage, a number between 0 and MAXEP
+/**
+\brief unique device ID number in a stage
+
+ This ID is a number between 0 and MAXEP (defined in
+common.h). Uniqueness must be guaranteed within one stage session,
+i.e., the database backend needs to ensure a correct assignment.
+*/
 typedef uint8_t stage_device_id_t;
-// stage device channel id type
-// TODO: Verify
+/**
+ \brief unique stage device channel id
+
+ This ID must be unique at least within one session.
+*/
 typedef std::string device_channel_id_t;
 
+/**
+   \brief Description of an audio interface device
+ */
 struct audio_device_t {
   /// driver name, e.g. jack, ALSA, ASIO
   std::string drivername;
@@ -98,6 +118,18 @@ bool operator!=(const std::vector<device_channel_t>& a,
 
 bool operator!=(const stage_device_t& a, const stage_device_t& b);
 
+/**
+   \brief Network settings of a device
+
+   This structure contains network settings, like peer-to-peer mode,
+   jitter buffer settings, extra ports etc.
+ */
+struct network_settings_t {
+};
+
+/**
+   \brief Acoustic rendering settings
+ */
 struct render_settings_t {
   stage_device_id_t id;
   /// room dimensions:
@@ -156,6 +188,8 @@ struct stage_t {
   secret_t pin;
   /// rendering settings:
   render_settings_t rendersettings;
+  /// rendering settings:
+  network_settings_t networksettings;
   /// Device identifier of this stage device (typically its mac address):
   std::string thisdeviceid;
   /// Numeric identifier of this device within the stage:
