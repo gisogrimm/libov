@@ -1,4 +1,5 @@
 #include "ds_service.h"
+#include "ds_events.h"
 #include "udpsocket.h"
 #include <iostream>
 #include <nlohmann/json.hpp>
@@ -64,7 +65,7 @@ void ds::ds_service_t::service()
 
         std::cout << "[EVENT] " << event << std::endl;
 
-        if(event == "ready") {
+        if(event == ds::events::READY) {
           this->ready_ = true;
           if(this->isInsideStage()) {
             boost::optional<const ds::json::device_t> localDevice =
@@ -77,7 +78,7 @@ void ds::ds_service_t::service()
             }
           }
           this->store_->dump();
-        } else if(event == "local-device-ready") {
+        } else if(event == ds::events::LOCAL_DEVICE_READY) {
           this->store_->setLocalDevice(payload);
           const auto localDevice = this->store_->getLocalDevice();
           // UPDATE SOUND CARDS
@@ -112,7 +113,7 @@ void ds::ds_service_t::service()
           } else {
             std::cerr << "[WARNING] No soundcards available!" << std::endl;
           }
-        } else if(event == "device-changed") {
+        } else if(event == ds::events::DEVICE_CHANGED) {
           boost::optional<const ds::json::device_t> localDevice =
               this->store_->getLocalDevice();
           if(localDevice && localDevice->_id == payload["_id"]) {
@@ -157,7 +158,7 @@ void ds::ds_service_t::service()
               }
             }
           }
-        } else if(event == "stage-joined") {
+        } else if(event == ds::events::STAGE_JOINED) {
           const std::string currentStageId =
               payload.at("stageId").get<std::string>();
           this->store_->setCurrentStageId(currentStageId);
@@ -176,10 +177,16 @@ void ds::ds_service_t::service()
               this->store_->createGroup(i);
             }
           }
-          if(payload.contains("customGroups") &&
-             payload["customGroups"].is_array()) {
-            for(const nlohmann::json& i : payload["customGroups"]) {
-              this->store_->createCustomGroup(i);
+          if(payload.contains("customGroupVolumes") &&
+             payload["customGroupVolumes"].is_array()) {
+            for(const nlohmann::json& i : payload["customGroupVolumes"]) {
+              this->store_->createCustomGroupVolume(i);
+            }
+          }
+          if(payload.contains("customGroupPositions") &&
+             payload["customGroupPositions"].is_array()) {
+            for(const nlohmann::json& i : payload["customGroupPositions"]) {
+              this->store_->createCustomGroupPosition(i);
             }
           }
           if(payload.contains("stageMembers") &&
@@ -188,10 +195,16 @@ void ds::ds_service_t::service()
               this->store_->createStageMember(i);
             }
           }
-          if(payload.contains("customStageMembers") &&
-             payload["customStageMembers"].is_array()) {
-            for(const nlohmann::json& i : payload["customStageMembers"]) {
-              this->store_->createCustomStageMember(i);
+          if(payload.contains("customStageMemberPositions") &&
+             payload["customStageMemberPositions"].is_array()) {
+            for(const nlohmann::json& i : payload["customStageMemberPositions"]) {
+              this->store_->createCustomStageMemberPosition(i);
+            }
+          }
+          if(payload.contains("customStageMemberVolumes") &&
+             payload["customStageMemberVolumes"].is_array()) {
+            for(const nlohmann::json& i : payload["customStageMemberVolumes"]) {
+              this->store_->createCustomStageMemberVolume(i);
             }
           }
           if(payload.contains("ovTracks") && payload["ovTracks"].is_array()) {
@@ -205,10 +218,16 @@ void ds::ds_service_t::service()
               this->store_->createRemoteOvTrack(i);
             }
           }
-          if(payload.contains("customRemoteOvTracks") &&
-             payload["customRemoteOvTracks"].is_array()) {
-            for(const nlohmann::json& i : payload["customRemoteOvTracks"]) {
-              this->store_->createCustomRemoteOvTrack(i);
+          if(payload.contains("customRemoteOvTrackPositions") &&
+             payload["customRemoteOvTrackPositions"].is_array()) {
+            for(const nlohmann::json& i : payload["customRemoteOvTrackPositions"]) {
+              this->store_->createCustomRemoteOvTrackPosition(i);
+            }
+          }
+          if(payload.contains("customRemoteOvTrackVolumes") &&
+             payload["customRemoteOvTrackVolumes"].is_array()) {
+            for(const nlohmann::json& i : payload["customRemoteOvTrackVolumes"]) {
+              this->store_->createCustomRemoteOvTrackVolume(i);
             }
           }
 
@@ -227,7 +246,7 @@ void ds::ds_service_t::service()
                 this->store_->readStage(currentStageId);
 
             if(currentStage) {
-              if(currentStage->ovServer.supported) {
+              if(currentStage->supportsOv) {
                 this->configureConnection(currentStage->ovServer);
               } else {
                 std::cout
@@ -240,19 +259,22 @@ void ds::ds_service_t::service()
                         << " defined but stage is not available" << std::endl;
             }
           }
-        } else if(event == "stage-left") {
+        } else if(event == ds::events::STAGE_LEFT) {
           this->stopOv();
           // Remove active stage related data
-          this->store_->removeCustomGroups();
+          this->store_->removeCustomGroupPositions();
+          this->store_->removeCustomGroupVolumes();
           this->store_->removeStageMembers();
-          this->store_->removeCustomStageMembers();
+          this->store_->removeCustomStageMemberPositions();
+          this->store_->removeCustomStageMemberVolumes();
           this->store_->removeRemoteOvTracks();
-          this->store_->removeCustomRemoteOvTracks();
-        } else if(event == "user-ready") {
+          this->store_->removeCustomRemoteOvTrackPositions();
+          this->store_->removeCustomRemoteOvTrackVolumes();
+        } else if(event == ds::events::USER_READY) {
           this->store_->setLocalUser(payload);
-        } else if(event == "stage-added") {
+        } else if(event == ds::events::STAGE_ADDED) {
           this->store_->createStage(payload);
-        } else if(event == "stage-changed") {
+        } else if(event == ds::events::STAGE_CHANGED) {
           const std::string stageId = payload.at("_id").get<std::string>();
           const std::string currentStageId = this->store_->getCurrentStageId();
           this->store_->updateStage(stageId, payload);
@@ -260,7 +282,7 @@ void ds::ds_service_t::service()
             boost::optional<const ds::json::stage_t> stage =
                 this->store_->readStage(currentStageId);
             if(stage) {
-              if(stage->ovServer.supported) {
+              if(stage->supportsOv) {
                 this->configureConnection(stage->ovServer);
               } else {
                 std::cerr
@@ -272,7 +294,7 @@ void ds::ds_service_t::service()
                         << " should existing but is not available" << std::endl;
             }
           }
-        } else if(event == "stage-removed") {
+        } else if(event == ds::events::STAGE_REMOVED) {
           const std::string _id = payload.get<std::string>();
           this->store_->removeStage(_id);
           const std::string currentStageId = this->store_->getCurrentStageId();
@@ -280,54 +302,71 @@ void ds::ds_service_t::service()
             this->store_->setCurrentStageId("");
             this->stopOv();
           }
-        } else if(event == "user-added") {
+        } else if(event == ds::events::REMOTE_USER_ADDED) {
           this->store_->createUser(payload);
-        } else if(event == "user-changed") {
+        } else if(event == ds::events::REMOTE_USER_CHANGED) {
           const std::string _id = payload.at("_id").get<std::string>();
           this->store_->updateUser(_id, payload);
-        } else if(event == "user-removed") {
+        } else if(event == ds::events::REMOTE_USER_REMOVED) {
           const std::string _id = payload.get<std::string>();
           this->store_->removeUser(_id);
-        } else if(event == "group-added") {
+        } else if(event == ds::events::GROUP_ADDED) {
           const std::string _id = payload.at("_id").get<std::string>();
           this->store_->createGroup(payload);
           if(this->isInsideStage()) {
             this->syncGroupPosition(_id);
             this->syncGroupVolume(_id);
           }
-        } else if(event == "group-changed") {
+        } else if(event == ds::events::GROUP_CHANGED) {
           const std::string _id = payload.at("_id").get<std::string>();
           this->store_->updateGroup(_id, payload);
           if(this->isInsideStage()) {
             this->syncGroupPosition(_id);
             this->syncGroupVolume(_id);
           }
-        } else if(event == "group-removed") {
+        } else if(event == ds::events::GROUP_REMOVED) {
           const std::string _id = payload.get<std::string>();
           this->store_->removeGroup(_id);
           // TODO: Check if triggers are necessary here
-        } else if(event == "custom-group-added") {
+        } else if(event == ds::events::CUSTOM_GROUP_POSITION_ADDED) {
           const std::string _id = payload.at("_id").get<std::string>();
-          this->store_->createCustomGroup(payload);
+          this->store_->createCustomGroupPosition(payload);
           if(this->isInsideStage()) {
             this->syncGroupPosition(_id);
-            this->syncGroupVolume(_id);
           }
-        } else if(event == "custom-group-changed") {
+        } else if(event == ds::events::CUSTOM_GROUP_POSITION_CHANGED) {
           const std::string _id = payload.at("_id").get<std::string>();
-          this->store_->updateCustomGroup(_id, payload);
+          this->store_->updateCustomGroupPosition(_id, payload);
           if(this->isInsideStage()) {
             this->syncGroupPosition(_id);
-            this->syncGroupVolume(_id);
           }
-        } else if(event == "custom-group-removed") {
+        } else if(event == ds::events::CUSTOM_GROUP_POSITION_REMOVED) {
           const std::string _id = payload.get<std::string>();
-          this->store_->removeCustomGroup(_id);
-          // TODO: Check if triggers are necessary here
-        } else if(event == "stage-member-added") {
+          this->store_->removeCustomGroupPosition(_id);
+        } else if(event == ds::events::STAGE_MEMBER_ADDED) {
           this->store_->createStageMember(payload);
           this->syncRemoteStageMembers();
-        } else if(event == "stage-member-changed") {
+        } else if(event == ds::events::CUSTOM_GROUP_VOLUME_ADDED) {
+          const std::string _id = payload.at("_id").get<std::string>();
+          this->store_->createCustomGroupVolume(payload);
+          if(this->isInsideStage()) {
+            this->syncGroupPosition(_id);
+            this->syncGroupVolume(_id);
+          }
+        } else if(event == ds::events::CUSTOM_GROUP_VOLUME_CHANGED) {
+          const std::string _id = payload.at("_id").get<std::string>();
+          this->store_->updateCustomGroupVolume(_id, payload);
+          if(this->isInsideStage()) {
+            this->syncGroupPosition(_id);
+            this->syncGroupVolume(_id);
+          }
+        } else if(event == ds::events::CUSTOM_GROUP_VOLUME_REMOVED) {
+          const std::string _id = payload.get<std::string>();
+          this->store_->removeCustomGroupVolume(_id);
+        } else if(event == ds::events::STAGE_MEMBER_ADDED) {
+          this->store_->createStageMember(payload);
+          this->syncRemoteStageMembers();
+        } else if(event == ds::events::STAGE_MEMBER_CHANGED) {
           const std::string _id = payload.at("_id").get<std::string>();
           this->store_->updateStageMember(_id, payload);
           // stage member
@@ -341,31 +380,63 @@ void ds::ds_service_t::service()
               this->syncStageMemberPosition(_id);
             }
           }
-        } else if(event == "stage-member-removed") {
+        } else if(event == ds::events::STAGE_MEMBER_REMOVED) {
           const std::string _id = payload.get<std::string>();
           this->store_->removeStageMember(_id);
           if(this->isInsideStage()) {
             this->syncRemoteStageMembers();
           }
-        } else if(event == "custom-stage-member-added") {
+        } else if(event == ds::events::CUSTOM_STAGE_MEMBER_VOLUME_ADDED) {
           const std::string _id = payload.at("_id").get<std::string>();
-          this->store_->createCustomStageMember(payload);
+          this->store_->createCustomStageMemberVolume(payload);
           if(this->isInsideStage()) {
             const std::string stageMemberId =
                 payload.at("stageMemberId").get<std::string>();
             this->syncStageMemberVolume(stageMemberId);
-            this->syncStageMemberPosition(stageMemberId);
           }
-        } else if(event == "custom-stage-member-changed") {
+        } else if(event == ds::events::CUSTOM_STAGE_MEMBER_VOLUME_CHANGED) {
           const std::string _id = payload.at("_id").get<std::string>();
-          this->store_->updateCustomStageMember(_id, payload);
+          this->store_->updateCustomStageMemberVolume(_id, payload);
           if(this->isInsideStage()) {
             const auto customStageMember =
-                this->store_->readCustomStageMember(_id);
+                this->store_->readCustomStageMemberVolume(_id);
             if(customStageMember) {
               if(payload.contains("volume") || payload.contains("muted")) {
                 this->syncStageMemberVolume(customStageMember->stageMemberId);
               }
+            } else {
+              std::cerr << "[ERROR] custom stage member not available"
+                        << std::endl;
+            }
+          }
+        } else if(event == ds::events::CUSTOM_STAGE_MEMBER_VOLUME_REMOVED) {
+          const std::string _id = payload.get<std::string>();
+          const auto customStageMember =
+              this->store_->readCustomStageMemberVolume(_id);
+          this->store_->removeCustomStageMemberVolume(_id);
+          if(this->isInsideStage()) {
+            if(customStageMember) {
+              this->syncStageMemberVolume(customStageMember->stageMemberId);
+            } else {
+              std::cerr << "[ERROR] custom stage member not available"
+                        << std::endl;
+            }
+          }
+        } else if(event == ds::events::CUSTOM_STAGE_MEMBER_POSITION_ADDED) {
+          const std::string _id = payload.at("_id").get<std::string>();
+          this->store_->createCustomStageMemberPosition(payload);
+          if(this->isInsideStage()) {
+            const std::string stageMemberId =
+                payload.at("stageMemberId").get<std::string>();
+            this->syncStageMemberPosition(stageMemberId);
+          }
+        } else if(event == ds::events::CUSTOM_STAGE_MEMBER_POSITION_CHANGED) {
+          const std::string _id = payload.at("_id").get<std::string>();
+          this->store_->updateCustomStageMemberPosition(_id, payload);
+          if(this->isInsideStage()) {
+            const auto customStageMember =
+                this->store_->readCustomStageMemberPosition(_id);
+            if(customStageMember) {
               if(payload.contains("x") || payload.contains("z") ||
                  payload.contains("y") || payload.contains("rX") ||
                  payload.contains("rY") || payload.contains("yZ")) {
@@ -376,26 +447,25 @@ void ds::ds_service_t::service()
                         << std::endl;
             }
           }
-        } else if(event == "custom-stage-member-removed") {
+        } else if(event == ds::events::CUSTOM_STAGE_MEMBER_POSITION_REMOVED) {
           const std::string _id = payload.get<std::string>();
           const auto customStageMember =
-              this->store_->readCustomStageMember(_id);
-          this->store_->removeCustomStageMember(_id);
+              this->store_->readCustomStageMemberPosition(_id);
+          this->store_->removeCustomStageMemberPosition(_id);
           if(this->isInsideStage()) {
             if(customStageMember) {
-              this->syncStageMemberVolume(customStageMember->stageMemberId);
               this->syncStageMemberPosition(customStageMember->stageMemberId);
             } else {
               std::cerr << "[ERROR] custom stage member not available"
                         << std::endl;
             }
           }
-        } else if(event == "stage-member-ov-added") {
+        } else if(event == ds::events::REMOTE_OV_TRACK_ADDED) {
           this->store_->createRemoteOvTrack(payload);
           if(this->isInsideStage()) {
             this->syncRemoteStageMembers();
           }
-        } else if(event == "stage-member-ov-changed") {
+        } else if(event == ds::events::REMOTE_OV_TRACK_CHANGED) {
           const std::string _id = payload.at("_id").get<std::string>();
           this->store_->updateRemoteOvTrack(_id, payload);
           if(this->isInsideStage()) {
@@ -408,56 +478,93 @@ void ds::ds_service_t::service()
               this->syncRemoteOvTrackPosition(_id);
             }
           }
-        } else if(event == "stage-member-ov-removed") {
+        } else if(event == ds::events::REMOTE_OV_TRACK_REMOVED) {
           const std::string _id = payload.get<std::string>();
           this->store_->removeRemoteOvTrack(_id);
           if(this->isInsideStage()) {
             this->syncRemoteStageMembers();
           }
-        } else if(event == "custom-stage-member-ov-added") {
-          this->store_->createCustomRemoteOvTrack(payload);
+        } else if(event == ds::events::CUSTOM_REMOTE_OV_TRACK_POSITION_ADDED) {
+          this->store_->createCustomRemoteOvTrackPosition(payload);
+          if(this->isInsideStage()) {
+            const std::string remoteOvTrackId =
+                payload.at("remoteOvTrackId").get<std::string>();
+            this->syncRemoteOvTrackPosition(remoteOvTrackId);
+          }
+        } else if(event ==
+                  ds::events::CUSTOM_REMOTE_OV_TRACK_POSITION_CHANGED) {
+          const std::string _id = payload.at("_id").get<std::string>();
+          this->store_->updateCustomRemoteOvTrackPosition(_id, payload);
+          if(this->isInsideStage()) {
+            boost::optional<const ds::json::custom_remote_ov_track_position_t>
+                customRemoteOvTrack =
+                    this->store_->readCustomRemoteOvTrackPosition(_id);
+            if(customRemoteOvTrack) {
+              this->syncRemoteOvTrackPosition(
+                  customRemoteOvTrack->remoteOvTrackId);
+            } else {
+              std::cerr << "[ERROR] Could not find required custom remote ov "
+                           "track position "
+                        << _id << std::endl;
+            }
+          }
+        } else if(event ==
+                  ds::events::CUSTOM_REMOTE_OV_TRACK_POSITION_REMOVED) {
+          const std::string _id = payload.get<std::string>();
+          boost::optional<const ds::json::custom_remote_ov_track_position_t>
+              customRemoteOvTrack =
+                  this->store_->readCustomRemoteOvTrackPosition(_id);
+          this->store_->removeCustomRemoteOvTrackPosition(_id);
+          if(this->isInsideStage()) {
+            if(customRemoteOvTrack) {
+              this->syncRemoteOvTrackPosition(
+                  customRemoteOvTrack->remoteOvTrackId);
+            } else {
+              std::cerr << "[ERROR] Could not find required custom remote ov "
+                           "track position "
+                        << _id << std::endl;
+            }
+          }
+        } else if(event == ds::events::CUSTOM_REMOTE_OV_TRACK_VOLUME_ADDED) {
+          this->store_->createCustomRemoteOvTrackVolume(payload);
           if(this->isInsideStage()) {
             const std::string remoteOvTrackId =
                 payload.at("remoteOvTrackId").get<std::string>();
             this->syncRemoteOvTrackVolume(remoteOvTrackId);
-            this->syncRemoteOvTrackPosition(remoteOvTrackId);
           }
-        } else if(event == "custom-stage-member-ov-changed") {
+        } else if(event == ds::events::CUSTOM_REMOTE_OV_TRACK_VOLUME_CHANGED) {
           const std::string _id = payload.at("_id").get<std::string>();
-          this->store_->updateCustomRemoteOvTrack(_id, payload);
+          this->store_->updateCustomRemoteOvTrackPosition(_id, payload);
           if(this->isInsideStage()) {
-            boost::optional<const ds::json::custom_remote_ov_track_t>
-                customRemoteOvTrack =
-                    this->store_->readCustomRemoteOvTrack(_id);
-            if(customRemoteOvTrack) {
+            boost::optional<const ds::json::custom_remote_ov_track_volume_t>
+                customRemoteOvTrackVolume =
+                    this->store_->readCustomRemoteOvTrackVolume(_id);
+            if(customRemoteOvTrackVolume) {
               this->syncRemoteOvTrackVolume(
-                  customRemoteOvTrack->remoteOvTrackId);
-              this->syncRemoteOvTrackPosition(
-                  customRemoteOvTrack->remoteOvTrackId);
+                  customRemoteOvTrackVolume->remoteOvTrackId);
             } else {
-              std::cerr
-                  << "[ERROR] Could not find required custom remote ov track "
-                  << _id << std::endl;
+              std::cerr << "[ERROR] Could not find required custom remote ov "
+                           "track volume "
+                        << _id << std::endl;
             }
           }
-        } else if(event == "custom-stage-member-ov-removed") {
+        } else if(event == ds::events::CUSTOM_REMOTE_OV_TRACK_VOLUME_REMOVED) {
           const std::string _id = payload.get<std::string>();
-          boost::optional<const ds::json::custom_remote_ov_track_t>
-              customRemoteOvTrack = this->store_->readCustomRemoteOvTrack(_id);
-          this->store_->removeCustomRemoteOvTrack(_id);
+          boost::optional<const ds::json::custom_remote_ov_track_volume_t>
+              customRemoteOvTrack =
+                  this->store_->readCustomRemoteOvTrackVolume(_id);
+          this->store_->removeCustomRemoteOvTrackVolume(_id);
           if(this->isInsideStage()) {
             if(customRemoteOvTrack) {
               this->syncRemoteOvTrackVolume(
                   customRemoteOvTrack->remoteOvTrackId);
-              this->syncRemoteOvTrackPosition(
-                  customRemoteOvTrack->remoteOvTrackId);
             } else {
-              std::cerr
-                  << "[ERROR] Could not find required custom remote ov track "
-                  << _id << std::endl;
+              std::cerr << "[ERROR] Could not find required custom remote ov "
+                           "track volume "
+                        << _id << std::endl;
             }
           }
-        } else if(event == "sound-card-added") {
+        } else if(event == ds::events::SOUND_CARD_ADDED) {
           this->store_->createSoundCard(payload);
           boost::optional<const ds::json::device_t> localDevice =
               this->store_->getLocalDevice();
@@ -481,7 +588,7 @@ void ds::ds_service_t::service()
               }
             }
           }
-        } else if(event == "sound-card-changed") {
+        } else if(event == ds::events::SOUND_CARD_CHANGED) {
           const std::string _id = payload.at("_id").get<std::string>();
           this->store_->updateSoundCard(_id, payload);
           const auto soundCard = this->store_->readSoundCard(_id);
@@ -525,7 +632,7 @@ void ds::ds_service_t::service()
             std::cerr
                 << "[ERROR] Logical error: updated sound card is NOT available";
           }
-        } else if(event == "sound-card-removed") {
+        } else if(event == ds::events::SOUND_CARD_REMOVED) {
           const std::string _id = payload.get<std::string>();
           boost::optional<const ds::json::soundcard_t> soundCard =
               this->store_->readSoundCard(_id);
@@ -542,12 +649,12 @@ void ds::ds_service_t::service()
                         << std::endl;
             }
           }
-        } else if(event == "track-added") {
+        } else if(event == ds::events::OV_TRACK_ADDED) {
           this->store_->createOvTrack(payload);
-        } else if(event == "track-changed") {
+        } else if(event == ds::events::OV_TRACK_CHANGED) {
           const std::string _id = payload.at("_id").get<std::string>();
           this->store_->updateOvTrack(_id, payload);
-        } else if(event == "track-removed") {
+        } else if(event == ds::events::OV_TRACK_REMOVED) {
           const std::string _id = payload.get<std::string>();
           this->store_->removeOvTrack(_id);
         } else {
@@ -672,62 +779,71 @@ void ds::ds_service_t::syncLocalStageMember()
     // thrown...
     boost::optional<const ds::json::group_t> group =
         this->store_->readGroup(currentStageMember->groupId);
-    boost::optional<const ds::json::custom_stage_member_t> customStageMember =
-        this->store_->getCustomStageMemberByStageMemberId(
+    boost::optional<const ds::json::custom_stage_member_volume_t> customStageMemberVolume =
+        this->store_->getCustomStageMemberVolumeByStageMemberId(
             currentStageMember->_id);
-    std::cout << "AFTER?" << std::endl;
-    boost::optional<const ds::json::custom_group_t> customGroup =
-        this->store_->getCustomGroupByGroupId(group->_id);
+    boost::optional<const ds::json::custom_stage_member_position_t> customStageMemberPosition =
+        this->store_->getCustomStageMemberPositionByStageMemberId(
+            currentStageMember->_id);
+    boost::optional<const ds::json::custom_group_volume_t> customGroupVolume =
+        this->store_->getCustomGroupVolumeByGroupId(group->_id);
+    boost::optional<const ds::json::custom_group_position_t> customGroupPosition =
+        this->store_->getCustomGroupPositionByGroupId(group->_id);
 
     const std::vector<const ds::json::remote_ov_track_t> tracks =
         this->store_->getRemoteOvTracksByStageMemberId(currentStageMember->_id);
-
 
     std::vector<device_channel_t> deviceChannels;
     // Now for all tracks
     for(const auto& track : tracks) {
       std::cout << "[TRACE] Adding local track " << track.channel << std::endl;
       // Look for custom track
-      boost::optional<const ds::json::custom_remote_ov_track_t> customTrack =
-          this->store_->getCustomOvTrackByOvTrackId(track._id);
-      if(customTrack) {
-        deviceChannels.push_back(
-            {track._id,
-             "", // TODO: What is sourceport
-             customTrack->volume,
-             {customTrack->x, customTrack->y, customTrack->z},
-             customTrack->directivity});
+      boost::optional<const ds::json::custom_remote_ov_track_volume_t>
+          customTrackVolume =
+              this->store_->getCustomOvTrackVolumeByOvTrackId(track._id);
+      boost::optional<const ds::json::custom_remote_ov_track_position_t>
+          customTrackPosition =
+              this->store_->getCustomOvTrackPositionByOvTrackId(track._id);
+      double volume =
+          customTrackVolume ? customTrackVolume->volume : track.volume;
+      pos_t pos;
+      if(customTrackPosition) {
+        pos = {customTrackPosition->x, customTrackPosition->y,
+               customTrackPosition->z};
       } else {
-        deviceChannels.push_back({track._id,
-                                  "", // TODO: What is sourceport
-                                  track.volume,
-                                  {track.x, track.y, track.z},
-                                  track.directivity});
+        pos = {track.x, track.y, track.z};
       }
+      std::string directivity = customTrackPosition
+                                    ? customTrackPosition->directivity
+                                    : track.directivity;
+      deviceChannels.push_back({track._id,
+                                "system:capture_" + std::to_string(track.channel),
+                                volume, pos, directivity});
     }
 
     // Calculate stage member volume
-    double gain = customStageMember ? customStageMember->volume
+    double gain = customStageMemberVolume ? customStageMemberVolume->volume
                                     : currentStageMember->volume;
-    gain = customGroup ? (customGroup->volume * gain) : (group->volume * gain);
+    gain = customGroupVolume ? (customGroupVolume->volume * gain) : (group->volume * gain);
 
-    bool muted;
+    bool muted = currentStageMember->muted;
+    if(  customStageMemberVolume ) {
+      muted = customStageMemberVolume->muted;
+    }
     pos_t position;
     zyx_euler_t orientation;
-    if(customStageMember) {
-      muted = customStageMember->muted;
+    if(customStageMemberPosition) {
       position = {
-          customStageMember->x,
-          customStageMember->y,
-          customStageMember->z,
+          customStageMemberPosition->x,
+          customStageMemberPosition->y,
+          customStageMemberPosition->z,
       };
       orientation = {
-          customStageMember->rZ,
-          customStageMember->rY,
-          customStageMember->rX,
+          customStageMemberPosition->rZ,
+          customStageMemberPosition->rY,
+          customStageMemberPosition->rX,
       };
     } else {
-      muted = currentStageMember->muted;
       position = {
           currentStageMember->x,
           currentStageMember->y,
@@ -739,14 +855,16 @@ void ds::ds_service_t::syncLocalStageMember()
           currentStageMember->rX,
       };
     }
-    if(customGroup) {
-      muted = customGroup->muted || muted;
-      position = {position.x * customGroup->x, position.y * customGroup->y,
-                  position.z * customGroup->z};
+    if( customGroupVolume ) {
+      muted = customGroupVolume->muted || muted;
+    }
+    if(customGroupPosition) {
+      position = {position.x * customGroupPosition->x, position.y * customGroupPosition->y,
+                  position.z * customGroupPosition->z};
       orientation = {
-          orientation.z * customGroup->rZ,
-          orientation.y * customGroup->rY,
-          orientation.x * customGroup->rX,
+          orientation.z * customGroupPosition->rZ,
+          orientation.y * customGroupPosition->rY,
+          orientation.x * customGroupPosition->rX,
       };
     } else {
       muted = group->muted || muted;
@@ -759,16 +877,16 @@ void ds::ds_service_t::syncLocalStageMember()
       };
     }
 
-    if( currentStageMember->ovStageDeviceId == 255 ) {
+    if(currentStageMember->ovStageDeviceId == 255) {
       std::cerr << "OV not available" << std::endl;
       return;
     }
     this->backend_.set_thisdev({
-                                   currentStageMember->ovStageDeviceId, localUser->name, deviceChannels,
-                                   position, orientation, gain, muted, localDevice->senderJitter,
-                                   localDevice->receiverJitter,
-                                   true // sendlocal always true?
-                               });
+        currentStageMember->ovStageDeviceId, localUser->name, deviceChannels,
+        position, orientation, gain, muted, localDevice->senderJitter,
+        localDevice->receiverJitter,
+        true // sendlocal always true?
+    });
   } else {
     std::cout << "[TRACE] Nothing to do here - not on a stage" << std::endl;
   }
@@ -793,57 +911,59 @@ void ds::ds_service_t::syncRemoteStageMembers()
           this->store_->readUser(stageMember.userId);
       boost::optional<const ds::json::group_t> group =
           this->store_->readGroup(stageMember.groupId);
-      boost::optional<const ds::json::custom_stage_member_t> customStageMember =
-          this->store_->getCustomStageMemberByStageMemberId(stageMember._id);
-      boost::optional<const ds::json::custom_group_t> customGroup =
-          this->store_->getCustomGroupByGroupId(group->_id);
+      boost::optional<const ds::json::custom_stage_member_position_t> customStageMemberPosition =
+          this->store_->getCustomStageMemberPositionByStageMemberId(stageMember._id);
+      boost::optional<const ds::json::custom_stage_member_volume_t> customStageMemberVolume =
+          this->store_->getCustomStageMemberVolumeByStageMemberId(stageMember._id);
+      boost::optional<const ds::json::custom_group_position_t> customGroupPosition =
+          this->store_->getCustomGroupPositionByGroupId(group->_id);
+      boost::optional<const ds::json::custom_group_volume_t> customGroupVolume =
+          this->store_->getCustomGroupVolumeByGroupId(group->_id);
       const std::vector<const ds::json::remote_ov_track_t> tracks =
           this->store_->getRemoteOvTracksByStageMemberId(stageMember._id);
 
       std::vector<device_channel_t> deviceChannels;
       for(const auto& track : tracks) {
         // Look for custom track
-        boost::optional<const ds::json::custom_remote_ov_track_t> customTrack =
-            this->store_->getCustomOvTrackByOvTrackId(track._id);
-        if(customTrack) {
-          deviceChannels.push_back(
-              {track._id,
-               "", // TODO: What is sourceport
-               customTrack->volume,
-               {customTrack->x, customTrack->y, customTrack->z},
-               customTrack->directivity});
-        } else {
-          deviceChannels.push_back({track._id,
-                                    "", // TODO: What is sourceport
-                                    track.volume,
-                                    {track.x, track.y, track.z},
-                                    track.directivity});
+        boost::optional<const ds::json::custom_remote_ov_track_position_t> customTrackPosition =
+            this->store_->getCustomOvTrackPositionByOvTrackId(track._id);
+        boost::optional<const ds::json::custom_remote_ov_track_volume_t> customTrackVolume =
+            this->store_->getCustomOvTrackVolumeByOvTrackId(track._id);
+
+        double volume = customTrackVolume ? customTrackVolume->volume : track.volume;
+        pos_t pos;
+        if( customTrackPosition ) {
+          pos = {customTrackPosition->x, customTrackPosition->y, customTrackPosition->z};
         }
+        std::string directivity = customTrackPosition ? customTrackPosition->directivity : track.directivity;
+        deviceChannels.push_back(
+            {track._id,
+             "", // TODO: What is sourceport
+             volume,
+             pos,
+             directivity});
       }
 
       // Calculate stage member volume
       double gain =
-          customStageMember ? customStageMember->volume : stageMember.volume;
+          customStageMemberVolume ? customStageMemberVolume->volume : stageMember.volume;
       gain =
-          customGroup ? (customGroup->volume * gain) : (group->volume * gain);
-
-      bool muted;
+          customGroupVolume ? (customGroupVolume->volume * gain) : (group->volume * gain);
+      bool muted = customStageMemberVolume ? customStageMemberVolume->muted : stageMember.muted;
       pos_t position;
       zyx_euler_t orientation;
-      if(customStageMember) {
-        muted = customStageMember->muted;
+      if(customStageMemberPosition) {
         position = {
-            customStageMember->x,
-            customStageMember->y,
-            customStageMember->z,
+            customStageMemberPosition->x,
+            customStageMemberPosition->y,
+            customStageMemberPosition->z,
         };
         orientation = {
-            customStageMember->rZ,
-            customStageMember->rY,
-            customStageMember->rX,
+            customStageMemberPosition->rZ,
+            customStageMemberPosition->rY,
+            customStageMemberPosition->rX,
         };
       } else {
-        muted = stageMember.muted;
         position = {
             stageMember.x,
             stageMember.y,
@@ -855,14 +975,16 @@ void ds::ds_service_t::syncRemoteStageMembers()
             stageMember.rX,
         };
       }
-      if(customGroup) {
-        muted = customGroup->muted || muted;
-        position = {position.x * customGroup->x, position.y * customGroup->y,
-                    position.z * customGroup->z};
+      if( customGroupVolume ) {
+        muted =  customGroupVolume->muted || muted;
+      }
+      if(customGroupPosition) {
+        position = {position.x * customGroupPosition->x, position.y * customGroupPosition->y,
+                    position.z * customGroupPosition->z};
         orientation = {
-            orientation.z * customGroup->rZ,
-            orientation.y * customGroup->rY,
-            orientation.x * customGroup->rX,
+            orientation.z * customGroupPosition->rZ,
+            orientation.y * customGroupPosition->rY,
+            orientation.x * customGroupPosition->rX,
         };
       } else {
         muted = group->muted || muted;
@@ -904,22 +1026,22 @@ void ds::ds_service_t::syncStageMemberPosition(const std::string& stageMemberId)
   if(stageMember) {
     boost::optional<const ds::json::group_t> group =
         this->store_->readGroup(stageMember->groupId);
-    boost::optional<const ds::json::custom_stage_member_t> customStageMember =
-        this->store_->getCustomStageMemberByStageMemberId(stageMember->_id);
-    boost::optional<const ds::json::custom_group_t> customGroup =
-        this->store_->getCustomGroupByGroupId(group->_id);
+    boost::optional<const ds::json::custom_stage_member_position_t> customStageMemberPosition =
+        this->store_->getCustomStageMemberPositionByStageMemberId(stageMember->_id);
+    boost::optional<const ds::json::custom_group_position_t> customGroupPosition =
+        this->store_->getCustomGroupPositionByGroupId(group->_id);
     pos_t position;
     zyx_euler_t orientation;
-    if(customStageMember) {
+    if(customStageMemberPosition) {
       position = {
-          customStageMember->x,
-          customStageMember->y,
-          customStageMember->z,
+          customStageMemberPosition->x,
+          customStageMemberPosition->y,
+          customStageMemberPosition->z,
       };
       orientation = {
-          customStageMember->rZ,
-          customStageMember->rY,
-          customStageMember->rX,
+          customStageMemberPosition->rZ,
+          customStageMemberPosition->rY,
+          customStageMemberPosition->rX,
       };
     } else {
       position = {
@@ -933,13 +1055,13 @@ void ds::ds_service_t::syncStageMemberPosition(const std::string& stageMemberId)
           stageMember->rX,
       };
     }
-    if(customGroup) {
-      position = {position.x * customGroup->x, position.y * customGroup->y,
-                  position.z * customGroup->z};
+    if(customGroupPosition) {
+      position = {position.x * customGroupPosition->x, position.y * customGroupPosition->y,
+                  position.z * customGroupPosition->z};
       orientation = {
-          orientation.z * customGroup->rZ,
-          orientation.y * customGroup->rY,
-          orientation.x * customGroup->rX,
+          orientation.z * customGroupPosition->rZ,
+          orientation.y * customGroupPosition->rY,
+          orientation.x * customGroupPosition->rX,
       };
     } else {
       position = {position.x * group->x, position.y * group->y,
@@ -968,13 +1090,13 @@ void ds::ds_service_t::syncStageMemberVolume(const std::string& stageMemberId)
   if(stageMember) {
     boost::optional<const ds::json::group_t> group =
         this->store_->readGroup(stageMember->groupId);
-    boost::optional<const ds::json::custom_stage_member_t> customStageMember =
-        this->store_->getCustomStageMemberByStageMemberId(stageMember->_id);
-    boost::optional<const ds::json::custom_group_t> customGroup =
-        this->store_->getCustomGroupByGroupId(group->_id);
+    boost::optional<const ds::json::custom_stage_member_volume_t> customStageMemberVolume =
+        this->store_->getCustomStageMemberVolumeByStageMemberId(stageMember->_id);
+    boost::optional<const ds::json::custom_group_volume_t> customGroupVolume =
+        this->store_->getCustomGroupVolumeByGroupId(group->_id);
     double gain =
-        customStageMember ? customStageMember->volume : stageMember->volume;
-    gain = customGroup ? (customGroup->volume * gain) : (group->volume * gain);
+        customStageMemberVolume ? customStageMemberVolume->volume : stageMember->volume;
+    gain = customGroupVolume ? (customGroupVolume->volume * gain) : (group->volume * gain);
     // TODO: mute is MISSING!!!
     // bool muted = (customStageMember ? customStageMember->muted :
     // stageMember->muted)
@@ -1016,8 +1138,9 @@ void ds::ds_service_t::configureAudio(const ds::json::soundcard_t soundCard)
   std::lock_guard<std::recursive_mutex>(this->backend_mutex_);
   std::cout << "[INFO] Configure Audio using sound card " << soundCard.name
             << std::endl;
+  std::cout << "SOUND CARD ID:"  << soundCard.name << std::endl;
   this->backend_.configure_audio_backend(
-      {soundCard.driver, soundCard.deviceId, soundCard.sampleRate,
+      {soundCard.driver, soundCard.name, soundCard.sampleRate,
        soundCard.periodSize, soundCard.numPeriods});
   if(!this->backend_.is_audio_active()) {
     this->backend_.start_audiobackend();
@@ -1066,10 +1189,10 @@ void ds::ds_service_t::syncRemoteOvTrackVolume(
         this->store_->readStageMember(remoteOvTrack->stageMemberId);
 
     if(stageMember) {
-      boost::optional<const ds::json::custom_remote_ov_track_t>
-          customRemoteOvTrack =
-              this->store_->getCustomOvTrackByOvTrackId(remoteOvTrackId);
-      const double gain = customRemoteOvTrack ? customRemoteOvTrack->volume
+      boost::optional<const ds::json::custom_remote_ov_track_volume_t>
+          customRemoteOvTrackVolume =
+              this->store_->getCustomOvTrackVolumeByOvTrackId(remoteOvTrackId);
+      const double gain = customRemoteOvTrackVolume ? customRemoteOvTrackVolume->volume
                                               : remoteOvTrack->volume;
       this->backend_.set_stage_device_channel_gain(stageMember->ovStageDeviceId,
                                                    remoteOvTrackId, gain);
@@ -1095,16 +1218,16 @@ void ds::ds_service_t::syncRemoteOvTrackPosition(
     boost::optional<const ds::json::stage_member_t> stageMember =
         this->store_->readStageMember(remoteOvTrack->stageMemberId);
     if(stageMember) {
-      boost::optional<const ds::json::custom_remote_ov_track_t>
-          customRemoteOvTrack =
-              this->store_->getCustomOvTrackByOvTrackId(remoteOvTrackId);
-      if(customRemoteOvTrack) {
+      boost::optional<const ds::json::custom_remote_ov_track_position_t>
+          customRemoteOvTrackPosition =
+              this->store_->getCustomOvTrackPositionByOvTrackId(remoteOvTrackId);
+      if(customRemoteOvTrackPosition) {
         this->backend_.set_stage_device_channel_position(
             stageMember->ovStageDeviceId, remoteOvTrackId,
-            {customRemoteOvTrack->x, customRemoteOvTrack->y,
-             customRemoteOvTrack->z},
-            {customRemoteOvTrack->rZ, customRemoteOvTrack->rY,
-             customRemoteOvTrack->rX});
+            {customRemoteOvTrackPosition->x, customRemoteOvTrackPosition->y,
+             customRemoteOvTrackPosition->z},
+            {customRemoteOvTrackPosition->rZ, customRemoteOvTrackPosition->rY,
+             customRemoteOvTrackPosition->rX});
       } else {
         this->backend_.set_stage_device_channel_position(
             stageMember->ovStageDeviceId, remoteOvTrackId,

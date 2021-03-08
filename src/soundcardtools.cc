@@ -1,5 +1,7 @@
 #include "soundcardtools.h"
 
+#include <iostream>
+
 #ifndef __APPLE__
 #include <alsa/asoundlib.h>
 #endif
@@ -124,9 +126,10 @@ std::vector<sound_card_t> sound_card_tools_t::get_sound_devices()
       soundcard.num_output_channels =
           output_sound_device->current_layout.channel_count;
       soundcard.sample_rate = input_sound_device->sample_rate_current;
-      for(int j = 0; j < input_sound_devices[i]->sample_rate_count; j += 1) {
+
+      for(int j = 0; j < output_sound_device->sample_rate_count; j += 1) {
         struct SoundIoSampleRateRange* range =
-            &input_sound_device->sample_rates[i];
+            &output_sound_device->sample_rates[j];
         soundcard.sample_rates.push_back(range->min);
       }
       soundcard.is_default = (size_t)default_input == i;

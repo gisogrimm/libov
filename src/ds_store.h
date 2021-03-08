@@ -56,16 +56,27 @@ namespace ds {
 
     void removeGroups();
 
-    void createCustomGroup(const nlohmann::json customGroup);
+    void createCustomGroupPosition(const nlohmann::json customGroup);
 
-    void updateCustomGroup(const std::string& id, const nlohmann::json update);
+    void updateCustomGroupPosition(const std::string& id, const nlohmann::json update);
 
-    boost::optional<const ds::json::custom_group_t>
-    readCustomGroup(const std::string& id);
+    boost::optional<const ds::json::custom_group_position_t>
+    readCustomGroupPosition(const std::string& id);
 
-    void removeCustomGroup(const std::string& id);
+    void removeCustomGroupPosition(const std::string& id);
 
-    void removeCustomGroups();
+    void removeCustomGroupPositions();
+
+    void createCustomGroupVolume(const nlohmann::json customGroup);
+
+    void updateCustomGroupVolume(const std::string& id, const nlohmann::json update);
+
+    boost::optional<const ds::json::custom_group_volume_t>
+    readCustomGroupVolume(const std::string& id);
+
+    void removeCustomGroupVolume(const std::string& id);
+
+    void removeCustomGroupVolumes();
 
     void createStageMember(const nlohmann::json stageMember);
 
@@ -84,20 +95,35 @@ namespace ds {
 
     void removeStageMembers();
 
-    void createCustomStageMember(const nlohmann::json customStageMember);
+    void createCustomStageMemberPosition(const nlohmann::json customStageMember);
 
-    void updateCustomStageMember(const std::string& id,
+    void updateCustomStageMemberPosition(const std::string& id,
                                  const nlohmann::json update);
 
-    boost::optional<const ds::json::custom_stage_member_t>
-    readCustomStageMember(const std::string& id);
+    boost::optional<const ds::json::custom_stage_member_position_t>
+    readCustomStageMemberPosition(const std::string& id);
 
-    boost::optional<const ds::json::custom_stage_member_t>
-    readCustomStageMemberByStageMember(const std::string& stageMemberId);
+    boost::optional<const ds::json::custom_stage_member_position_t>
+    readCustomStageMemberPositionByStageMember(const std::string& stageMemberId);
 
-    void removeCustomStageMember(const std::string& id);
+    void removeCustomStageMemberPosition(const std::string& id);
 
-    void removeCustomStageMembers();
+    void removeCustomStageMemberPositions();
+
+    void createCustomStageMemberVolume(const nlohmann::json customStageMember);
+
+    void updateCustomStageMemberVolume(const std::string& id,
+                                 const nlohmann::json update);
+
+    boost::optional<const ds::json::custom_stage_member_volume_t>
+    readCustomStageMemberVolume(const std::string& id);
+
+    boost::optional<const ds::json::custom_stage_member_volume_t>
+    readCustomStageMemberVolumeByStageMember(const std::string& stageMemberId);
+
+    void removeCustomStageMemberVolume(const std::string& id);
+
+    void removeCustomStageMemberVolumes();
 
     void createSoundCard(const nlohmann::json soundCard);
 
@@ -138,17 +164,29 @@ namespace ds {
 
     void removeRemoteOvTracks();
 
-    void createCustomRemoteOvTrack(const nlohmann::json customRemoteOvTrack);
+    void createCustomRemoteOvTrackPosition(const nlohmann::json customRemoteOvTrack);
 
-    void updateCustomRemoteOvTrack(const std::string& id,
+    void updateCustomRemoteOvTrackPosition(const std::string& id,
                                    const nlohmann::json update);
 
-    boost::optional<const ds::json::custom_remote_ov_track_t>
-    readCustomRemoteOvTrack(const std::string& id);
+    boost::optional<const ds::json::custom_remote_ov_track_position_t>
+    readCustomRemoteOvTrackPosition(const std::string& id);
 
-    void removeCustomRemoteOvTrack(const std::string& id);
+    void removeCustomRemoteOvTrackPosition(const std::string& id);
 
-    void removeCustomRemoteOvTracks();
+    void removeCustomRemoteOvTrackPositions();
+
+    void createCustomRemoteOvTrackVolume(const nlohmann::json customRemoteOvTrack);
+
+    void updateCustomRemoteOvTrackVolume(const std::string& id,
+                                   const nlohmann::json update);
+
+    boost::optional<const ds::json::custom_remote_ov_track_volume_t>
+    readCustomRemoteOvTrackVolume(const std::string& id);
+
+    void removeCustomRemoteOvTrackVolume(const std::string& id);
+
+    void removeCustomRemoteOvTrackVolumes();
 
     /* CUSTOMIZED METHODS */
 
@@ -160,14 +198,23 @@ namespace ds {
 
     boost::optional<const ds::json::stage_member_t> getCurrentStageMember();
 
-    boost::optional<const ds::json::custom_stage_member_t>
-    getCustomStageMemberByStageMemberId(const std::string& stageMemberId);
+    boost::optional<const ds::json::custom_stage_member_position_t>
+    getCustomStageMemberPositionByStageMemberId(const std::string& stageMemberId);
 
-    boost::optional<const ds::json::custom_group_t>
-    getCustomGroupByGroupId(const std::string& customStageMemberId);
+    boost::optional<const ds::json::custom_stage_member_volume_t>
+    getCustomStageMemberVolumeByStageMemberId(const std::string& stageMemberId);
 
-    boost::optional<const ds::json::custom_remote_ov_track_t>
-    getCustomOvTrackByOvTrackId(const std::string& ovTrackId);
+    boost::optional<const ds::json::custom_group_position_t>
+    getCustomGroupPositionByGroupId(const std::string& customStageMemberId);
+
+    boost::optional<const ds::json::custom_group_volume_t>
+    getCustomGroupVolumeByGroupId(const std::string& customStageMemberId);
+
+    boost::optional<const ds::json::custom_remote_ov_track_position_t>
+    getCustomOvTrackPositionByOvTrackId(const std::string& ovTrackId);
+
+    boost::optional<const ds::json::custom_remote_ov_track_volume_t>
+    getCustomOvTrackVolumeByOvTrackId(const std::string& ovTrackId);
 
     const std::vector<const ds::json::remote_ov_track_t>
     getRemoteOvTracksByStageMemberId(const std::string& stageMemberId);
@@ -180,23 +227,30 @@ namespace ds {
     std::recursive_mutex users_mutex_;
     std::recursive_mutex stages_mutex_;
     std::recursive_mutex groups_mutex_;
-    std::recursive_mutex custom_groups_mutex_;
+    std::recursive_mutex custom_group_positions_mutex_;
+    std::recursive_mutex custom_group_volumes_mutex_;
     std::recursive_mutex stage_members_mutex_;
-    std::recursive_mutex custom_stage_members_mutex_;
+    std::recursive_mutex custom_stage_member_positions_mutex_;
+    std::recursive_mutex custom_stage_member_volumes_mutex_;
     std::recursive_mutex sound_cards_mutex_;
     std::recursive_mutex ov_tracks_mutex_;
     std::recursive_mutex remote_ov_tracks_mutex_;
-    std::recursive_mutex custom_remote_ov_tracks_mutex_;
+    std::recursive_mutex custom_remote_ov_track_positions_mutex_;
+    std::recursive_mutex custom_remote_ov_track_volumes_mutex_;
     std::recursive_mutex current_stage_id_mutex_;
 
     // Internal data store
-    std::map<std::string, nlohmann::json> customRemoteOvTracks_;
+    std::map<std::string, nlohmann::json> customRemoteOvTrackPositions_;
+    std::map<std::string, nlohmann::json> customRemoteOvTrackVolumes_;
     std::map<std::string, nlohmann::json> remoteOvTracks_;
-    std::map<std::string, nlohmann::json> customStageMemberTracks_;
+    std::map<std::string, nlohmann::json> customStageMemberTrackPositions_;
+    std::map<std::string, nlohmann::json> customStageMemberTrackVolumes_;
     std::map<std::string, nlohmann::json> stageMemberTracks_;
-    std::map<std::string, nlohmann::json> customStageMembers_;
+    std::map<std::string, nlohmann::json> customStageMemberPositions_;
+    std::map<std::string, nlohmann::json> customStageMemberVolumes_;
     std::map<std::string, nlohmann::json> stageMembers_;
-    std::map<std::string, nlohmann::json> customGroups_;
+    std::map<std::string, nlohmann::json> customGroupPositions_;
+    std::map<std::string, nlohmann::json> customGroupVolumes_;
     std::map<std::string, nlohmann::json> groups_;
     std::map<std::string, nlohmann::json> stages_;
     std::map<std::string, nlohmann::json> ovTracks_;
@@ -208,21 +262,17 @@ namespace ds {
     std::string currentStageMemberId_;
 
     // Helper data stores
-    std::map<std::string, std::string> customGroupIdByGroupId_;
+    std::map<std::string, std::string> customGroupPositionIdByGroupId_;
+    std::map<std::string, std::string> customGroupVolumeIdByGroupId_;
     std::map<std::string, std::vector<std::string>> stageMemberIdsByStageId_;
     std::map<std::string, std::vector<std::string>> stageMemberIdsByGroupId_;
     std::map<std::string, std::vector<std::string>>
         remoteOvTrackIdsByStageMemberId_;
-    std::map<std::string, std::string> customStageMemberIdByStageMemberId_;
-    std::map<std::string, std::string> customOvTrackIdByOvTrackId_;
+    std::map<std::string, std::string> customStageMemberVolumeIdByStageMemberId_;
+    std::map<std::string, std::string> customStageMemberPositionIdByStageMemberId_;
+    std::map<std::string, std::string> customOvTrackPositionIdByOvTrackId_;
+    std::map<std::string, std::string> customOvTrackVolumeIdByOvTrackId_;
     std::map<std::string, std::string> soundCardIdByName_;
-    /*
-    std::map<std::string, std::string> customTracksByTrack_;
-    std::map<std::string, std::string> trackByStageMember_;
-    std::map<std::string, std::string> customStageMemberByStageMember_;
-    std::map<std::string, std::string> stageMemberByGroup_;
-    std::map<std::string, std::string> groupByStage_;
-     */
   };
 } // namespace ds
 
