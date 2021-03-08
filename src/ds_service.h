@@ -8,6 +8,7 @@
 #include <atomic>
 #include <cpprest/ws_client.h>
 #include <thread>
+#include <mutex>
 
 using namespace web::websockets::client;
 
@@ -24,6 +25,9 @@ namespace ds {
     void stop();
 
   protected:
+    ov_render_base_t& backend_;
+
+  private:
     void service();
 
     void on_sound_devices_change();
@@ -32,31 +36,41 @@ namespace ds {
 
     void sendAsync(const std::string& event, const std::string& message);
 
-    ov_render_base_t& backend_;
+    void configureConnection(const ds::json::stage_ov_server_t server);
 
-  private:
+    void configureAudio(const ds::json::soundcard_t soundcard);
+
+    void startOv();
+
+    void stopOv();
+
+    void createTrack(const std::string& soundCardId, unsigned int channel);
+
+    // TODO: Replace this later with a more detailes TASCAR control
+    void syncLocalStageMember();
+    void syncRemoteStageMembers();
+    void syncGroupVolume(const std::string& groupId);
+    void syncGroupPosition(const std::string& groupId);
+    void syncStageMemberVolume(const std::string& stageMemberId);
+    void syncStageMemberPosition(const std::string& stageMemberId);
+    void syncRemoteOvTrackVolume(const std::string& remoteOvTrackId);
+    void syncRemoteOvTrackPosition(const std::string& remoteOvTrackId);
+
+    bool isInsideStage();
+
     // Threading
-    bool running_;
     std::thread servicethread_;
-    std::atomic<bool> quitrequest_;
+    std::recursive_mutex backend_mutex_;
 
     // Connection related
-    websocket_callback_client wsclient;
+    websocket_callback_client wsclient_;
     std::string api_url_;
     std::string token_;
 
-    sound_card_tools_t* sound_card_tools;
-    ds_store_t store;
+    sound_card_tools_t* sound_card_tools_;
+    ds_store_t* store_;
 
-    void update_stage_member(const std::string& stageMemberId);
-
-    void update_stage_member_track(const std::string& trackId);
-
-    // void rerender_stage_member(const std::string &stageMemberId);
-    bool is_sending_audio();
-
-    std::vector<std::string>
-    getStageMemberIdsByGroupId(const std::string& groupId);
+    std::atomic<bool> ready_;
   };
 } // namespace ds
 

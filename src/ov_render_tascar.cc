@@ -1,6 +1,8 @@
 #include "ov_render_tascar.h"
 #include "soundcardtools.h"
 #include <fstream>
+#include <iostream>
+#include <jack/jack.h>
 
 #define ZITAPATH ""
 
@@ -743,11 +745,24 @@ void ov_render_tascar_t::start_audiobackend()
     }
     char cmd[1024];
 #ifdef __APPLE__
+    // Check if jack is already running
+    //const char *client_name = "run_test";
+    jack_options_t options = JackNullOption;
+    jack_status_t status;
+    jack_client_t *jackClient = jack_client_open("run_test", options, &status);
+    if( jackClient != nullptr ) {
+      std::cout << "JACK IS ALREADY RUNNING" << std::endl;
+      return;
+    }
+    std::cout << "JACK IS NOT RUNNING" << std::endl;
+    jack_client_close(jackClient);
     sprintf(cmd,
             "JACK_NO_AUDIO_RESERVATION=1 jackd --sync -P 40 -d coreaudio -d %s "
             "-r %g -p %d -n %d",
             devname.c_str(), audiodevice.srate, audiodevice.periodsize,
             audiodevice.numperiods);
+    std::cout << "STARTING JACK!" << std::endl;
+    std::cout << cmd << std::endl;
 #else
     sprintf(cmd,
             "JACK_NO_AUDIO_RESERVATION=1 jackd --sync -P 40 -d alsa -d %s "
