@@ -13,10 +13,10 @@
             << std::endl
 #endif
 
-// maximum buffer size (mtu)
+// maximum buffer size in bytes
 #define BUFSIZE 4096
 
-// maximum number of clients
+/// maximum number of clients in a stage
 #define MAXEP 32
 
 // the first few ports are reserved for control packages:

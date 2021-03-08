@@ -4,12 +4,33 @@
 #include "callerlist.h"
 #include <functional>
 
+/**
+   \brief Main communication between ovboxclient and relay server
+
+   This class implements the communication protocol between relay
+   server and ov-clients. Its counterpart on the server side is
+   ov_server_t from package ov-server.
+ */
 class ovboxclient_t : public endpoint_list_t {
 public:
+  /**
+
+     \param desthost hostname or IP address of relay server
+     \param destport port number of relay server
+     \param recport port of local receiver
+     \param portoffset offset added to recport for sending
+     \param prio thread priority of sending and receiving threads
+     \param secret access code of relay server session
+     \param callerid ID of caller (unique number of device in stage, max 30)
+     \param peer2peer use peer-to-peer mode for this client
+     \param donotsend do not request data messages from server or peers (e.g., in proxy mode)
+     \param downmixonly send downmix only, not individual tracks (not yet fully implemented)
+     \param sendlocal allow sending to local IP address if in same network
+   */
   ovboxclient_t(const std::string& desthost, port_t destport, port_t recport,
                 port_t portoffset, int prio, secret_t secret,
                 stage_device_id_t callerid, bool peer2peer, bool donotsend,
-                bool downmixonly, bool sendlocal_);
+                bool downmixonly, bool sendlocal);
   virtual ~ovboxclient_t();
   void announce_new_connection(stage_device_id_t cid, const ep_desc_t& ep);
   void announce_connection_lost(stage_device_id_t cid);

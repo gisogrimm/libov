@@ -34,7 +34,7 @@ typedef int16_t sequence_t;
 typedef uint16_t port_t;
 /// pin code type
 typedef uint32_t secret_t;
-/// stage device id type
+/// unique device ID number in a stage, a number between 0 and MAXEP
 typedef uint8_t stage_device_id_t;
 // stage device channel id type
 // TODO: Verify
