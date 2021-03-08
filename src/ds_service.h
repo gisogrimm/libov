@@ -8,6 +8,7 @@
 #include <atomic>
 #include <cpprest/ws_client.h>
 #include <thread>
+#include <mutex>
 
 using namespace web::websockets::client;
 

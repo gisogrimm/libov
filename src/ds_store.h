@@ -8,6 +8,7 @@
 #include "ds_json_types.h"
 #include <boost/optional.hpp>
 #include <nlohmann/json.hpp>
+#include <mutex>
 
 namespace ds {
   class ds_store_t {
