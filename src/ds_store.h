@@ -90,10 +90,10 @@ namespace ds {
     boost::optional<const ds::stage_member_t>
     readStageMember(const std::string& id);
 
-    const std::vector<const ds::stage_member_t>
+    const std::vector<ds::stage_member_t>
     readStageMembersByStage(const std::string& stageId);
 
-    const std::vector<const ds::stage_member_t>
+    const std::vector<ds::stage_member_t>
     readStageMembersByGroup(const std::string& groupId);
 
     void removeStageMember(const std::string& id);
@@ -220,7 +220,7 @@ namespace ds {
     boost::optional<const ds::custom_remote_ov_track_volume_t>
     getCustomOvTrackVolumeByOvTrackId(const std::string& ovTrackId);
 
-    const std::vector<const ds::remote_ov_track_t>
+    const std::vector<ds::remote_ov_track_t>
     getRemoteOvTracksByStageMemberId(const std::string& stageMemberId);
 
     void dump();

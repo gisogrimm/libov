@@ -811,7 +811,7 @@ void ds::ds_service_t::syncLocalStageMember()
     boost::optional<const ds::custom_group_position_t> customGroupPosition =
         this->store_->getCustomGroupPositionByGroupId(group->_id);
 
-    const std::vector<const ds::remote_ov_track_t> tracks =
+    const std::vector<ds::remote_ov_track_t> tracks =
         this->store_->getRemoteOvTracksByStageMemberId(currentStageMember->_id);
 
     std::vector<device_channel_t> deviceChannels;
@@ -925,7 +925,7 @@ void ds::ds_service_t::syncRemoteStageMembers()
   if(localDevice && stage) {
     std::map<stage_device_id_t, stage_device_t> stageDeviceMap;
 
-    const std::vector<const ds::stage_member_t> stageMembers =
+    const std::vector<ds::stage_member_t> stageMembers =
         this->store_->readStageMembersByStage(stage->_id);
 
     for(const auto& stageMember : stageMembers) {
@@ -945,7 +945,7 @@ void ds::ds_service_t::syncRemoteStageMembers()
           this->store_->getCustomGroupPositionByGroupId(group->_id);
       boost::optional<const ds::custom_group_volume_t> customGroupVolume =
           this->store_->getCustomGroupVolumeByGroupId(group->_id);
-      const std::vector<const ds::remote_ov_track_t> tracks =
+      const std::vector<ds::remote_ov_track_t> tracks =
           this->store_->getRemoteOvTracksByStageMemberId(stageMember._id);
 
       std::vector<device_channel_t> deviceChannels;
@@ -1195,7 +1195,7 @@ void ds::ds_service_t::configureConnection(const ds::stage_ov_server_t server)
 void ds::ds_service_t::syncGroupVolume(const std::string& groupId)
 {
   std::cout << "[TRACE] Syncing volume of group " << groupId << std::endl;
-  const std::vector<const ds::stage_member_t> stageMembers =
+  const std::vector<ds::stage_member_t> stageMembers =
       this->store_->readStageMembersByGroup(groupId);
   for(const auto& stageMember : stageMembers) {
     this->syncStageMemberVolume(stageMember._id);
@@ -1205,7 +1205,7 @@ void ds::ds_service_t::syncGroupVolume(const std::string& groupId)
 void ds::ds_service_t::syncGroupPosition(const std::string& groupId)
 {
   std::cout << "[TRACE] Syncing position of group " << groupId << std::endl;
-  const std::vector<const ds::stage_member_t> stageMembers =
+  const std::vector<ds::stage_member_t> stageMembers =
       this->store_->readStageMembersByGroup(groupId);
   for(const auto& stageMember : stageMembers) {
     this->syncStageMemberPosition(stageMember._id);

@@ -235,11 +235,11 @@ ds::ds_store_t::readStageMember(const std::string& id)
   return boost::none;
 }
 
-const std::vector<const ds::stage_member_t>
+const std::vector<ds::stage_member_t>
 ds::ds_store_t::readStageMembersByStage(const std::string& stageId)
 {
   std::lock_guard<std::recursive_mutex>(this->stage_members_mutex_);
-  std::vector<const ds::stage_member_t> stageMembers;
+  std::vector<ds::stage_member_t> stageMembers;
   if(this->stageMemberIdsByStageId_.count(stageId) > 0) {
     for(const auto& stageMemberId : this->stageMemberIdsByStageId_[stageId]) {
       const auto stageMember = this->readStageMember(stageMemberId);
@@ -251,11 +251,11 @@ ds::ds_store_t::readStageMembersByStage(const std::string& stageId)
   return stageMembers;
 }
 
-const std::vector<const ds::stage_member_t>
+const std::vector<ds::stage_member_t>
 ds::ds_store_t::readStageMembersByGroup(const std::string& groupId)
 {
   std::lock_guard<std::recursive_mutex>(this->stage_members_mutex_);
-  std::vector<const ds::stage_member_t> stageMembers;
+  std::vector<ds::stage_member_t> stageMembers;
   if(this->stageMemberIdsByGroupId_.count(groupId) > 0) {
     for(const auto& stageMemberId : this->stageMemberIdsByGroupId_[groupId]) {
       const auto stageMember = this->readStageMember(stageMemberId);
@@ -762,12 +762,12 @@ ds::ds_store_t::getCustomOvTrackVolumeByOvTrackId(const std::string& ovTrackId)
   return boost::none;
 }
 
-const std::vector<const ds::remote_ov_track_t>
+const std::vector<ds::remote_ov_track_t>
 ds::ds_store_t::getRemoteOvTracksByStageMemberId(
     const std::string& stageMemberId)
 {
   std::lock_guard<std::recursive_mutex>(this->remote_ov_tracks_mutex_);
-  std::vector<const ds::remote_ov_track_t> remoteTracks;
+  std::vector<ds::remote_ov_track_t> remoteTracks;
   if(this->remoteOvTrackIdsByStageMemberId_.count(stageMemberId) > 0) {
     for(const std::string& remoteOvTrackId :
         this->remoteOvTrackIdsByStageMemberId_[stageMemberId]) {
