@@ -33,12 +33,18 @@ const std::string ds::events::CUSTOM_STAGE_MEMBER_POSITION_REMOVED = "c-sm-p-r";
 const std::string ds::events::REMOTE_OV_TRACK_ADDED = "sm-ov-a";
 const std::string ds::events::REMOTE_OV_TRACK_CHANGED = "sm-ov-c";
 const std::string ds::events::REMOTE_OV_TRACK_REMOVED = "sm-ov-r";
-const std::string ds::events::CUSTOM_REMOTE_OV_TRACK_VOLUME_ADDED = "c-sm-ov-v-a";
-const std::string ds::events::CUSTOM_REMOTE_OV_TRACK_VOLUME_CHANGED = "c-sm-ov-v-c";
-const std::string ds::events::CUSTOM_REMOTE_OV_TRACK_VOLUME_REMOVED = "c-sm-ov-v-r";
-const std::string ds::events::CUSTOM_REMOTE_OV_TRACK_POSITION_ADDED = "c-sm-ov-p-a";
-const std::string ds::events::CUSTOM_REMOTE_OV_TRACK_POSITION_CHANGED = "c-sm-ov-p-c";
-const std::string ds::events::CUSTOM_REMOTE_OV_TRACK_POSITION_REMOVED = "c-sm-ov-p-r";
+const std::string ds::events::CUSTOM_REMOTE_OV_TRACK_VOLUME_ADDED =
+    "c-sm-ov-v-a";
+const std::string ds::events::CUSTOM_REMOTE_OV_TRACK_VOLUME_CHANGED =
+    "c-sm-ov-v-c";
+const std::string ds::events::CUSTOM_REMOTE_OV_TRACK_VOLUME_REMOVED =
+    "c-sm-ov-v-r";
+const std::string ds::events::CUSTOM_REMOTE_OV_TRACK_POSITION_ADDED =
+    "c-sm-ov-p-a";
+const std::string ds::events::CUSTOM_REMOTE_OV_TRACK_POSITION_CHANGED =
+    "c-sm-ov-p-c";
+const std::string ds::events::CUSTOM_REMOTE_OV_TRACK_POSITION_REMOVED =
+    "c-sm-ov-p-r";
 const std::string ds::events::SOUND_CARD_ADDED = "sound-card-added";
 const std::string ds::events::SOUND_CARD_CHANGED = "sound-card-changed";
 const std::string ds::events::SOUND_CARD_REMOVED = "sound-card-removed";

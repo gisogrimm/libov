@@ -1,15 +1,15 @@
 #ifndef DS_SERVICE
 #define DS_SERVICE
 
-#include "ds_json_types.h"
 #include "ds_store.h"
+#include "ds_types.h"
 #include "ov_types.h"
 #include "soundcardtools.h"
 #include <atomic>
+#include <cpprest/ws_client.h>
 #include <mutex>
 #include <string>
 #include <thread>
-#include <cpprest/ws_client.h>
 
 using namespace web::websockets::client;
 
@@ -17,8 +17,7 @@ namespace ds {
   class ds_service_t : public ov_client_base_t {
 
   public:
-    ds_service_t(ov_render_base_t& backend,
-                 std::string api_url);
+    ds_service_t(ov_render_base_t& backend, std::string api_url);
 
     ~ds_service_t();
 
@@ -44,9 +43,9 @@ namespace ds {
 
     void sendAsync(const std::string& event, const std::string& message);
 
-    void configureConnection(const ds::json::stage_ov_server_t server);
+    void configureConnection(const ds::stage_ov_server_t server);
 
-    void configureAudio(const ds::json::soundcard_t soundcard);
+    void configureAudio(const ds::soundcard_t soundcard);
 
     void startOv();
 

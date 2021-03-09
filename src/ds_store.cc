@@ -19,12 +19,12 @@ void ds::ds_store_t::updateStage(const std::string& stageId,
   this->stages_[stageId].merge_patch(update);
 }
 
-boost::optional<const ds::json::stage_t>
+boost::optional<const ds::stage_t>
 ds::ds_store_t::readStage(const std::string& stageId)
 {
   std::lock_guard<std::recursive_mutex>(this->stages_mutex_);
   if(this->stages_.count(stageId) > 0)
-    return this->stages_[stageId].get<ds::json::stage_t>();
+    return this->stages_[stageId].get<ds::stage_t>();
   return boost::none;
 }
 
@@ -48,12 +48,12 @@ void ds::ds_store_t::updateGroup(const std::string& id,
   this->groups_[id].merge_patch(update);
 }
 
-boost::optional<const ds::json::group_t>
+boost::optional<const ds::group_t>
 ds::ds_store_t::readGroup(const std::string& id)
 {
   std::lock_guard<std::recursive_mutex>(this->groups_mutex_);
   if(this->groups_.count(id) > 0)
-    return this->groups_[id].get<ds::json::group_t>();
+    return this->groups_[id].get<ds::group_t>();
   return boost::none;
 }
 
@@ -82,11 +82,11 @@ void ds::ds_store_t::setLocalDevice(const nlohmann::json localDevice)
   this->localDevice_ = localDevice;
 }
 
-boost::optional<const ds::json::device_t> ds::ds_store_t::getLocalDevice()
+boost::optional<const ds::device_t> ds::ds_store_t::getLocalDevice()
 {
   std::lock_guard<std::recursive_mutex>(this->local_device_mutex_);
   if(!(this->localDevice_.is_null())) {
-    return this->localDevice_.get<ds::json::device_t>();
+    return this->localDevice_.get<ds::device_t>();
   }
   return boost::none;
 }
@@ -103,11 +103,11 @@ void ds::ds_store_t::setLocalUser(const nlohmann::json localUser)
   this->localUser_ = localUser;
 }
 
-boost::optional<const ds::json::user_t> ds::ds_store_t::getLocalUser()
+boost::optional<const ds::user_t> ds::ds_store_t::getLocalUser()
 {
   std::lock_guard<std::recursive_mutex>(this->local_user_mutex_);
   if(!(this->localUser_.is_null()))
-    return this->localUser_.get<ds::json::user_t>();
+    return this->localUser_.get<ds::user_t>();
   return boost::none;
 }
 
@@ -132,18 +132,18 @@ void ds::ds_store_t::createCustomGroupPosition(const nlohmann::json customGroup)
 }
 
 void ds::ds_store_t::updateCustomGroupPosition(const std::string& id,
-                                       const nlohmann::json update)
+                                               const nlohmann::json update)
 {
   std::lock_guard<std::recursive_mutex>(this->custom_group_positions_mutex_);
   this->customGroupPositions_[id].merge_patch(update);
 }
 
-boost::optional<const ds::json::custom_group_position_t>
+boost::optional<const ds::custom_group_position_t>
 ds::ds_store_t::readCustomGroupPosition(const std::string& id)
 {
   std::lock_guard<std::recursive_mutex>(this->custom_group_positions_mutex_);
   if(this->customGroupPositions_.count(id) > 0)
-    return this->customGroupPositions_[id].get<ds::json::custom_group_position_t>();
+    return this->customGroupPositions_[id].get<ds::custom_group_position_t>();
   return boost::none;
 }
 
@@ -172,18 +172,18 @@ void ds::ds_store_t::createCustomGroupVolume(const nlohmann::json customGroup)
 }
 
 void ds::ds_store_t::updateCustomGroupVolume(const std::string& id,
-                                       const nlohmann::json update)
+                                             const nlohmann::json update)
 {
   std::lock_guard<std::recursive_mutex>(this->custom_group_volumes_mutex_);
   this->customGroupVolumes_[id].merge_patch(update);
 }
 
-boost::optional<const ds::json::custom_group_volume_t>
+boost::optional<const ds::custom_group_volume_t>
 ds::ds_store_t::readCustomGroupVolume(const std::string& id)
 {
   std::lock_guard<std::recursive_mutex>(this->custom_group_volumes_mutex_);
   if(this->customGroupVolumes_.count(id) > 0)
-    return this->customGroupVolumes_[id].get<ds::json::custom_group_volume_t>();
+    return this->customGroupVolumes_[id].get<ds::custom_group_volume_t>();
   return boost::none;
 }
 
@@ -225,21 +225,21 @@ void ds::ds_store_t::updateStageMember(const std::string& id,
   this->stageMembers_[id].merge_patch(update);
 }
 
-boost::optional<const ds::json::stage_member_t>
+boost::optional<const ds::stage_member_t>
 ds::ds_store_t::readStageMember(const std::string& id)
 {
   std::lock_guard<std::recursive_mutex>(this->stage_members_mutex_);
   if(this->stageMembers_.count(id) > 0) {
-    return this->stageMembers_[id].get<ds::json::stage_member_t>();
+    return this->stageMembers_[id].get<ds::stage_member_t>();
   }
   return boost::none;
 }
 
-const std::vector<const ds::json::stage_member_t>
+const std::vector<const ds::stage_member_t>
 ds::ds_store_t::readStageMembersByStage(const std::string& stageId)
 {
   std::lock_guard<std::recursive_mutex>(this->stage_members_mutex_);
-  std::vector<const ds::json::stage_member_t> stageMembers;
+  std::vector<const ds::stage_member_t> stageMembers;
   if(this->stageMemberIdsByStageId_.count(stageId) > 0) {
     for(const auto& stageMemberId : this->stageMemberIdsByStageId_[stageId]) {
       const auto stageMember = this->readStageMember(stageMemberId);
@@ -251,11 +251,11 @@ ds::ds_store_t::readStageMembersByStage(const std::string& stageId)
   return stageMembers;
 }
 
-const std::vector<const ds::json::stage_member_t>
+const std::vector<const ds::stage_member_t>
 ds::ds_store_t::readStageMembersByGroup(const std::string& groupId)
 {
   std::lock_guard<std::recursive_mutex>(this->stage_members_mutex_);
-  std::vector<const ds::json::stage_member_t> stageMembers;
+  std::vector<const ds::stage_member_t> stageMembers;
   if(this->stageMemberIdsByGroupId_.count(groupId) > 0) {
     for(const auto& stageMemberId : this->stageMemberIdsByGroupId_[groupId]) {
       const auto stageMember = this->readStageMember(stageMemberId);
@@ -297,7 +297,8 @@ void ds::ds_store_t::removeStageMembers()
 void ds::ds_store_t::createCustomStageMemberPosition(
     const nlohmann::json customStageMember)
 {
-  std::lock_guard<std::recursive_mutex>(this->custom_stage_member_positions_mutex_);
+  std::lock_guard<std::recursive_mutex>(
+      this->custom_stage_member_positions_mutex_);
   std::string _id = customStageMember.at("_id").get<std::string>();
   std::string stageMemberId =
       customStageMember["stageMemberId"].get<std::string>();
@@ -305,31 +306,36 @@ void ds::ds_store_t::createCustomStageMemberPosition(
   this->customStageMemberPositionIdByStageMemberId_[stageMemberId] = _id;
 }
 
-void ds::ds_store_t::updateCustomStageMemberPosition(const std::string& id,
-                                             const nlohmann::json update)
+void ds::ds_store_t::updateCustomStageMemberPosition(
+    const std::string& id, const nlohmann::json update)
 {
-  std::lock_guard<std::recursive_mutex>(this->custom_stage_member_positions_mutex_);
+  std::lock_guard<std::recursive_mutex>(
+      this->custom_stage_member_positions_mutex_);
   this->customStageMemberPositions_[id].merge_patch(update);
   // We may implement the change of the stageMemberId, but this should never
   // happen if backend works as expected
 }
 
-boost::optional<const ds::json::custom_stage_member_position_t>
+boost::optional<const ds::custom_stage_member_position_t>
 ds::ds_store_t::readCustomStageMemberPosition(const std::string& id)
 {
-  std::lock_guard<std::recursive_mutex>(this->custom_stage_member_positions_mutex_);
+  std::lock_guard<std::recursive_mutex>(
+      this->custom_stage_member_positions_mutex_);
   if(this->customStageMemberPositions_.count(id) > 0) {
-    const ds::json::custom_stage_member_position_t customStageMember =  this->customStageMemberPositions_[id].get<ds::json::custom_stage_member_position_t>();
+    const ds::custom_stage_member_position_t customStageMember =
+        this->customStageMemberPositions_[id]
+            .get<ds::custom_stage_member_position_t>();
     return customStageMember;
   }
   return boost::none;
 }
 
-boost::optional<const ds::json::custom_stage_member_position_t>
+boost::optional<const ds::custom_stage_member_position_t>
 ds::ds_store_t::readCustomStageMemberPositionByStageMember(
     const std::string& stageMemberId)
 {
-  std::lock_guard<std::recursive_mutex>(this->custom_stage_member_positions_mutex_);
+  std::lock_guard<std::recursive_mutex>(
+      this->custom_stage_member_positions_mutex_);
   if(this->customStageMemberPositionIdByStageMemberId_.count(stageMemberId)) {
     return this->readCustomStageMemberPosition(
         this->customStageMemberPositionIdByStageMemberId_[stageMemberId]);
@@ -339,7 +345,8 @@ ds::ds_store_t::readCustomStageMemberPositionByStageMember(
 
 void ds::ds_store_t::removeCustomStageMemberPosition(const std::string& id)
 {
-  std::lock_guard<std::recursive_mutex>(this->custom_stage_member_positions_mutex_);
+  std::lock_guard<std::recursive_mutex>(
+      this->custom_stage_member_positions_mutex_);
   const std::string stageMemberId =
       this->customStageMemberPositions_.at("stageMemberId").get<std::string>();
   this->customStageMemberPositions_.erase(id);
@@ -348,7 +355,8 @@ void ds::ds_store_t::removeCustomStageMemberPosition(const std::string& id)
 
 void ds::ds_store_t::removeCustomStageMemberPositions()
 {
-  std::lock_guard<std::recursive_mutex>(this->custom_stage_member_positions_mutex_);
+  std::lock_guard<std::recursive_mutex>(
+      this->custom_stage_member_positions_mutex_);
   this->customStageMemberPositions_.clear();
   this->customStageMemberPositionIdByStageMemberId_.clear();
 }
@@ -356,7 +364,8 @@ void ds::ds_store_t::removeCustomStageMemberPositions()
 void ds::ds_store_t::createCustomStageMemberVolume(
     const nlohmann::json customStageMember)
 {
-  std::lock_guard<std::recursive_mutex>(this->custom_stage_member_volumes_mutex_);
+  std::lock_guard<std::recursive_mutex>(
+      this->custom_stage_member_volumes_mutex_);
   std::string _id = customStageMember.at("_id").get<std::string>();
   std::string stageMemberId =
       customStageMember["stageMemberId"].get<std::string>();
@@ -365,30 +374,35 @@ void ds::ds_store_t::createCustomStageMemberVolume(
 }
 
 void ds::ds_store_t::updateCustomStageMemberVolume(const std::string& id,
-                                             const nlohmann::json update)
+                                                   const nlohmann::json update)
 {
-  std::lock_guard<std::recursive_mutex>(this->custom_stage_member_volumes_mutex_);
+  std::lock_guard<std::recursive_mutex>(
+      this->custom_stage_member_volumes_mutex_);
   this->customStageMemberVolumes_[id].merge_patch(update);
   // We may implement the change of the stageMemberId, but this should never
   // happen if backend works as expected
 }
 
-boost::optional<const ds::json::custom_stage_member_volume_t>
+boost::optional<const ds::custom_stage_member_volume_t>
 ds::ds_store_t::readCustomStageMemberVolume(const std::string& id)
 {
-  std::lock_guard<std::recursive_mutex>(this->custom_stage_member_volumes_mutex_);
+  std::lock_guard<std::recursive_mutex>(
+      this->custom_stage_member_volumes_mutex_);
   if(this->customStageMemberVolumes_.count(id) > 0) {
-    const ds::json::custom_stage_member_volume_t customStageMember =  this->customStageMemberVolumes_[id].get<ds::json::custom_stage_member_volume_t>();
+    const ds::custom_stage_member_volume_t customStageMember =
+        this->customStageMemberVolumes_[id]
+            .get<ds::custom_stage_member_volume_t>();
     return customStageMember;
   }
   return boost::none;
 }
 
-boost::optional<const ds::json::custom_stage_member_volume_t>
+boost::optional<const ds::custom_stage_member_volume_t>
 ds::ds_store_t::readCustomStageMemberVolumeByStageMember(
     const std::string& stageMemberId)
 {
-  std::lock_guard<std::recursive_mutex>(this->custom_stage_member_volumes_mutex_);
+  std::lock_guard<std::recursive_mutex>(
+      this->custom_stage_member_volumes_mutex_);
   if(this->customStageMemberVolumeIdByStageMemberId_.count(stageMemberId)) {
     return this->readCustomStageMemberVolume(
         this->customStageMemberVolumeIdByStageMemberId_[stageMemberId]);
@@ -398,7 +412,8 @@ ds::ds_store_t::readCustomStageMemberVolumeByStageMember(
 
 void ds::ds_store_t::removeCustomStageMemberVolume(const std::string& id)
 {
-  std::lock_guard<std::recursive_mutex>(this->custom_stage_member_volumes_mutex_);
+  std::lock_guard<std::recursive_mutex>(
+      this->custom_stage_member_volumes_mutex_);
   const std::string stageMemberId =
       this->customStageMemberVolumes_.at("stageMemberId").get<std::string>();
   this->customStageMemberVolumes_.erase(id);
@@ -407,7 +422,8 @@ void ds::ds_store_t::removeCustomStageMemberVolume(const std::string& id)
 
 void ds::ds_store_t::removeCustomStageMemberVolumes()
 {
-  std::lock_guard<std::recursive_mutex>(this->custom_stage_member_volumes_mutex_);
+  std::lock_guard<std::recursive_mutex>(
+      this->custom_stage_member_volumes_mutex_);
   this->customStageMemberVolumes_.clear();
   this->customStageMemberVolumeIdByStageMemberId_.clear();
 }
@@ -427,16 +443,16 @@ void ds::ds_store_t::updateSoundCard(const std::string& id,
   this->soundCards_[id].merge_patch(update);
 }
 
-boost::optional<const ds::json::soundcard_t>
+boost::optional<const ds::soundcard_t>
 ds::ds_store_t::readSoundCard(const std::string& id)
 {
   std::lock_guard<std::recursive_mutex>(this->sound_cards_mutex_);
   if(this->soundCards_.count(id) > 0)
-    return this->soundCards_[id].get<ds::json::soundcard_t>();
+    return this->soundCards_[id].get<ds::soundcard_t>();
   return boost::none;
 }
 
-boost::optional<const ds::json::soundcard_t>
+boost::optional<const ds::soundcard_t>
 ds::ds_store_t::readSoundCardByName(const std::string& name)
 {
   std::lock_guard<std::recursive_mutex>(this->sound_cards_mutex_);
@@ -475,12 +491,12 @@ void ds::ds_store_t::updateOvTrack(const std::string& id,
   this->ovTracks_[id].merge_patch(update);
 }
 
-boost::optional<const ds::json::ov_track_t>
+boost::optional<const ds::ov_track_t>
 ds::ds_store_t::readOvTrack(const std::string& id)
 {
   std::lock_guard<std::recursive_mutex>(this->ov_tracks_mutex_);
   if(this->ovTracks_.count(id) > 0)
-    return this->ovTracks_[id].get<ds::json::ov_track_t>();
+    return this->ovTracks_[id].get<ds::ov_track_t>();
   return boost::none;
 }
 
@@ -512,12 +528,12 @@ void ds::ds_store_t::updateRemoteOvTrack(const std::string& id,
   this->remoteOvTracks_[id].merge_patch(update);
 }
 
-boost::optional<const ds::json::remote_ov_track_t>
+boost::optional<const ds::remote_ov_track_t>
 ds::ds_store_t::readRemoteOvTrack(const std::string& id)
 {
   std::lock_guard<std::recursive_mutex>(this->remote_ov_tracks_mutex_);
   if(this->remoteOvTracks_.count(id) > 0)
-    return this->remoteOvTracks_[id].get<ds::json::remote_ov_track_t>();
+    return this->remoteOvTracks_[id].get<ds::remote_ov_track_t>();
   return boost::none;
 }
 
@@ -541,47 +557,48 @@ void ds::ds_store_t::removeRemoteOvTracks()
 void ds::ds_store_t::createCustomRemoteOvTrackPosition(
     const nlohmann::json customRemoteOvTrack)
 {
-  auto lock =
-      std::unique_lock<std::recursive_mutex>(this->custom_remote_ov_track_positions_mutex_);
+  auto lock = std::unique_lock<std::recursive_mutex>(
+      this->custom_remote_ov_track_positions_mutex_);
   const std::string _id = customRemoteOvTrack.at("_id").get<std::string>();
   this->customRemoteOvTrackPositions_[_id] = customRemoteOvTrack;
-  this->customOvTrackPositionIdByOvTrackId_[customRemoteOvTrack["remoteOvTrackId"]] =
-      _id;
+  this->customOvTrackPositionIdByOvTrackId_
+      [customRemoteOvTrack["remoteOvTrackId"]] = _id;
 }
 
-void ds::ds_store_t::updateCustomRemoteOvTrackPosition(const std::string& id,
-                                               const nlohmann::json update)
+void ds::ds_store_t::updateCustomRemoteOvTrackPosition(
+    const std::string& id, const nlohmann::json update)
 {
-  auto lock =
-      std::unique_lock<std::recursive_mutex>(this->custom_remote_ov_track_positions_mutex_);
+  auto lock = std::unique_lock<std::recursive_mutex>(
+      this->custom_remote_ov_track_positions_mutex_);
   this->customRemoteOvTrackPositions_[id].merge_patch(update);
 }
 
-boost::optional<const ds::json::custom_remote_ov_track_position_t>
+boost::optional<const ds::custom_remote_ov_track_position_t>
 ds::ds_store_t::readCustomRemoteOvTrackPosition(const std::string& id)
 {
-  auto lock =
-      std::unique_lock<std::recursive_mutex>(this->custom_remote_ov_track_positions_mutex_);
+  auto lock = std::unique_lock<std::recursive_mutex>(
+      this->custom_remote_ov_track_positions_mutex_);
   if(this->customRemoteOvTrackPositions_.count(id) > 0)
     return this->customRemoteOvTrackPositions_[id]
-        .get<ds::json::custom_remote_ov_track_position_t>();
+        .get<ds::custom_remote_ov_track_position_t>();
   return boost::none;
 }
 
 void ds::ds_store_t::removeCustomRemoteOvTrackPosition(const std::string& id)
 {
-  auto lock =
-      std::unique_lock<std::recursive_mutex>(this->custom_remote_ov_track_positions_mutex_);
-  const std::string remoteOvTrackId =
-      this->customRemoteOvTrackPositions_[id].at("remoteOvTrackId").get<std::string>();
+  auto lock = std::unique_lock<std::recursive_mutex>(
+      this->custom_remote_ov_track_positions_mutex_);
+  const std::string remoteOvTrackId = this->customRemoteOvTrackPositions_[id]
+                                          .at("remoteOvTrackId")
+                                          .get<std::string>();
   this->customRemoteOvTrackPositions_.erase(id);
   this->customOvTrackPositionIdByOvTrackId_[remoteOvTrackId];
 }
 
 void ds::ds_store_t::removeCustomRemoteOvTrackPositions()
 {
-  auto lock =
-      std::unique_lock<std::recursive_mutex>(this->custom_remote_ov_track_positions_mutex_);
+  auto lock = std::unique_lock<std::recursive_mutex>(
+      this->custom_remote_ov_track_positions_mutex_);
   this->customRemoteOvTrackPositions_.clear();
   this->customOvTrackPositionIdByOvTrackId_.clear();
 }
@@ -589,62 +606,63 @@ void ds::ds_store_t::removeCustomRemoteOvTrackPositions()
 void ds::ds_store_t::createCustomRemoteOvTrackVolume(
     const nlohmann::json customRemoteOvTrack)
 {
-  auto lock =
-      std::unique_lock<std::recursive_mutex>(this->custom_remote_ov_track_volumes_mutex_);
+  auto lock = std::unique_lock<std::recursive_mutex>(
+      this->custom_remote_ov_track_volumes_mutex_);
   const std::string _id = customRemoteOvTrack.at("_id").get<std::string>();
   this->customRemoteOvTrackVolumes_[_id] = customRemoteOvTrack;
-  this->customOvTrackVolumeIdByOvTrackId_[customRemoteOvTrack["remoteOvTrackId"]] =
-      _id;
+  this->customOvTrackVolumeIdByOvTrackId_
+      [customRemoteOvTrack["remoteOvTrackId"]] = _id;
 }
 
-void ds::ds_store_t::updateCustomRemoteOvTrackVolume(const std::string& id,
-                                               const nlohmann::json update)
+void ds::ds_store_t::updateCustomRemoteOvTrackVolume(
+    const std::string& id, const nlohmann::json update)
 {
-  auto lock =
-      std::unique_lock<std::recursive_mutex>(this->custom_remote_ov_track_volumes_mutex_);
+  auto lock = std::unique_lock<std::recursive_mutex>(
+      this->custom_remote_ov_track_volumes_mutex_);
   this->customRemoteOvTrackVolumes_[id].merge_patch(update);
 }
 
-boost::optional<const ds::json::custom_remote_ov_track_volume_t>
+boost::optional<const ds::custom_remote_ov_track_volume_t>
 ds::ds_store_t::readCustomRemoteOvTrackVolume(const std::string& id)
 {
-  auto lock =
-      std::unique_lock<std::recursive_mutex>(this->custom_remote_ov_track_volumes_mutex_);
+  auto lock = std::unique_lock<std::recursive_mutex>(
+      this->custom_remote_ov_track_volumes_mutex_);
   if(this->customRemoteOvTrackVolumes_.count(id) > 0)
     return this->customRemoteOvTrackVolumes_[id]
-        .get<ds::json::custom_remote_ov_track_volume_t>();
+        .get<ds::custom_remote_ov_track_volume_t>();
   return boost::none;
 }
 
 void ds::ds_store_t::removeCustomRemoteOvTrackVolume(const std::string& id)
 {
-  auto lock =
-      std::unique_lock<std::recursive_mutex>(this->custom_remote_ov_track_volumes_mutex_);
-  const std::string remoteOvTrackId =
-      this->customRemoteOvTrackVolumes_[id].at("remoteOvTrackId").get<std::string>();
+  auto lock = std::unique_lock<std::recursive_mutex>(
+      this->custom_remote_ov_track_volumes_mutex_);
+  const std::string remoteOvTrackId = this->customRemoteOvTrackVolumes_[id]
+                                          .at("remoteOvTrackId")
+                                          .get<std::string>();
   this->customRemoteOvTrackVolumes_.erase(id);
   this->customOvTrackVolumeIdByOvTrackId_[remoteOvTrackId];
 }
 
 void ds::ds_store_t::removeCustomRemoteOvTrackVolumes()
 {
-  auto lock =
-      std::unique_lock<std::recursive_mutex>(this->custom_remote_ov_track_volumes_mutex_);
+  auto lock = std::unique_lock<std::recursive_mutex>(
+      this->custom_remote_ov_track_volumes_mutex_);
   this->customRemoteOvTrackVolumes_.clear();
   this->customOvTrackVolumeIdByOvTrackId_.clear();
 }
 
-const std::vector<ds::json::ov_track_t> ds::ds_store_t::readOvTracks()
+const std::vector<ds::ov_track_t> ds::ds_store_t::readOvTracks()
 {
   std::lock_guard<std::recursive_mutex>(this->ov_tracks_mutex_);
-  std::vector<ds::json::ov_track_t> tracks;
+  std::vector<ds::ov_track_t> tracks;
   for(const auto& pair : this->ovTracks_) {
     tracks.push_back(pair.second);
   }
   return tracks;
 }
 
-boost::optional<const ds::json::stage_t> ds::ds_store_t::getCurrentStage()
+boost::optional<const ds::stage_t> ds::ds_store_t::getCurrentStage()
 {
   std::lock_guard<std::recursive_mutex>(this->stages_mutex_);
   const std::string currentStageId = this->getCurrentStageId();
@@ -654,7 +672,7 @@ boost::optional<const ds::json::stage_t> ds::ds_store_t::getCurrentStage()
   return boost::none;
 }
 
-boost::optional<const ds::json::stage_member_t>
+boost::optional<const ds::stage_member_t>
 ds::ds_store_t::getCurrentStageMember()
 {
   if(!this->currentStageMemberId_.empty()) {
@@ -663,35 +681,42 @@ ds::ds_store_t::getCurrentStageMember()
   return boost::none;
 }
 
-boost::optional<const ds::json::custom_stage_member_position_t>
+boost::optional<const ds::custom_stage_member_position_t>
 ds::ds_store_t::getCustomStageMemberPositionByStageMemberId(
     const std::string& stageMemberId)
 {
-  std::lock_guard<std::recursive_mutex>(this->custom_stage_member_positions_mutex_);
-  if(this->customStageMemberPositionIdByStageMemberId_.count(stageMemberId) > 0) {
-    const std::string customStageMemberId = this->customStageMemberPositionIdByStageMemberId_[stageMemberId];
-    boost::optional<const ds::json::custom_stage_member_position_t> customStageMember = this->readCustomStageMemberPosition(
-        customStageMemberId);
+  std::lock_guard<std::recursive_mutex>(
+      this->custom_stage_member_positions_mutex_);
+  if(this->customStageMemberPositionIdByStageMemberId_.count(stageMemberId) >
+     0) {
+    const std::string customStageMemberId =
+        this->customStageMemberPositionIdByStageMemberId_[stageMemberId];
+    boost::optional<const ds::custom_stage_member_position_t>
+        customStageMember =
+            this->readCustomStageMemberPosition(customStageMemberId);
     return customStageMember;
   }
   return boost::none;
 }
-boost::optional<const ds::json::custom_stage_member_volume_t>
+boost::optional<const ds::custom_stage_member_volume_t>
 ds::ds_store_t::getCustomStageMemberVolumeByStageMemberId(
     const std::string& stageMemberId)
 {
-  std::lock_guard<std::recursive_mutex>(this->custom_stage_member_volumes_mutex_);
+  std::lock_guard<std::recursive_mutex>(
+      this->custom_stage_member_volumes_mutex_);
   if(this->customStageMemberVolumeIdByStageMemberId_.count(stageMemberId) > 0) {
-    const std::string customStageMemberId = this->customStageMemberVolumeIdByStageMemberId_[stageMemberId];
-    boost::optional<const ds::json::custom_stage_member_volume_t> customStageMember = this->readCustomStageMemberVolume(
-        customStageMemberId);
+    const std::string customStageMemberId =
+        this->customStageMemberVolumeIdByStageMemberId_[stageMemberId];
+    boost::optional<const ds::custom_stage_member_volume_t> customStageMember =
+        this->readCustomStageMemberVolume(customStageMemberId);
     return customStageMember;
   }
   return boost::none;
 }
 
-boost::optional<const ds::json::custom_group_position_t>
-ds::ds_store_t::getCustomGroupPositionByGroupId(const std::string& customStageMemberId)
+boost::optional<const ds::custom_group_position_t>
+ds::ds_store_t::getCustomGroupPositionByGroupId(
+    const std::string& customStageMemberId)
 {
   std::lock_guard<std::recursive_mutex>(this->custom_group_positions_mutex_);
   if(this->customGroupPositionIdByGroupId_.count(customStageMemberId) > 0) {
@@ -700,8 +725,9 @@ ds::ds_store_t::getCustomGroupPositionByGroupId(const std::string& customStageMe
   }
   return boost::none;
 }
-boost::optional<const ds::json::custom_group_volume_t>
-ds::ds_store_t::getCustomGroupVolumeByGroupId(const std::string& customStageMemberId)
+boost::optional<const ds::custom_group_volume_t>
+ds::ds_store_t::getCustomGroupVolumeByGroupId(
+    const std::string& customStageMemberId)
 {
   std::lock_guard<std::recursive_mutex>(this->custom_group_volumes_mutex_);
   if(this->customGroupPositionIdByGroupId_.count(customStageMemberId) > 0) {
@@ -711,11 +737,12 @@ ds::ds_store_t::getCustomGroupVolumeByGroupId(const std::string& customStageMemb
   return boost::none;
 }
 
-boost::optional<const ds::json::custom_remote_ov_track_position_t>
-ds::ds_store_t::getCustomOvTrackPositionByOvTrackId(const std::string& ovTrackId)
+boost::optional<const ds::custom_remote_ov_track_position_t>
+ds::ds_store_t::getCustomOvTrackPositionByOvTrackId(
+    const std::string& ovTrackId)
 {
-  auto lock =
-      std::unique_lock<std::recursive_mutex>(this->custom_remote_ov_track_positions_mutex_);
+  auto lock = std::unique_lock<std::recursive_mutex>(
+      this->custom_remote_ov_track_positions_mutex_);
   if(this->customOvTrackPositionIdByOvTrackId_.count(ovTrackId) > 0) {
     return this->readCustomRemoteOvTrackPosition(
         this->customOvTrackPositionIdByOvTrackId_[ovTrackId]);
@@ -723,11 +750,11 @@ ds::ds_store_t::getCustomOvTrackPositionByOvTrackId(const std::string& ovTrackId
   return boost::none;
 }
 
-boost::optional<const ds::json::custom_remote_ov_track_volume_t>
+boost::optional<const ds::custom_remote_ov_track_volume_t>
 ds::ds_store_t::getCustomOvTrackVolumeByOvTrackId(const std::string& ovTrackId)
 {
-  auto lock =
-      std::unique_lock<std::recursive_mutex>(this->custom_remote_ov_track_volumes_mutex_);
+  auto lock = std::unique_lock<std::recursive_mutex>(
+      this->custom_remote_ov_track_volumes_mutex_);
   if(this->customOvTrackVolumeIdByOvTrackId_.count(ovTrackId) > 0) {
     return this->readCustomRemoteOvTrackVolume(
         this->customOvTrackVolumeIdByOvTrackId_[ovTrackId]);
@@ -735,12 +762,12 @@ ds::ds_store_t::getCustomOvTrackVolumeByOvTrackId(const std::string& ovTrackId)
   return boost::none;
 }
 
-const std::vector<const ds::json::remote_ov_track_t>
+const std::vector<const ds::remote_ov_track_t>
 ds::ds_store_t::getRemoteOvTracksByStageMemberId(
     const std::string& stageMemberId)
 {
   std::lock_guard<std::recursive_mutex>(this->remote_ov_tracks_mutex_);
-  std::vector<const ds::json::remote_ov_track_t> remoteTracks;
+  std::vector<const ds::remote_ov_track_t> remoteTracks;
   if(this->remoteOvTrackIdsByStageMemberId_.count(stageMemberId) > 0) {
     for(const std::string& remoteOvTrackId :
         this->remoteOvTrackIdsByStageMemberId_[stageMemberId]) {
@@ -767,12 +794,12 @@ void ds::ds_store_t::updateUser(const std::string& id,
   this->users_[id].merge_patch(update);
 }
 
-boost::optional<const ds::json::user_t>
+boost::optional<const ds::user_t>
 ds::ds_store_t::readUser(const std::string& id)
 {
   std::lock_guard<std::recursive_mutex>(this->users_mutex_);
   if(this->users_.count(id) > 0)
-    return this->users_[id].get<ds::json::user_t>();
+    return this->users_[id].get<ds::user_t>();
   return boost::none;
 }
 
@@ -795,7 +822,8 @@ void ds::ds_store_t::dump()
   auto lock1 = std::unique_lock<std::recursive_mutex>(this->users_mutex_);
   auto lock2 = std::unique_lock<std::recursive_mutex>(this->stages_mutex_);
   auto lock3 = std::unique_lock<std::recursive_mutex>(this->groups_mutex_);
-  auto lock4 = std::unique_lock<std::recursive_mutex>(this->stage_members_mutex_);
+  auto lock4 =
+      std::unique_lock<std::recursive_mutex>(this->stage_members_mutex_);
   std::cout << this->users_.size() << " users" << std::endl;
   std::cout << this->stages_.size() << " stages" << std::endl;
   std::cout << this->groups_.size() << " groups" << std::endl;

@@ -2,11 +2,11 @@
 #include "ds_events.h"
 #include "udpsocket.h"
 #include <iostream>
-#include <utility>
 #include <map>
-#include <vector>
 #include <nlohmann/json.hpp>
 #include <pplx/pplxtasks.h>
+#include <utility>
+#include <vector>
 
 using namespace utility;
 using namespace web;
@@ -18,8 +18,7 @@ using namespace concurrency::streams;
 task_completion_event<void> tce; // used to terminate async PPLX listening task
 
 ds::ds_service_t::ds_service_t(ov_render_base_t& backend, std::string api_url)
-    : ov_client_base_t(backend),
-      backend_(backend),
+    : ov_client_base_t(backend), backend_(backend),
       api_url_(std::move(api_url)), ready_(false)
 {
   std::cout << "DEVICE ID: " << backend_.get_deviceid() << std::endl;
@@ -39,13 +38,14 @@ void ds::ds_service_t::set_token(const std::string& token)
   this->token_ = token;
 }
 
-const std::string ds::ds_service_t::get_token() {
+const std::string ds::ds_service_t::get_token()
+{
   return this->token_;
 }
 
 void ds::ds_service_t::start_service()
 {
-  if( this->token_.empty() )
+  if(this->token_.empty())
     throw std::logic_error("Set token first");
   this->servicethread_ = std::thread(&ds::ds_service_t::service, this);
 }
@@ -84,7 +84,7 @@ void ds::ds_service_t::service()
         if(event == ds::events::READY) {
           this->ready_ = true;
           if(this->isInsideStage()) {
-            boost::optional<const ds::json::device_t> localDevice =
+            boost::optional<const ds::device_t> localDevice =
                 this->store_->getLocalDevice();
             if(localDevice && localDevice->sendAudio) {
               std::cout << "[INFO] Starting all ov related tasks" << std::endl;
@@ -130,7 +130,7 @@ void ds::ds_service_t::service()
             std::cerr << "[WARNING] No soundcards available!" << std::endl;
           }
         } else if(event == ds::events::DEVICE_CHANGED) {
-          boost::optional<const ds::json::device_t> localDevice =
+          boost::optional<const ds::device_t> localDevice =
               this->store_->getLocalDevice();
           if(localDevice && localDevice->_id == payload["_id"]) {
             // The events refers this device
@@ -141,14 +141,14 @@ void ds::ds_service_t::service()
                   payload.at("soundCardName").get<std::string>();
               if(soundCardName != localDevice->soundCardName) {
                 // Soundcard has been switched
-                boost::optional<const ds::json::soundcard_t> soundCard =
+                boost::optional<const ds::soundcard_t> soundCard =
                     this->store_->readSoundCardByName(payload["soundCardName"]);
                 if(soundCard) {
                   // Use sound card
                   this->configureAudio(soundCard.value());
                   // We have to remove all existing tracks and propagate new
                   // tracks
-                  std::vector<ds::json::ov_track_t> existingTracks =
+                  std::vector<ds::ov_track_t> existingTracks =
                       this->store_->readOvTracks();
                   for(const auto& track : existingTracks) {
                     this->sendAsync("remove-track", track._id);
@@ -213,7 +213,8 @@ void ds::ds_service_t::service()
           }
           if(payload.contains("customStageMemberPositions") &&
              payload["customStageMemberPositions"].is_array()) {
-            for(const nlohmann::json& i : payload["customStageMemberPositions"]) {
+            for(const nlohmann::json& i :
+                payload["customStageMemberPositions"]) {
               this->store_->createCustomStageMemberPosition(i);
             }
           }
@@ -236,19 +237,21 @@ void ds::ds_service_t::service()
           }
           if(payload.contains("customRemoteOvTrackPositions") &&
              payload["customRemoteOvTrackPositions"].is_array()) {
-            for(const nlohmann::json& i : payload["customRemoteOvTrackPositions"]) {
+            for(const nlohmann::json& i :
+                payload["customRemoteOvTrackPositions"]) {
               this->store_->createCustomRemoteOvTrackPosition(i);
             }
           }
           if(payload.contains("customRemoteOvTrackVolumes") &&
              payload["customRemoteOvTrackVolumes"].is_array()) {
-            for(const nlohmann::json& i : payload["customRemoteOvTrackVolumes"]) {
+            for(const nlohmann::json& i :
+                payload["customRemoteOvTrackVolumes"]) {
               this->store_->createCustomRemoteOvTrackVolume(i);
             }
           }
 
           if(this->ready_) {
-            boost::optional<const ds::json::device_t> localDevice =
+            boost::optional<const ds::device_t> localDevice =
                 this->store_->getLocalDevice();
             if(localDevice && localDevice->sendAudio) {
               this->syncLocalStageMember();
@@ -258,7 +261,7 @@ void ds::ds_service_t::service()
           } else {
             // Not ready means this is an initial commit, so configure also the
             // stage connection
-            boost::optional<const ds::json::stage_t> currentStage =
+            boost::optional<const ds::stage_t> currentStage =
                 this->store_->readStage(currentStageId);
 
             if(currentStage) {
@@ -295,7 +298,7 @@ void ds::ds_service_t::service()
           const std::string currentStageId = this->store_->getCurrentStageId();
           this->store_->updateStage(stageId, payload);
           if(currentStageId == stageId) {
-            boost::optional<const ds::json::stage_t> stage =
+            boost::optional<const ds::stage_t> stage =
                 this->store_->readStage(currentStageId);
             if(stage) {
               if(stage->supportsOv) {
@@ -512,7 +515,7 @@ void ds::ds_service_t::service()
           const std::string _id = payload.at("_id").get<std::string>();
           this->store_->updateCustomRemoteOvTrackPosition(_id, payload);
           if(this->isInsideStage()) {
-            boost::optional<const ds::json::custom_remote_ov_track_position_t>
+            boost::optional<const ds::custom_remote_ov_track_position_t>
                 customRemoteOvTrack =
                     this->store_->readCustomRemoteOvTrackPosition(_id);
             if(customRemoteOvTrack) {
@@ -527,7 +530,7 @@ void ds::ds_service_t::service()
         } else if(event ==
                   ds::events::CUSTOM_REMOTE_OV_TRACK_POSITION_REMOVED) {
           const std::string _id = payload.get<std::string>();
-          boost::optional<const ds::json::custom_remote_ov_track_position_t>
+          boost::optional<const ds::custom_remote_ov_track_position_t>
               customRemoteOvTrack =
                   this->store_->readCustomRemoteOvTrackPosition(_id);
           this->store_->removeCustomRemoteOvTrackPosition(_id);
@@ -552,7 +555,7 @@ void ds::ds_service_t::service()
           const std::string _id = payload.at("_id").get<std::string>();
           this->store_->updateCustomRemoteOvTrackPosition(_id, payload);
           if(this->isInsideStage()) {
-            boost::optional<const ds::json::custom_remote_ov_track_volume_t>
+            boost::optional<const ds::custom_remote_ov_track_volume_t>
                 customRemoteOvTrackVolume =
                     this->store_->readCustomRemoteOvTrackVolume(_id);
             if(customRemoteOvTrackVolume) {
@@ -566,7 +569,7 @@ void ds::ds_service_t::service()
           }
         } else if(event == ds::events::CUSTOM_REMOTE_OV_TRACK_VOLUME_REMOVED) {
           const std::string _id = payload.get<std::string>();
-          boost::optional<const ds::json::custom_remote_ov_track_volume_t>
+          boost::optional<const ds::custom_remote_ov_track_volume_t>
               customRemoteOvTrack =
                   this->store_->readCustomRemoteOvTrackVolume(_id);
           this->store_->removeCustomRemoteOvTrackVolume(_id);
@@ -582,7 +585,7 @@ void ds::ds_service_t::service()
           }
         } else if(event == ds::events::SOUND_CARD_ADDED) {
           this->store_->createSoundCard(payload);
-          boost::optional<const ds::json::device_t> localDevice =
+          boost::optional<const ds::device_t> localDevice =
               this->store_->getLocalDevice();
           const std::string soundCardName =
               payload.at("name").get<std::string>();
@@ -592,8 +595,7 @@ void ds::ds_service_t::service()
                                              {"soundCardName", soundCardName}};
               this->sendAsync("update-device", update.dump());
             } else if(localDevice->soundCardName == soundCardName) {
-              const ds::json::soundcard_t soundCard =
-                  payload.get<ds::json::soundcard_t>();
+              const ds::soundcard_t soundCard = payload.get<ds::soundcard_t>();
               this->configureAudio(soundCard);
               for(const unsigned int& channel : soundCard.inputChannels) {
                 this->createTrack(soundCard._id, channel);
@@ -613,7 +615,7 @@ void ds::ds_service_t::service()
             if(localDevice && localDevice->sendAudio == true &&
                localDevice->soundCardName == soundCard->name) {
               bool isChannelConfigurationDifferent = false;
-              std::vector<ds::json::ov_track_t> existingTracks =
+              std::vector<ds::ov_track_t> existingTracks =
                   this->store_->readOvTracks();
               // Remove obsolete tracks (channel has been removed from sound
               // card for these tracks)
@@ -630,7 +632,7 @@ void ds::ds_service_t::service()
               for(const unsigned int& channel : soundCard->inputChannels) {
                 auto it = std::find_if(
                     existingTracks.begin(), existingTracks.end(),
-                    [channel](const ds::json::ov_track_t& existingTrack) {
+                    [channel](const ds::ov_track_t& existingTrack) {
                       return existingTrack.channel == channel;
                     });
                 if(it == existingTracks.end()) {
@@ -650,12 +652,12 @@ void ds::ds_service_t::service()
           }
         } else if(event == ds::events::SOUND_CARD_REMOVED) {
           const std::string _id = payload.get<std::string>();
-          boost::optional<const ds::json::soundcard_t> soundCard =
+          boost::optional<const ds::soundcard_t> soundCard =
               this->store_->readSoundCard(_id);
           this->store_->removeSoundCard(_id);
           if(this->isInsideStage()) {
             if(soundCard) {
-              boost::optional<const ds::json::device_t> localDevice =
+              boost::optional<const ds::device_t> localDevice =
                   this->store_->getLocalDevice();
               if(localDevice->soundCardName == soundCard->name) {
                 this->stopOv();
@@ -773,10 +775,9 @@ void ds::ds_service_t::syncLocalStageMember()
   std::lock_guard<std::recursive_mutex>(this->backend_mutex_);
   std::cout << "[TRACE] Syncing local stage member" << std::endl;
 
-  boost::optional<const ds::json::device_t> localDevice =
+  boost::optional<const ds::device_t> localDevice =
       this->store_->getLocalDevice();
-  boost::optional<const ds::json::user_t> localUser =
-      this->store_->getLocalUser();
+  boost::optional<const ds::user_t> localUser = this->store_->getLocalUser();
 
   if(!localDevice) {
     std::cerr << "[ERROR] Local device not set yet - server side error?"
@@ -789,26 +790,28 @@ void ds::ds_service_t::syncLocalStageMember()
     return;
   }
 
-  boost::optional<const ds::json::stage_member_t> currentStageMember =
+  boost::optional<const ds::stage_member_t> currentStageMember =
       this->store_->getCurrentStageMember();
 
   if(currentStageMember) {
     // we have to create the tracks, maybe the decorating events has been
     // thrown...
-    boost::optional<const ds::json::group_t> group =
+    boost::optional<const ds::group_t> group =
         this->store_->readGroup(currentStageMember->groupId);
-    boost::optional<const ds::json::custom_stage_member_volume_t> customStageMemberVolume =
-        this->store_->getCustomStageMemberVolumeByStageMemberId(
-            currentStageMember->_id);
-    boost::optional<const ds::json::custom_stage_member_position_t> customStageMemberPosition =
-        this->store_->getCustomStageMemberPositionByStageMemberId(
-            currentStageMember->_id);
-    boost::optional<const ds::json::custom_group_volume_t> customGroupVolume =
+    boost::optional<const ds::custom_stage_member_volume_t>
+        customStageMemberVolume =
+            this->store_->getCustomStageMemberVolumeByStageMemberId(
+                currentStageMember->_id);
+    boost::optional<const ds::custom_stage_member_position_t>
+        customStageMemberPosition =
+            this->store_->getCustomStageMemberPositionByStageMemberId(
+                currentStageMember->_id);
+    boost::optional<const ds::custom_group_volume_t> customGroupVolume =
         this->store_->getCustomGroupVolumeByGroupId(group->_id);
-    boost::optional<const ds::json::custom_group_position_t> customGroupPosition =
+    boost::optional<const ds::custom_group_position_t> customGroupPosition =
         this->store_->getCustomGroupPositionByGroupId(group->_id);
 
-    const std::vector<const ds::json::remote_ov_track_t> tracks =
+    const std::vector<const ds::remote_ov_track_t> tracks =
         this->store_->getRemoteOvTracksByStageMemberId(currentStageMember->_id);
 
     std::vector<device_channel_t> deviceChannels;
@@ -816,10 +819,10 @@ void ds::ds_service_t::syncLocalStageMember()
     for(const auto& track : tracks) {
       std::cout << "[TRACE] Adding local track " << track.channel << std::endl;
       // Look for custom track
-      boost::optional<const ds::json::custom_remote_ov_track_volume_t>
+      boost::optional<const ds::custom_remote_ov_track_volume_t>
           customTrackVolume =
               this->store_->getCustomOvTrackVolumeByOvTrackId(track._id);
-      boost::optional<const ds::json::custom_remote_ov_track_position_t>
+      boost::optional<const ds::custom_remote_ov_track_position_t>
           customTrackPosition =
               this->store_->getCustomOvTrackPositionByOvTrackId(track._id);
       double volume =
@@ -834,18 +837,19 @@ void ds::ds_service_t::syncLocalStageMember()
       std::string directivity = customTrackPosition
                                     ? customTrackPosition->directivity
                                     : track.directivity;
-      deviceChannels.push_back({track._id,
-                                "system:capture_" + std::to_string(track.channel),
-                                volume, pos, directivity});
+      deviceChannels.push_back(
+          {track._id, "system:capture_" + std::to_string(track.channel), volume,
+           pos, directivity});
     }
 
     // Calculate stage member volume
     double gain = customStageMemberVolume ? customStageMemberVolume->volume
-                                    : currentStageMember->volume;
-    gain = customGroupVolume ? (customGroupVolume->volume * gain) : (group->volume * gain);
+                                          : currentStageMember->volume;
+    gain = customGroupVolume ? (customGroupVolume->volume * gain)
+                             : (group->volume * gain);
 
     bool muted = currentStageMember->muted;
-    if(  customStageMemberVolume ) {
+    if(customStageMemberVolume) {
       muted = customStageMemberVolume->muted;
     }
     pos_t position;
@@ -873,11 +877,12 @@ void ds::ds_service_t::syncLocalStageMember()
           currentStageMember->rX,
       };
     }
-    if( customGroupVolume ) {
+    if(customGroupVolume) {
       muted = customGroupVolume->muted || muted;
     }
     if(customGroupPosition) {
-      position = {position.x * customGroupPosition->x, position.y * customGroupPosition->y,
+      position = {position.x * customGroupPosition->x,
+                  position.y * customGroupPosition->y,
                   position.z * customGroupPosition->z};
       orientation = {
           orientation.z * customGroupPosition->rZ,
@@ -914,60 +919,67 @@ void ds::ds_service_t::syncRemoteStageMembers()
 {
   std::lock_guard<std::recursive_mutex>(this->backend_mutex_);
   std::cout << "[TRACE] Syncing remote stage members" << std::endl;
-  boost::optional<const ds::json::stage_t> stage =
-      this->store_->getCurrentStage();
-  boost::optional<const ds::json::device_t> localDevice =
+  boost::optional<const ds::stage_t> stage = this->store_->getCurrentStage();
+  boost::optional<const ds::device_t> localDevice =
       this->store_->getLocalDevice();
   if(localDevice && stage) {
     std::map<stage_device_id_t, stage_device_t> stageDeviceMap;
 
-    const std::vector<const ds::json::stage_member_t> stageMembers =
+    const std::vector<const ds::stage_member_t> stageMembers =
         this->store_->readStageMembersByStage(stage->_id);
 
     for(const auto& stageMember : stageMembers) {
-      boost::optional<const ds::json::user_t> user =
+      boost::optional<const ds::user_t> user =
           this->store_->readUser(stageMember.userId);
-      boost::optional<const ds::json::group_t> group =
+      boost::optional<const ds::group_t> group =
           this->store_->readGroup(stageMember.groupId);
-      boost::optional<const ds::json::custom_stage_member_position_t> customStageMemberPosition =
-          this->store_->getCustomStageMemberPositionByStageMemberId(stageMember._id);
-      boost::optional<const ds::json::custom_stage_member_volume_t> customStageMemberVolume =
-          this->store_->getCustomStageMemberVolumeByStageMemberId(stageMember._id);
-      boost::optional<const ds::json::custom_group_position_t> customGroupPosition =
+      boost::optional<const ds::custom_stage_member_position_t>
+          customStageMemberPosition =
+              this->store_->getCustomStageMemberPositionByStageMemberId(
+                  stageMember._id);
+      boost::optional<const ds::custom_stage_member_volume_t>
+          customStageMemberVolume =
+              this->store_->getCustomStageMemberVolumeByStageMemberId(
+                  stageMember._id);
+      boost::optional<const ds::custom_group_position_t> customGroupPosition =
           this->store_->getCustomGroupPositionByGroupId(group->_id);
-      boost::optional<const ds::json::custom_group_volume_t> customGroupVolume =
+      boost::optional<const ds::custom_group_volume_t> customGroupVolume =
           this->store_->getCustomGroupVolumeByGroupId(group->_id);
-      const std::vector<const ds::json::remote_ov_track_t> tracks =
+      const std::vector<const ds::remote_ov_track_t> tracks =
           this->store_->getRemoteOvTracksByStageMemberId(stageMember._id);
 
       std::vector<device_channel_t> deviceChannels;
       for(const auto& track : tracks) {
         // Look for custom track
-        boost::optional<const ds::json::custom_remote_ov_track_position_t> customTrackPosition =
-            this->store_->getCustomOvTrackPositionByOvTrackId(track._id);
-        boost::optional<const ds::json::custom_remote_ov_track_volume_t> customTrackVolume =
-            this->store_->getCustomOvTrackVolumeByOvTrackId(track._id);
+        boost::optional<const ds::custom_remote_ov_track_position_t>
+            customTrackPosition =
+                this->store_->getCustomOvTrackPositionByOvTrackId(track._id);
+        boost::optional<const ds::custom_remote_ov_track_volume_t>
+            customTrackVolume =
+                this->store_->getCustomOvTrackVolumeByOvTrackId(track._id);
 
-        double volume = customTrackVolume ? customTrackVolume->volume : track.volume;
+        double volume =
+            customTrackVolume ? customTrackVolume->volume : track.volume;
         pos_t pos;
-        if( customTrackPosition ) {
-          pos = {customTrackPosition->x, customTrackPosition->y, customTrackPosition->z};
+        if(customTrackPosition) {
+          pos = {customTrackPosition->x, customTrackPosition->y,
+                 customTrackPosition->z};
         }
-        std::string directivity = customTrackPosition ? customTrackPosition->directivity : track.directivity;
-        deviceChannels.push_back(
-            {track._id,
-             "", // TODO: What is sourceport
-             volume,
-             pos,
-             directivity});
+        std::string directivity = customTrackPosition
+                                      ? customTrackPosition->directivity
+                                      : track.directivity;
+        deviceChannels.push_back({track._id,
+                                  "", // TODO: What is sourceport
+                                  volume, pos, directivity});
       }
 
       // Calculate stage member volume
-      double gain =
-          customStageMemberVolume ? customStageMemberVolume->volume : stageMember.volume;
-      gain =
-          customGroupVolume ? (customGroupVolume->volume * gain) : (group->volume * gain);
-      bool muted = customStageMemberVolume ? customStageMemberVolume->muted : stageMember.muted;
+      double gain = customStageMemberVolume ? customStageMemberVolume->volume
+                                            : stageMember.volume;
+      gain = customGroupVolume ? (customGroupVolume->volume * gain)
+                               : (group->volume * gain);
+      bool muted = customStageMemberVolume ? customStageMemberVolume->muted
+                                           : stageMember.muted;
       pos_t position;
       zyx_euler_t orientation;
       if(customStageMemberPosition) {
@@ -993,11 +1005,12 @@ void ds::ds_service_t::syncRemoteStageMembers()
             stageMember.rX,
         };
       }
-      if( customGroupVolume ) {
-        muted =  customGroupVolume->muted || muted;
+      if(customGroupVolume) {
+        muted = customGroupVolume->muted || muted;
       }
       if(customGroupPosition) {
-        position = {position.x * customGroupPosition->x, position.y * customGroupPosition->y,
+        position = {position.x * customGroupPosition->x,
+                    position.y * customGroupPosition->y,
                     position.z * customGroupPosition->z};
         orientation = {
             orientation.z * customGroupPosition->rZ,
@@ -1038,15 +1051,17 @@ void ds::ds_service_t::syncStageMemberPosition(const std::string& stageMemberId)
   std::cout << "[TRACE] Syncing position of stage member " << stageMemberId
             << std::endl;
   std::lock_guard<std::recursive_mutex>(this->backend_mutex_);
-  boost::optional<const ds::json::stage_member_t> stageMember =
+  boost::optional<const ds::stage_member_t> stageMember =
       this->store_->readStageMember(stageMemberId);
 
   if(stageMember) {
-    boost::optional<const ds::json::group_t> group =
+    boost::optional<const ds::group_t> group =
         this->store_->readGroup(stageMember->groupId);
-    boost::optional<const ds::json::custom_stage_member_position_t> customStageMemberPosition =
-        this->store_->getCustomStageMemberPositionByStageMemberId(stageMember->_id);
-    boost::optional<const ds::json::custom_group_position_t> customGroupPosition =
+    boost::optional<const ds::custom_stage_member_position_t>
+        customStageMemberPosition =
+            this->store_->getCustomStageMemberPositionByStageMemberId(
+                stageMember->_id);
+    boost::optional<const ds::custom_group_position_t> customGroupPosition =
         this->store_->getCustomGroupPositionByGroupId(group->_id);
     pos_t position;
     zyx_euler_t orientation;
@@ -1074,7 +1089,8 @@ void ds::ds_service_t::syncStageMemberPosition(const std::string& stageMemberId)
       };
     }
     if(customGroupPosition) {
-      position = {position.x * customGroupPosition->x, position.y * customGroupPosition->y,
+      position = {position.x * customGroupPosition->x,
+                  position.y * customGroupPosition->y,
                   position.z * customGroupPosition->z};
       orientation = {
           orientation.z * customGroupPosition->rZ,
@@ -1102,19 +1118,22 @@ void ds::ds_service_t::syncStageMemberVolume(const std::string& stageMemberId)
   std::cout << "[TRACE] Syncing volume of stage member " << stageMemberId
             << std::endl;
   std::lock_guard<std::recursive_mutex>(this->backend_mutex_);
-  boost::optional<const ds::json::stage_member_t> stageMember =
+  boost::optional<const ds::stage_member_t> stageMember =
       this->store_->readStageMember(stageMemberId);
 
   if(stageMember) {
-    boost::optional<const ds::json::group_t> group =
+    boost::optional<const ds::group_t> group =
         this->store_->readGroup(stageMember->groupId);
-    boost::optional<const ds::json::custom_stage_member_volume_t> customStageMemberVolume =
-        this->store_->getCustomStageMemberVolumeByStageMemberId(stageMember->_id);
-    boost::optional<const ds::json::custom_group_volume_t> customGroupVolume =
+    boost::optional<const ds::custom_stage_member_volume_t>
+        customStageMemberVolume =
+            this->store_->getCustomStageMemberVolumeByStageMemberId(
+                stageMember->_id);
+    boost::optional<const ds::custom_group_volume_t> customGroupVolume =
         this->store_->getCustomGroupVolumeByGroupId(group->_id);
-    double gain =
-        customStageMemberVolume ? customStageMemberVolume->volume : stageMember->volume;
-    gain = customGroupVolume ? (customGroupVolume->volume * gain) : (group->volume * gain);
+    double gain = customStageMemberVolume ? customStageMemberVolume->volume
+                                          : stageMember->volume;
+    gain = customGroupVolume ? (customGroupVolume->volume * gain)
+                             : (group->volume * gain);
     // TODO: mute is MISSING!!!
     // bool muted = (customStageMember ? customStageMember->muted :
     // stageMember->muted)
@@ -1151,12 +1170,12 @@ void ds::ds_service_t::stopOv()
   }
 }
 
-void ds::ds_service_t::configureAudio(const ds::json::soundcard_t soundCard)
+void ds::ds_service_t::configureAudio(const ds::soundcard_t soundCard)
 {
   std::lock_guard<std::recursive_mutex>(this->backend_mutex_);
   std::cout << "[INFO] Configure Audio using sound card " << soundCard.name
             << std::endl;
-  std::cout << "SOUND CARD ID:"  << soundCard.name << std::endl;
+  std::cout << "SOUND CARD ID:" << soundCard.name << std::endl;
   this->backend_.configure_audio_backend(
       {soundCard.driver, soundCard.name, soundCard.sampleRate,
        soundCard.periodSize, soundCard.numPeriods});
@@ -1165,8 +1184,7 @@ void ds::ds_service_t::configureAudio(const ds::json::soundcard_t soundCard)
   }
 }
 
-void ds::ds_service_t::configureConnection(
-    const ds::json::stage_ov_server_t server)
+void ds::ds_service_t::configureConnection(const ds::stage_ov_server_t server)
 {
   std::lock_guard<std::recursive_mutex>(this->backend_mutex_);
   std::cout << "[INFO] Configure connection using server " << server.ipv4 << ":"
@@ -1177,7 +1195,7 @@ void ds::ds_service_t::configureConnection(
 void ds::ds_service_t::syncGroupVolume(const std::string& groupId)
 {
   std::cout << "[TRACE] Syncing volume of group " << groupId << std::endl;
-  const std::vector<const ds::json::stage_member_t> stageMembers =
+  const std::vector<const ds::stage_member_t> stageMembers =
       this->store_->readStageMembersByGroup(groupId);
   for(const auto& stageMember : stageMembers) {
     this->syncStageMemberVolume(stageMember._id);
@@ -1187,7 +1205,7 @@ void ds::ds_service_t::syncGroupVolume(const std::string& groupId)
 void ds::ds_service_t::syncGroupPosition(const std::string& groupId)
 {
   std::cout << "[TRACE] Syncing position of group " << groupId << std::endl;
-  const std::vector<const ds::json::stage_member_t> stageMembers =
+  const std::vector<const ds::stage_member_t> stageMembers =
       this->store_->readStageMembersByGroup(groupId);
   for(const auto& stageMember : stageMembers) {
     this->syncStageMemberPosition(stageMember._id);
@@ -1200,18 +1218,19 @@ void ds::ds_service_t::syncRemoteOvTrackVolume(
   std::cout << "[TRACE] Syncing volume of remote track " << remoteOvTrackId
             << std::endl;
   std::lock_guard<std::recursive_mutex>(this->backend_mutex_);
-  boost::optional<const ds::json::remote_ov_track_t> remoteOvTrack =
+  boost::optional<const ds::remote_ov_track_t> remoteOvTrack =
       this->store_->readRemoteOvTrack(remoteOvTrackId);
   if(remoteOvTrack) {
-    boost::optional<const ds::json::stage_member_t> stageMember =
+    boost::optional<const ds::stage_member_t> stageMember =
         this->store_->readStageMember(remoteOvTrack->stageMemberId);
 
     if(stageMember) {
-      boost::optional<const ds::json::custom_remote_ov_track_volume_t>
+      boost::optional<const ds::custom_remote_ov_track_volume_t>
           customRemoteOvTrackVolume =
               this->store_->getCustomOvTrackVolumeByOvTrackId(remoteOvTrackId);
-      const double gain = customRemoteOvTrackVolume ? customRemoteOvTrackVolume->volume
-                                              : remoteOvTrack->volume;
+      const double gain = customRemoteOvTrackVolume
+                              ? customRemoteOvTrackVolume->volume
+                              : remoteOvTrack->volume;
       this->backend_.set_stage_device_channel_gain(stageMember->ovStageDeviceId,
                                                    remoteOvTrackId, gain);
     } else {
@@ -1230,15 +1249,16 @@ void ds::ds_service_t::syncRemoteOvTrackPosition(
   std::lock_guard<std::recursive_mutex>(this->backend_mutex_);
   std::cout << "[TRACE] Syncing position of remote track " << remoteOvTrackId
             << std::endl;
-  boost::optional<const ds::json::remote_ov_track_t> remoteOvTrack =
+  boost::optional<const ds::remote_ov_track_t> remoteOvTrack =
       this->store_->readRemoteOvTrack(remoteOvTrackId);
   if(remoteOvTrack) {
-    boost::optional<const ds::json::stage_member_t> stageMember =
+    boost::optional<const ds::stage_member_t> stageMember =
         this->store_->readStageMember(remoteOvTrack->stageMemberId);
     if(stageMember) {
-      boost::optional<const ds::json::custom_remote_ov_track_position_t>
+      boost::optional<const ds::custom_remote_ov_track_position_t>
           customRemoteOvTrackPosition =
-              this->store_->getCustomOvTrackPositionByOvTrackId(remoteOvTrackId);
+              this->store_->getCustomOvTrackPositionByOvTrackId(
+                  remoteOvTrackId);
       if(customRemoteOvTrackPosition) {
         this->backend_.set_stage_device_channel_position(
             stageMember->ovStageDeviceId, remoteOvTrackId,

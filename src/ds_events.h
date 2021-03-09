@@ -50,7 +50,7 @@ namespace ds {
     extern const std::string OV_TRACK_ADDED;
     extern const std::string OV_TRACK_CHANGED;
     extern const std::string OV_TRACK_REMOVED;
-  }
-}
+  } // namespace events
+} // namespace ds
 
-#endif //DS_EVENTS
+#endif // DS_EVENTS
