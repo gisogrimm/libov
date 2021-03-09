@@ -19,10 +19,9 @@ task_completion_event<void> tce; // used to terminate async PPLX listening task
 
 ds::ds_service_t::ds_service_t(ov_render_base_t& backend, std::string api_url)
     : ov_client_base_t(backend), backend_(backend),
-      api_url_(std::move(api_url)), ready_(false)
+      api_url_(std::move(api_url)), ready_(false),
+      quitrequest_(false)
 {
-  std::cout << "DEVICE ID: " << backend_.get_deviceid() << std::endl;
-  std::cout << "DEVICE ID: " << backend.get_deviceid() << std::endl;
   this->sound_card_tools_ = new sound_card_tools_t();
   this->store_ = new ds_store_t();
 }
@@ -79,7 +78,9 @@ void ds::ds_service_t::service()
         const std::string& event = j["data"][0];
         const nlohmann::json payload = j["data"][1];
 
+#ifdef DEBUG_EVENTS
         std::cout << "[EVENT] " << event << std::endl;
+#endif
 
         if(event == ds::events::READY) {
           this->ready_ = true;
@@ -87,7 +88,9 @@ void ds::ds_service_t::service()
             boost::optional<const ds::device_t> localDevice =
                 this->store_->getLocalDevice();
             if(localDevice && localDevice->sendAudio) {
+#ifdef DEBUG
               std::cout << "[INFO] Starting all ov related tasks" << std::endl;
+#endif
               this->syncLocalStageMember();
               this->syncRemoteStageMembers();
               this->startOv();
@@ -676,8 +679,10 @@ void ds::ds_service_t::service()
           const std::string _id = payload.get<std::string>();
           this->store_->removeOvTrack(_id);
         } else {
-          ucout << "Not supported: [" << event << "] " << payload.dump()
+#ifdef DEBUG_EVENTS
+          std::cout << "Not supported: [" << event << "] " << payload.dump()
                 << std::endl;
+#endif
         }
       }
       catch(const std::exception& e) {
@@ -709,8 +714,6 @@ void ds::ds_service_t::service()
 
   // Get mac address and local ip
   std::string mac(backend_.get_deviceid());
-
-  std::cout << "DEVICE ID: " << mac << std::endl;
 
   // Initial call with device
   nlohmann::json deviceJson;
@@ -747,7 +750,9 @@ void ds::ds_service_t::send(const std::string& event,
   std::string body_str(R"({"type":0,"data":[")" + event + "\"," + message +
                        "]}");
   msg.set_utf8_message(body_str);
-  ucout << "[SENDING] " << body_str << std::endl;
+#ifdef DEBUG_EVENTS
+  std::cout << "[SENDING] " << body_str << std::endl;
+#endif
   wsclient_.send(msg).wait();
 }
 
@@ -758,7 +763,9 @@ void ds::ds_service_t::sendAsync(const std::string& event,
   std::string body_str(R"({"type":0,"data":[")" + event + "\"," + message +
                        "]}");
   msg.set_utf8_message(body_str);
-  ucout << "[SENDING] " << body_str << std::endl;
+#ifdef DEBUG_EVENTS
+  std::cout << "[SENDING] " << body_str << std::endl;
+#endif
   wsclient_.send(msg);
 }
 
@@ -773,7 +780,9 @@ void ds::ds_service_t::createTrack(const std::string& soundCardId,
 void ds::ds_service_t::syncLocalStageMember()
 {
   std::lock_guard<std::recursive_mutex>(this->backend_mutex_);
+#ifdef DEBUG
   std::cout << "[TRACE] Syncing local stage member" << std::endl;
+#endif
 
   boost::optional<const ds::device_t> localDevice =
       this->store_->getLocalDevice();
@@ -817,7 +826,9 @@ void ds::ds_service_t::syncLocalStageMember()
     std::vector<device_channel_t> deviceChannels;
     // Now for all tracks
     for(const auto& track : tracks) {
+#ifdef DEBUG
       std::cout << "[TRACE] Adding local track " << track.channel << std::endl;
+#endif
       // Look for custom track
       boost::optional<const ds::custom_remote_ov_track_volume_t>
           customTrackVolume =
@@ -911,14 +922,18 @@ void ds::ds_service_t::syncLocalStageMember()
         true // sendlocal always true?
     });
   } else {
+#ifdef DEBUG
     std::cout << "[TRACE] Nothing to do here - not on a stage" << std::endl;
+#endif
   }
 }
 
 void ds::ds_service_t::syncRemoteStageMembers()
 {
   std::lock_guard<std::recursive_mutex>(this->backend_mutex_);
+#ifdef DEBUG
   std::cout << "[TRACE] Syncing remote stage members" << std::endl;
+#endif
   boost::optional<const ds::stage_t> stage = this->store_->getCurrentStage();
   boost::optional<const ds::device_t> localDevice =
       this->store_->getLocalDevice();
@@ -1042,14 +1057,18 @@ void ds::ds_service_t::syncRemoteStageMembers()
     }
     this->backend_.set_stage(stageDeviceMap);
   } else {
+#ifdef DEBUG
     std::cout << "[TRACE] Nothing to do here - not on a stage" << std::endl;
+#endif
   }
 }
 
 void ds::ds_service_t::syncStageMemberPosition(const std::string& stageMemberId)
 {
+#ifdef DEBUG
   std::cout << "[TRACE] Syncing position of stage member " << stageMemberId
             << std::endl;
+#endif
   std::lock_guard<std::recursive_mutex>(this->backend_mutex_);
   boost::optional<const ds::stage_member_t> stageMember =
       this->store_->readStageMember(stageMemberId);
@@ -1115,8 +1134,10 @@ void ds::ds_service_t::syncStageMemberPosition(const std::string& stageMemberId)
 
 void ds::ds_service_t::syncStageMemberVolume(const std::string& stageMemberId)
 {
+#ifdef DEBUG
   std::cout << "[TRACE] Syncing volume of stage member " << stageMemberId
             << std::endl;
+#endif
   std::lock_guard<std::recursive_mutex>(this->backend_mutex_);
   boost::optional<const ds::stage_member_t> stageMember =
       this->store_->readStageMember(stageMemberId);
@@ -1148,8 +1169,10 @@ void ds::ds_service_t::startOv()
 {
   std::lock_guard<std::recursive_mutex>(this->backend_mutex_);
   if(!this->backend_.is_session_active()) {
+#ifdef DEBUG
     std::cout << "[INFO] Starting OV Transmission, since it is not running yet"
               << std::endl;
+#endif
     if(this->backend_.is_audio_active()) {
       this->backend_.start_session();
     } else {
@@ -1162,8 +1185,10 @@ void ds::ds_service_t::startOv()
 void ds::ds_service_t::stopOv()
 {
   std::lock_guard<std::recursive_mutex>(this->backend_mutex_);
+#ifdef DEBUG
   std::cout << "[TRACE] Stopping OV Transmission (even if it is not running)"
             << std::endl;
+#endif
   this->backend_.clear_stage();
   if(this->backend_.is_audio_active()) {
     this->backend_.stop_audiobackend();
@@ -1173,9 +1198,11 @@ void ds::ds_service_t::stopOv()
 void ds::ds_service_t::configureAudio(const ds::soundcard_t soundCard)
 {
   std::lock_guard<std::recursive_mutex>(this->backend_mutex_);
+#ifdef DEBUG
   std::cout << "[INFO] Configure Audio using sound card " << soundCard.name
             << std::endl;
   std::cout << "SOUND CARD ID:" << soundCard.name << std::endl;
+#endif
   this->backend_.configure_audio_backend(
       {soundCard.driver, soundCard.name, soundCard.sampleRate,
        soundCard.periodSize, soundCard.numPeriods});
@@ -1187,14 +1214,18 @@ void ds::ds_service_t::configureAudio(const ds::soundcard_t soundCard)
 void ds::ds_service_t::configureConnection(const ds::stage_ov_server_t server)
 {
   std::lock_guard<std::recursive_mutex>(this->backend_mutex_);
+#ifdef DEBUG
   std::cout << "[INFO] Configure connection using server " << server.ipv4 << ":"
             << server.port << std::endl;
+#endif
   this->backend_.set_relay_server(server.ipv4, server.port, server.pin);
 }
 
 void ds::ds_service_t::syncGroupVolume(const std::string& groupId)
 {
+#ifdef DEBUG
   std::cout << "[TRACE] Syncing volume of group " << groupId << std::endl;
+#endif
   const std::vector<ds::stage_member_t> stageMembers =
       this->store_->readStageMembersByGroup(groupId);
   for(const auto& stageMember : stageMembers) {
@@ -1204,7 +1235,9 @@ void ds::ds_service_t::syncGroupVolume(const std::string& groupId)
 
 void ds::ds_service_t::syncGroupPosition(const std::string& groupId)
 {
+#ifdef DEBUG
   std::cout << "[TRACE] Syncing position of group " << groupId << std::endl;
+#endif
   const std::vector<ds::stage_member_t> stageMembers =
       this->store_->readStageMembersByGroup(groupId);
   for(const auto& stageMember : stageMembers) {
@@ -1215,8 +1248,10 @@ void ds::ds_service_t::syncGroupPosition(const std::string& groupId)
 void ds::ds_service_t::syncRemoteOvTrackVolume(
     const std::string& remoteOvTrackId)
 {
+#ifdef DEBUG
   std::cout << "[TRACE] Syncing volume of remote track " << remoteOvTrackId
             << std::endl;
+#endif
   std::lock_guard<std::recursive_mutex>(this->backend_mutex_);
   boost::optional<const ds::remote_ov_track_t> remoteOvTrack =
       this->store_->readRemoteOvTrack(remoteOvTrackId);
@@ -1247,8 +1282,10 @@ void ds::ds_service_t::syncRemoteOvTrackPosition(
     const std::string& remoteOvTrackId)
 {
   std::lock_guard<std::recursive_mutex>(this->backend_mutex_);
+#ifdef DEBUG
   std::cout << "[TRACE] Syncing position of remote track " << remoteOvTrackId
             << std::endl;
+#endif
   boost::optional<const ds::remote_ov_track_t> remoteOvTrack =
       this->store_->readRemoteOvTrack(remoteOvTrackId);
   if(remoteOvTrack) {

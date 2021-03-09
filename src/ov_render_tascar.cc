@@ -4,7 +4,9 @@
 #include <iostream>
 #include <jack/jack.h>
 
+#ifndef ZITAPATH
 #define ZITAPATH ""
+#endif
 
 bool ov_render_tascar_t::metronome_t::operator!=(const metronome_t& a)
 {
@@ -745,22 +747,20 @@ void ov_render_tascar_t::start_audiobackend()
 #ifdef __APPLE__
     // Check if jack is already running
     // const char *client_name = "run_test";
-    jack_options_t options = JackNullOption;
+    jack_options_t options = JackNoStartServer;
     jack_status_t status;
     jack_client_t* jackClient = jack_client_open("run_test", options, &status);
     if(jackClient != nullptr) {
-      std::cout << "JACK IS ALREADY RUNNING" << std::endl;
+      std::cout << "[ov_render_tascar] Jack is already running" << std::endl;
+      jack_client_close(jackClient);
       return;
     }
-    std::cout << "JACK IS NOT RUNNING" << std::endl;
-    jack_client_close(jackClient);
     sprintf(cmd,
             "JACK_NO_AUDIO_RESERVATION=1 jackd --sync -P 40 -d coreaudio -d %s "
             "-r %g -p %d -n %d",
             devname.c_str(), audiodevice.srate, audiodevice.periodsize,
             audiodevice.numperiods);
-    std::cout << "STARTING JACK!" << std::endl;
-    std::cout << cmd << std::endl;
+    std::cout << "[ov_render_tascar] Starting jack server" << std::endl;
 #else
     sprintf(cmd,
             "JACK_NO_AUDIO_RESERVATION=1 jackd --sync -P 40 -d alsa -d %s "

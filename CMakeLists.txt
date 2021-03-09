@@ -55,6 +55,10 @@ find_package(cpprestsdk REQUIRED NAMES cpprestsdk cpprest)
 find_package(SoundIo REQUIRED)
 
 ## COMPILER ADDONS
+option(DEBUG_EVENTS "Debug events to console" ON)
+if (DEBUG_EVENTS)
+    add_compile_definitions(DEBUG_EVENTS)
+endif (DEBUG_EVENTS)
 if (LINUX)
     add_compile_definitions(LINUX)
 elseif (APPLE)
