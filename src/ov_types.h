@@ -119,16 +119,11 @@ bool operator!=(const std::vector<device_channel_t>& a,
 bool operator!=(const stage_device_t& a, const stage_device_t& b);
 
 /**
-   \brief Network settings of a device
+   \brief Settings of acoustic rendering and networking specific to the local
+   device
 
-   This structure contains network settings, like peer-to-peer mode,
-   jitter buffer settings, extra ports etc.
- */
-struct network_settings_t {
-};
-
-/**
-   \brief Acoustic rendering settings
+   These settings do not need to be shared with other devices, or are
+   dstributed via the relay server protocol.
  */
 struct render_settings_t {
   stage_device_id_t id;
@@ -188,8 +183,6 @@ struct stage_t {
   secret_t pin;
   /// rendering settings:
   render_settings_t rendersettings;
-  /// rendering settings:
-  network_settings_t networksettings;
   /// Device identifier of this stage device (typically its mac address):
   std::string thisdeviceid;
   /// Numeric identifier of this device within the stage:

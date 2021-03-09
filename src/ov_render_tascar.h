@@ -71,6 +71,21 @@ private:
   double selfmonitor_delay;
   // metronome settings:
   metronome_t metronome;
+  /**
+     \brief serve as proxy
+
+     A device which serves as proxy will send forwarded packages
+     not to localhost, but to a multicast group instead.
+   */
+  bool is_proxy;
+  /**
+     \brief use a proxy
+
+     A device which uses a proxy will not receive packages from a
+     server or peers, but will listen to a multicast group
+
+  */
+  bool use_proxy;
 };
 
 #endif

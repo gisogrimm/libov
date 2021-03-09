@@ -73,16 +73,13 @@ render_settings_t default_rendersettings = {
     50,                                // double ambientlevel;
 };
 
-network_settings_t default_networksettings = {};
-
 stage_t default_stage = {
-    "",                      // std::string host;
-    0,                       // port_t port;
-    0,                       // secret_t pin;
-    default_rendersettings,  // render_settings_t rendersettings;
-    default_networksettings, // network_settings_t networksettings;
-    "",                      // std::string thisdeviceid;
-    0,                       // stage_device_id_t thisstagedeviceid;
+    "",                     // std::string host;
+    0,                      // port_t port;
+    0,                      // secret_t pin;
+    default_rendersettings, // render_settings_t rendersettings;
+    "",                     // std::string thisdeviceid;
+    0,                      // stage_device_id_t thisstagedeviceid;
     std::map<stage_device_id_t,
              stage_device_t>(), // std::map<stage_device_id_t,
                                 // stage_device_t> stage;
@@ -164,6 +161,7 @@ ov_render_base_t::ov_render_base_t(const std::string& deviceid)
     : audiodevice({"", "", 48000, 96, 2}), stage(default_stage),
       session_active(false), audio_active(false)
 {
+  stage.thisdeviceid = deviceid;
 }
 
 void ov_render_base_t::start_session()

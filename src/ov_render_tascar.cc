@@ -100,7 +100,8 @@ ov_render_tascar_t::ov_render_tascar_t(const std::string& deviceid,
     : ov_render_base_t(deviceid), h_jack(NULL), h_webmixer(NULL), tascar(NULL),
       ovboxclient(NULL), pinglogport(pinglogport_), pinglogaddr(nullptr),
       inputports({"system:capture_1", "system:capture_2"}),
-      headtrack_tauref(33.315), selfmonitor_delay(0.0)
+      headtrack_tauref(33.315), selfmonitor_delay(0.0), is_proxy(false),
+      use_proxy(false)
 {
   audiodevice = {"jack", "hw:1", 48000, 96, 2};
   if(pinglogport)
@@ -659,13 +660,10 @@ void ov_render_tascar_t::start_session()
       e_con->set_attribute("dest", xport.second);
     }
     if(!stage.host.empty()) {
-      // ovboxclient_t rec(desthost, destport, recport, portoffset, prio,
-      // secret,
-      //                callerid, peer2peer, donotsend, downmixonly);
       ovboxclient = new ovboxclient_t(
           stage.host, stage.port, 4464 + 2 * stage.thisstagedeviceid, 0, 30,
           stage.pin, stage.thisstagedeviceid, stage.rendersettings.peer2peer,
-          false, false, stage.stage[stage.thisstagedeviceid].sendlocal);
+          use_proxy, false, stage.stage[stage.thisstagedeviceid].sendlocal);
       if(stage.rendersettings.secrec > 0)
         ovboxclient->add_extraport(100);
       for(auto p : stage.rendersettings.xrecport)
@@ -939,27 +937,35 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
 {
   try {
     if(!js.empty()) {
+      bool restart_session(false);
+      // parse extra configuration:
       nlohmann::json xcfg(nlohmann::json::parse(js));
-      if(xcfg["headtrack"].is_object() &&
-         !xcfg["headtrack"]["tauref"].is_null())
-        headtrack_tauref = xcfg["headtrack"].value("tauref", 33.315);
-      if(xcfg["monitor"].is_object() && !xcfg["monitor"]["delay"].is_null())
-        selfmonitor_delay = xcfg["monitor"].value("delay", 0.0);
+      if(xcfg["headtrack"].is_object())
+        headtrack_tauref = my_js_value(xcfg["headtrack"], "tauref", 33.315);
+      if(xcfg["monitor"].is_object())
+        selfmonitor_delay = my_js_value(xcfg["monitor"], "delay", 0.0);
       if(xcfg["metronome"].is_object()) {
         metronome_t newmetro(xcfg["metronome"]);
         if(newmetro != metronome) {
-          bool delaychanged(metronome.delay != newmetro.delay);
+          if(metronome.delay != newmetro.delay)
+            restart_session = true;
           metronome = newmetro;
           if(is_session_active()) {
-            if(delaychanged) {
-              // workaround, no OSC control of delay yet:
-              end_session();
-              start_session();
-            } else {
-              metronome.update_osc(tascar, stage.thisdeviceid);
-            }
+            metronome.update_osc(tascar, stage.thisdeviceid);
           }
         }
+      }
+      if(xcfg["proxy"].is_object()) {
+        bool cfg_is_proxy = my_js_value(xcfg["proxy"], "isproxy", false);
+        bool cfg_use_proxy = my_js_value(xcfg["proxy"], "useproxy", false);
+        if((cfg_is_proxy != is_proxy) || (cfg_use_proxy != use_proxy))
+          restart_session = true;
+        is_proxy = cfg_is_proxy;
+        use_proxy = cfg_use_proxy;
+      }
+      if(is_session_active() && restart_session) {
+        end_session();
+        start_session();
       }
     }
   }
