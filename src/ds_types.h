@@ -41,7 +41,186 @@ namespace ds {
     std::vector<std::string> soundCardNames;
   };
 
-  void to_json(json& j, const device_t& p)
+  struct stage_ov_server_t {
+    std::string router;
+    std::string ipv4;
+    std::string ipv6;
+    uint16_t port = 0;
+    uint32_t pin = 0;
+    double serverJitter = -1;
+  };
+  struct stage_t {
+    std::string _id;
+    std::string name;
+    std::vector<std::string> admins;
+    std::string password;
+    double width;
+    double length;
+    double height;
+    double absorption;
+    double damping;
+    bool renderAmbient;
+    std::string ambientSoundUrl;
+    double ambientLevel;
+    bool supportsOv;
+    stage_ov_server_t ovServer;
+  };
+
+  struct group_t {
+    std::string _id;
+    std::string name;
+    std::string color;
+    std::string stageId;
+    double volume = 1;
+    bool muted = false;
+    double x;
+    double y;
+    double z;
+    double rX;
+    double rY;
+    double rZ;
+  };
+
+  struct custom_group_position_t {
+    std::string _id;
+    std::string userId;
+    std::string groupId;
+    double x = std::numeric_limits<double>::lowest();
+    double y = std::numeric_limits<double>::lowest();
+    double z = std::numeric_limits<double>::lowest();
+    double rX = std::numeric_limits<double>::lowest();
+    double rY = std::numeric_limits<double>::lowest();
+    double rZ = std::numeric_limits<double>::lowest();
+  };
+
+  struct custom_group_volume_t {
+    std::string _id;
+    std::string userId;
+    std::string groupId;
+    double volume = 1;
+    bool muted = false;
+  };
+
+  struct stage_member_t {
+    std::string _id;
+    std::string groupId;
+    std::string userId;
+    bool online;
+    bool isDirector;
+    stage_device_id_t ovStageDeviceId;
+    bool sendlocal;
+    std::string stageId;
+    double volume;
+    bool muted;
+    double x;
+    double y;
+    double z;
+    double rX;
+    double rY;
+    double rZ;
+  };
+
+  struct custom_stage_member_position_t {
+    std::string _id;
+    std::string userId;
+    std::string stageMemberId;
+    double x = std::numeric_limits<double>::lowest();
+    double y = std::numeric_limits<double>::lowest();
+    double z = std::numeric_limits<double>::lowest();
+    double rX = std::numeric_limits<double>::lowest();
+    double rY = std::numeric_limits<double>::lowest();
+    double rZ = std::numeric_limits<double>::lowest();
+  };
+  struct custom_stage_member_volume_t {
+    std::string _id;
+    std::string userId;
+    std::string stageMemberId;
+    double volume = 1;
+    bool muted = false;
+  };
+
+  struct soundcard_t {
+    std::string _id;
+    std::string deviceId;
+    std::string name;
+    std::string label;
+    bool isDefault;
+    std::string driver; //'jack' | 'alsa' | 'asio' | 'webrtc'
+    double sampleRate;
+    std::vector<double> sampleRates;
+    unsigned int periodSize;
+    unsigned int numPeriods;
+    double softwareLatency;
+
+    unsigned int numInputChannels;
+    unsigned int numOutputChannels;
+
+    std::vector<unsigned int> inputChannels;
+    std::vector<unsigned int> outputChannels;
+
+    std::string userId;
+  };
+  struct ov_track_t {
+    std::string _id;
+    std::string soundCardId;
+    int channel;
+    std::string userId;
+    std::string deviceId;
+  };
+
+  struct remote_ov_track_t {
+    std::string _id;
+    std::string ovTrackId;
+    std::string stageMemberId;
+    int channel;
+    bool online;
+    std::string directivity; // Will be omni or cardoid
+    double volume;
+    bool muted;
+    double x;
+    double y;
+    double z;
+    double rX;
+    double rY;
+    double rZ;
+    std::string userId;
+    std::string stageId;
+  };
+
+  struct custom_remote_ov_track_position_t {
+    std::string _id;
+    std::string stageMemberId;
+    std::string remoteOvTrackId;
+    std::string userId;
+    std::string stageId;
+    std::string directivity = "cardoid"; // Will be omni or cardoid
+    double x = std::numeric_limits<double>::lowest();
+    double y = std::numeric_limits<double>::lowest();
+    double z = std::numeric_limits<double>::lowest();
+    double rX = std::numeric_limits<double>::lowest();
+    double rY = std::numeric_limits<double>::lowest();
+    double rZ = std::numeric_limits<double>::lowest();
+  };
+
+  struct custom_remote_ov_track_volume_t {
+    std::string _id;
+    std::string stageMemberId;
+    std::string remoteOvTrackId;
+    std::string userId;
+    std::string stageId;
+    double volume = 1;
+    bool muted = false;
+  };
+
+  struct user_t {
+    std::string _id;
+    std::string name;
+    std::string avatarUrl;
+    std::string stageId;
+    std::string stageMemberId;
+  };
+
+  inline void to_json(json& j, const device_t& p)
   {
     j = json{{"_id", p._id},
              {"userId", p.userId},
@@ -70,7 +249,7 @@ namespace ds {
     }
   }
 
-  void from_json(const json& j, device_t& p)
+  inline void from_json(const json& j, device_t& p)
   {
     j.at("_id").get_to(p._id);
     j.at("_id").get_to(p._id);
@@ -102,16 +281,7 @@ namespace ds {
     }
   }
 
-  struct stage_ov_server_t {
-    std::string router;
-    std::string ipv4;
-    std::string ipv6;
-    uint16_t port = 0;
-    uint32_t pin = 0;
-    double serverJitter = -1;
-  };
-
-  void to_json(json& j, const stage_ov_server_t& p)
+  inline void to_json(json& j, const stage_ov_server_t& p)
   {
     j = json{{"router", p.router},
              {"ipv4", p.ipv4},
@@ -124,7 +294,7 @@ namespace ds {
       j["serverJitter"] = p.serverJitter;
     }
   }
-  void from_json(const json& j, stage_ov_server_t& p)
+  inline void from_json(const json& j, stage_ov_server_t& p)
   {
     j.at("router").get_to(p.router);
     j.at("ipv4").get_to(p.ipv4);
@@ -138,24 +308,7 @@ namespace ds {
     }
   }
 
-  struct stage_t {
-    std::string _id;
-    std::string name;
-    std::vector<std::string> admins;
-    std::string password;
-    double width;
-    double length;
-    double height;
-    double absorption;
-    double damping;
-    bool renderAmbient;
-    std::string ambientSoundUrl;
-    double ambientLevel;
-    bool supportsOv;
-    stage_ov_server_t ovServer;
-  };
-
-  void to_json(json& j, const stage_t& p)
+  inline void to_json(json& j, const stage_t& p)
   {
     j = json{{"_id", p._id},
              {"name", p.name},
@@ -176,7 +329,7 @@ namespace ds {
     }
   }
 
-  void from_json(const json& j, stage_t& p)
+  inline void from_json(const json& j, stage_t& p)
   {
     j.at("_id").get_to(p._id);
     j.at("name").get_to(p.name);
@@ -210,22 +363,7 @@ namespace ds {
     }
   }
 
-  struct group_t {
-    std::string _id;
-    std::string name;
-    std::string color;
-    std::string stageId;
-    double volume = 1;
-    bool muted = false;
-    double x;
-    double y;
-    double z;
-    double rX;
-    double rY;
-    double rZ;
-  };
-
-  void to_json(json& j, const group_t& p)
+  inline void to_json(json& j, const group_t& p)
   {
     j = json{{"_id", p._id},       {"name", p.name},
              {"color", p.color},   {"stageId", p.stageId},
@@ -235,7 +373,7 @@ namespace ds {
              {"rY", p.rY},         {"rZ", p.rZ}};
   }
 
-  void from_json(const json& j, group_t& p)
+  inline void from_json(const json& j, group_t& p)
   {
     j.at("_id").get_to(p._id);
     j.at("name").get_to(p.name);
@@ -255,26 +393,14 @@ namespace ds {
     }
   }
 
-  struct custom_group_position_t {
-    std::string _id;
-    std::string userId;
-    std::string groupId;
-    double x = std::numeric_limits<double>::lowest();
-    double y = std::numeric_limits<double>::lowest();
-    double z = std::numeric_limits<double>::lowest();
-    double rX = std::numeric_limits<double>::lowest();
-    double rY = std::numeric_limits<double>::lowest();
-    double rZ = std::numeric_limits<double>::lowest();
-  };
-
-  void to_json(json& j, const custom_group_position_t& p)
+  inline void to_json(json& j, const custom_group_position_t& p)
   {
     j = json{{"_id", p._id}, {"userId", p.userId}, {"groupId", p.groupId},
              {"x", p.x},     {"y", p.y},           {"z", p.z},
              {"rX", p.rX},   {"rY", p.rY},         {"rZ", p.rZ}};
   }
 
-  void from_json(const json& j, custom_group_position_t& p)
+  inline void from_json(const json& j, custom_group_position_t& p)
   {
     j.at("_id").get_to(p._id);
     j.at("userId").get_to(p.userId);
@@ -287,15 +413,7 @@ namespace ds {
     j.at("rZ").get_to(p.rZ);
   }
 
-  struct custom_group_volume_t {
-    std::string _id;
-    std::string userId;
-    std::string groupId;
-    double volume = 1;
-    bool muted = false;
-  };
-
-  void to_json(json& j, const custom_group_volume_t& p)
+  inline void to_json(json& j, const custom_group_volume_t& p)
   {
     j = json{{"_id", p._id},
              {"userId", p.userId},
@@ -304,7 +422,7 @@ namespace ds {
              {"muted", p.muted}};
   }
 
-  void from_json(const json& j, custom_group_volume_t& p)
+  inline void from_json(const json& j, custom_group_volume_t& p)
   {
     j.at("_id").get_to(p._id);
     j.at("userId").get_to(p.userId);
@@ -313,26 +431,7 @@ namespace ds {
     j.at("muted").get_to(p.muted);
   }
 
-  struct stage_member_t {
-    std::string _id;
-    std::string groupId;
-    std::string userId;
-    bool online;
-    bool isDirector;
-    stage_device_id_t ovStageDeviceId;
-    bool sendlocal;
-    std::string stageId;
-    double volume;
-    bool muted;
-    double x;
-    double y;
-    double z;
-    double rX;
-    double rY;
-    double rZ;
-  };
-
-  void to_json(json& j, const stage_member_t& p)
+  inline void to_json(json& j, const stage_member_t& p)
   {
     j = json{{"_id", p._id},
              {"groupId", p.groupId},
@@ -352,7 +451,7 @@ namespace ds {
              {"rZ", p.rZ}};
   }
 
-  void from_json(const json& j, stage_member_t& p)
+  inline void from_json(const json& j, stage_member_t& p)
   {
     j.at("_id").get_to(p._id);
     j.at("groupId").get_to(p.groupId);
@@ -376,19 +475,7 @@ namespace ds {
     j.at("rZ").get_to(p.rZ);
   }
 
-  struct custom_stage_member_position_t {
-    std::string _id;
-    std::string userId;
-    std::string stageMemberId;
-    double x = std::numeric_limits<double>::lowest();
-    double y = std::numeric_limits<double>::lowest();
-    double z = std::numeric_limits<double>::lowest();
-    double rX = std::numeric_limits<double>::lowest();
-    double rY = std::numeric_limits<double>::lowest();
-    double rZ = std::numeric_limits<double>::lowest();
-  };
-
-  void to_json(json& j, const custom_stage_member_position_t& p)
+  inline void to_json(json& j, const custom_stage_member_position_t& p)
   {
     j = json{{"_id", p._id},
              {"userId", p.userId},
@@ -401,7 +488,7 @@ namespace ds {
              {"rZ", p.rZ}};
   }
 
-  void from_json(const json& j, custom_stage_member_position_t& p)
+  inline void from_json(const json& j, custom_stage_member_position_t& p)
   {
     j.at("_id").get_to(p._id);
     j.at("userId").get_to(p.userId);
@@ -414,15 +501,7 @@ namespace ds {
     j.at("rZ").get_to(p.rZ);
   }
 
-  struct custom_stage_member_volume_t {
-    std::string _id;
-    std::string userId;
-    std::string stageMemberId;
-    double volume = 1;
-    bool muted = false;
-  };
-
-  void to_json(json& j, const custom_stage_member_volume_t& p)
+  inline void to_json(json& j, const custom_stage_member_volume_t& p)
   {
     j = json{{"_id", p._id},
              {"userId", p.userId},
@@ -431,7 +510,7 @@ namespace ds {
              {"muted", p.muted}};
   }
 
-  void from_json(const json& j, custom_stage_member_volume_t& p)
+  inline void from_json(const json& j, custom_stage_member_volume_t& p)
   {
     j.at("_id").get_to(p._id);
     j.at("userId").get_to(p.userId);
@@ -440,29 +519,7 @@ namespace ds {
     j.at("muted").get_to(p.muted);
   }
 
-  struct soundcard_t {
-    std::string _id;
-    std::string deviceId;
-    std::string name;
-    std::string label;
-    bool isDefault;
-    std::string driver; //'jack' | 'alsa' | 'asio' | 'webrtc'
-    double sampleRate;
-    std::vector<double> sampleRates;
-    unsigned int periodSize;
-    unsigned int numPeriods;
-    double softwareLatency;
-
-    unsigned int numInputChannels;
-    unsigned int numOutputChannels;
-
-    std::vector<unsigned int> inputChannels;
-    std::vector<unsigned int> outputChannels;
-
-    std::string userId;
-  };
-
-  void to_json(json& j, const soundcard_t& p)
+  inline void to_json(json& j, const soundcard_t& p)
   {
     j = json{{"_id", p._id},
              {"deviceId", p.deviceId},
@@ -484,7 +541,7 @@ namespace ds {
     }
   }
 
-  void from_json(const json& j, soundcard_t& p)
+  inline void from_json(const json& j, soundcard_t& p)
   {
     j.at("_id").get_to(p._id);
     j.at("deviceId").get_to(p.deviceId);
@@ -509,52 +566,7 @@ namespace ds {
     }
   }
 
-  struct ov_track_t {
-    std::string _id;
-    std::string soundCardId;
-    int channel;
-    std::string userId;
-    std::string deviceId;
-  };
-
-  void to_json(json& j, const ov_track_t& p)
-  {
-    j = json{{"_id", p._id},
-             {"soundCardId", p.soundCardId},
-             {"channel", p.channel},
-             {"userId", p.userId},
-             {"deviceId", p.deviceId}};
-  }
-
-  void from_json(const json& j, ov_track_t& p)
-  {
-    j.at("_id").get_to(p._id);
-    j.at("soundCardId").get_to(p.deviceId);
-    j.at("channel").get_to(p.channel);
-    j.at("userId").get_to(p.userId);
-    j.at("deviceId").get_to(p.deviceId);
-  }
-
-  struct remote_ov_track_t {
-    std::string _id;
-    std::string ovTrackId;
-    std::string stageMemberId;
-    int channel;
-    bool online;
-    std::string directivity; // Will be omni or cardoid
-    double volume;
-    bool muted;
-    double x;
-    double y;
-    double z;
-    double rX;
-    double rY;
-    double rZ;
-    std::string userId;
-    std::string stageId;
-  };
-
-  void to_json(json& j, const remote_ov_track_t& p)
+  inline void to_json(json& j, const remote_ov_track_t& p)
   {
     j = json{{"_id", p._id},
              {"ovTrackId", p.ovTrackId},
@@ -574,7 +586,7 @@ namespace ds {
              {"stageId", p.stageId}};
   }
 
-  void from_json(const json& j, remote_ov_track_t& p)
+  inline void from_json(const json& j, remote_ov_track_t& p)
   {
     j.at("_id").get_to(p._id);
     j.at("ovTrackId").get_to(p.ovTrackId);
@@ -594,22 +606,7 @@ namespace ds {
     j.at("rZ").get_to(p.rZ);
   }
 
-  struct custom_remote_ov_track_position_t {
-    std::string _id;
-    std::string stageMemberId;
-    std::string remoteOvTrackId;
-    std::string userId;
-    std::string stageId;
-    std::string directivity = "cardoid"; // Will be omni or cardoid
-    double x = std::numeric_limits<double>::lowest();
-    double y = std::numeric_limits<double>::lowest();
-    double z = std::numeric_limits<double>::lowest();
-    double rX = std::numeric_limits<double>::lowest();
-    double rY = std::numeric_limits<double>::lowest();
-    double rZ = std::numeric_limits<double>::lowest();
-  };
-
-  void to_json(json& j, const custom_remote_ov_track_position_t& p)
+  inline void to_json(json& j, const custom_remote_ov_track_position_t& p)
   {
     j = json{{"_id", p._id},
              {"stageMemberId", p.stageMemberId},
@@ -625,7 +622,7 @@ namespace ds {
              {"rZ", p.rZ}};
   }
 
-  void from_json(const json& j, custom_remote_ov_track_position_t& p)
+  inline void from_json(const json& j, custom_remote_ov_track_position_t& p)
   {
     j.at("_id").get_to(p._id);
     j.at("stageMemberId").get_to(p.stageMemberId);
@@ -641,17 +638,25 @@ namespace ds {
     j.at("directivity").get_to(p.directivity);
   }
 
-  struct custom_remote_ov_track_volume_t {
-    std::string _id;
-    std::string stageMemberId;
-    std::string remoteOvTrackId;
-    std::string userId;
-    std::string stageId;
-    double volume = 1;
-    bool muted = false;
-  };
+  inline void to_json(json& j, const ov_track_t& p)
+  {
+    j = json{{"_id", p._id},
+             {"soundCardId", p.soundCardId},
+             {"channel", p.channel},
+             {"userId", p.userId},
+             {"deviceId", p.deviceId}};
+  }
 
-  void to_json(json& j, const custom_remote_ov_track_volume_t& p)
+  inline void from_json(const json& j, ov_track_t& p)
+  {
+    j.at("_id").get_to(p._id);
+    j.at("soundCardId").get_to(p.deviceId);
+    j.at("channel").get_to(p.channel);
+    j.at("userId").get_to(p.userId);
+    j.at("deviceId").get_to(p.deviceId);
+  }
+
+  inline void to_json(json& j, const custom_remote_ov_track_volume_t& p)
   {
     j = json{{"_id", p._id},
              {"stageMemberId", p.stageMemberId},
@@ -662,7 +667,7 @@ namespace ds {
              {"muted", p.muted}};
   }
 
-  void from_json(const json& j, custom_remote_ov_track_volume_t& p)
+  inline void from_json(const json& j, custom_remote_ov_track_volume_t& p)
   {
     j.at("_id").get_to(p._id);
     j.at("stageMemberId").get_to(p.stageMemberId);
@@ -673,15 +678,7 @@ namespace ds {
     j.at("muted").get_to(p.muted);
   }
 
-  struct user_t {
-    std::string _id;
-    std::string name;
-    std::string avatarUrl;
-    std::string stageId;
-    std::string stageMemberId;
-  };
-
-  void to_json(json& j, const user_t& p)
+  inline void to_json(json& j, const user_t& p)
   {
     j = json{{"_id", p._id}, {"name", p.name}};
     if(!p.avatarUrl.empty()) {
@@ -695,7 +692,7 @@ namespace ds {
     }
   }
 
-  void from_json(const json& j, user_t& p)
+  inline void from_json(const json& j, user_t& p)
   {
     j.at("_id").get_to(p._id);
     j.at("name").get_to(p.name);
