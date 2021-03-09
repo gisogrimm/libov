@@ -59,7 +59,9 @@ void ov_client_orlandoviols_t::start_service()
 void ov_client_orlandoviols_t::stop_service()
 {
   runservice = false;
+  std::cout << "DEBUG STOP2" << std::endl;
   servicethread.join();
+  std::cout << "DEBUG STOP3" << std::endl;
 }
 
 bool ov_client_orlandoviols_t::report_error(std::string url,
@@ -441,8 +443,10 @@ void ov_client_orlandoviols_t::service()
             }
             if(!backend.is_audio_active())
               backend.start_audiobackend();
+            std::cout << "runservice1" << std::endl;
             if(!backend.is_session_active())
               backend.start_session();
+            std::cout << "runservice2" << std::endl;
           }
           report_error(lobby, backend.get_deviceid(), "");
         }
@@ -464,6 +468,7 @@ void ov_client_orlandoviols_t::service()
       sleep(15);
     }
   }
+  std::cout << "FINSIHED?" << std::endl;
 }
 
 /*

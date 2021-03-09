@@ -2,9 +2,11 @@
 #include "ds_events.h"
 #include "udpsocket.h"
 #include <iostream>
+#include <utility>
+#include <map>
+#include <vector>
 #include <nlohmann/json.hpp>
 #include <pplx/pplxtasks.h>
-#include <utility>
 
 using namespace utility;
 using namespace web;
@@ -16,8 +18,12 @@ using namespace concurrency::streams;
 task_completion_event<void> tce; // used to terminate async PPLX listening task
 
 ds::ds_service_t::ds_service_t(ov_render_base_t& backend, std::string api_url)
-    : backend_(backend), api_url_(std::move(api_url)), ready_(false)
+    : ov_client_base_t(backend),
+      backend_(backend),
+      api_url_(std::move(api_url)), ready_(false)
 {
+  std::cout << "DEVICE ID: " << backend_.get_deviceid() << std::endl;
+  std::cout << "DEVICE ID: " << backend.get_deviceid() << std::endl;
   this->sound_card_tools_ = new sound_card_tools_t();
   this->store_ = new ds_store_t();
 }
@@ -28,13 +34,23 @@ ds::ds_service_t::~ds_service_t()
   delete this->store_;
 }
 
-void ds::ds_service_t::start(const std::string& token)
+void ds::ds_service_t::set_token(const std::string& token)
 {
   this->token_ = token;
+}
+
+const std::string ds::ds_service_t::get_token() {
+  return this->token_;
+}
+
+void ds::ds_service_t::start_service()
+{
+  if( this->token_.empty() )
+    throw std::logic_error("Set token first");
   this->servicethread_ = std::thread(&ds::ds_service_t::service, this);
 }
 
-void ds::ds_service_t::stop()
+void ds::ds_service_t::stop_service()
 {
   tce.set(); // task completion event is set closing wss listening task
   this->wsclient_.close();     // wss client is closed
@@ -691,6 +707,8 @@ void ds::ds_service_t::service()
 
   // Get mac address and local ip
   std::string mac(backend_.get_deviceid());
+
+  std::cout << "DEVICE ID: " << mac << std::endl;
 
   // Initial call with device
   nlohmann::json deviceJson;

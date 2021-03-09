@@ -17,7 +17,7 @@ namespace ds {
      * service
      * @param authUrl
      */
-    ds_auth_service_t(const std::string& authUrl);
+    explicit ds_auth_service_t(const std::string& authUrl);
 
     /**
      * Sign into the auth service with given email and password

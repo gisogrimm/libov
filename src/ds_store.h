@@ -9,6 +9,9 @@
 #include <boost/optional.hpp>
 #include <nlohmann/json.hpp>
 #include <mutex>
+#include <string>
+#include <map>
+#include <vector>
 
 namespace ds {
   class ds_store_t {

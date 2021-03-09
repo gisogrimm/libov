@@ -6,23 +6,31 @@
 #include "ov_types.h"
 #include "soundcardtools.h"
 #include <atomic>
-#include <cpprest/ws_client.h>
-#include <thread>
 #include <mutex>
+#include <string>
+#include <thread>
+#include <cpprest/ws_client.h>
 
 using namespace web::websockets::client;
 
 namespace ds {
-  class ds_service_t {
+  class ds_service_t : public ov_client_base_t {
 
   public:
-    ds_service_t(ov_render_base_t& backend, std::string api_url);
+    ds_service_t(ov_render_base_t& backend,
+                 std::string api_url);
 
     ~ds_service_t();
 
-    void start(const std::string& token);
+    void set_token(const std::string& token);
 
-    void stop();
+    const std::string get_token();
+
+    void start_service();
+
+    void stop_service();
+
+    bool is_going_to_stop() const { return quitrequest_; };
 
   protected:
     ov_render_base_t& backend_;
@@ -71,6 +79,7 @@ namespace ds {
     ds_store_t* store_;
 
     std::atomic<bool> ready_;
+    std::atomic<bool> quitrequest_;
   };
 } // namespace ds
 

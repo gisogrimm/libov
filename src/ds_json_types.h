@@ -5,6 +5,8 @@
 #include <boost/optional.hpp>
 #include <iostream>
 #include <nlohmann/json.hpp>
+#include <string>
+#include <vector>
 
 namespace ds {
   namespace json {
