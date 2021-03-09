@@ -105,6 +105,8 @@ ov_render_tascar_t::ov_render_tascar_t(const std::string& deviceid,
       headtrack_tauref(33.315), selfmonitor_delay(0.0), is_proxy(false),
       use_proxy(false)
 {
+  // avoid problems with number format in xml file:
+  setlocale(LC_ALL, "C");
   audiodevice = {"jack", "hw:1", 48000, 96, 2};
   if(pinglogport)
     pinglogaddr =
