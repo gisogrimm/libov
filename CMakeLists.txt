@@ -6,7 +6,7 @@ project(ov
         VERSION 0.5
         DESCRIPTION "common header files and library code for ov-client and ov-server"
         )
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules)
@@ -80,7 +80,9 @@ add_compile_definitions(${CMAKE_SYSTEM_PROCESSOR})
 
 
 ## TARGET
-add_library(ov SHARED ${SOURCES})
+add_library(ov STATIC ${SOURCES})
+set_property(TARGET ov PROPERTY CXX_STANDARD 14)
+set_property(TARGET ov PROPERTY CXX_STANDARD_REQUIRED ON)
 set_target_properties(tascar PROPERTIES PUBLIC_HEADER "${HEADER}")
 target_include_directories(ov
         PRIVATE
