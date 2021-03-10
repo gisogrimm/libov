@@ -1,8 +1,8 @@
 VERSION=0.6
-export MINORVERSION:=$(shell git rev-list --count 141b60167cafe272176c962f4a61da118cde8d03..HEAD)
-export COMMIT:=$(shell git rev-parse --short HEAD)
-export COMMITMOD:=$(shell test -z "`git status --porcelain -uno`" || echo "-modified")
-export FULLVERSION:=$(VERSION).$(MINORVERSION)-$(COMMIT)$(COMMITMOD)
+#export MINORVERSION:=$(shell git rev-list --count 141b60167cafe272176c962f4a61da118cde8d03..HEAD)
+#export COMMIT:=$(shell git rev-parse --short HEAD)
+#export COMMITMOD:=$(shell test -z "`git status --porcelain -uno`" || echo "-modified")
+export FULLVERSION:=$(shell ./get_version.sh)
 
 all: tscver build showver lib tscobj tscplug
 
@@ -107,7 +107,7 @@ endif
 
 CXXFLAGS += $(OSFLAG)
 
-showver: tascar/Makefile
+showver: tascar/Makefile get_version.sh
 	@echo $(FULLVERSION)
 
 tascar/Makefile:
@@ -133,9 +133,6 @@ tscbuild:
 $(patsubst %,tascar/libtascar/build/%,$(TASCAROBJECTS)): tscobj
 
 tscver: tscbuild
-	echo $(VERSION) > .ov_version
-	echo $(MINORVERSION) > .ov_minor_version
-	echo $(FULLVERSION) > .ov_full_version
 	$(MAKE) -C tascar/libtascar ver
 
 tscobj: tscver
