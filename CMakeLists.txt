@@ -1,60 +1,23 @@
 cmake_minimum_required(VERSION 3.16.0)
 
-## GLOBAL CONFIGURATION
+### GLOBAL CONFIGURATION
 project(ov
         LANGUAGES CXX
         VERSION 0.5
         DESCRIPTION "common header files and library code for ov-client and ov-server"
         )
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules)
+if (APPLE)
+    include(cmake/FixAppleArchitecture.cmake)
+endif (APPLE)
 
+
+### ADDITIONAL FLAGS
 set(PLUGINPREFIX "ovclient")
 add_compile_definitions(PLUGINPREFIX="ovclient")
-
-## SOURCE MANAGEMENT
-file(GLOB
-        HEADER
-        src/*.h
-        )
-file(GLOB
-        SOURCES
-        src/*.cc
-        )
-
-add_subdirectory(tascar/libtascar libtascar)
-if (TARGET tascar)
-    add_library(tascar::tascar ALIAS tascar)
-    set(TASCAR_INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/tascar/libtascar/include)
-else ()
-    find_package(tascar REQUIRED)
-endif ()
-
-## DEPENDENCIES
-if (APPLE)
-    find_program(BREW brew)
-    # only if OPENSSL_ROOT_DIR is not set yet
-    if (BREW AND NOT OPENSSL_ROOT_DIR AND NOT "$ENV{OPENSSL_ROOT_DIR}")
-        execute_process(COMMAND ${BREW} --prefix openssl
-                OUTPUT_VARIABLE BREW_OPENSSL_PREFIX
-                RESULT_VARIABLE BREW_OPENSSL_RESULT
-                ERROR_QUIET
-                OUTPUT_STRIP_TRAILING_WHITESPACE
-                )
-        if (BREW_OPENSSL_RESULT EQUAL 0)
-            message(STATUS "Set OPENSSL_ROOT_DIR=${BREW_OPENSSL_PREFIX} (from brew)")
-            set(OPENSSL_ROOT_DIR "${BREW_OPENSSL_PREFIX}" CACHE PATH "")
-        endif ()
-    endif ()
-endif ()
-find_package(CURL REQUIRED)
-find_package(nlohmann_json 3.2.0 REQUIRED)
-find_package(cpprestsdk REQUIRED NAMES cpprestsdk cpprest)
-find_package(SoundIo REQUIRED)
-
-## COMPILER ADDONS
 option(DEBUG_EVENTS "Debug events to console" ON)
 if (DEBUG_EVENTS)
     add_compile_definitions(DEBUG_EVENTS)
@@ -79,14 +42,43 @@ add_compile_definitions(OVBOXVERSION="${OVBOXVERSION}")
 add_compile_definitions(${CMAKE_SYSTEM_PROCESSOR})
 
 
-## TARGET
+### SOURCE MANAGEMENT
+file(GLOB
+        HEADER
+        src/*.h
+        )
+file(GLOB
+        SOURCES
+        src/*.cc
+        )
+
+
+### DEPENDENCIES
+if (APPLE)
+    include(cmake/BrewResolver.cmake)
+endif (APPLE)
+add_subdirectory(tascar/libtascar libtascar)
+if (TARGET tascar)
+    add_library(tascar::tascar ALIAS tascar)
+    set(TASCAR_INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/tascar/libtascar/include)
+else ()
+    find_package(tascar REQUIRED)
+endif ()
+find_package(CURL REQUIRED)
+find_package(nlohmann_json 3.2.0 REQUIRED)
+find_package(cpprestsdk REQUIRED NAMES cpprestsdk cpprest)
+find_package(SoundIo REQUIRED)
+find_package(LibXml++ REQUIRED)
+
+
+### TARGETS
+# libov
 add_library(ov STATIC ${SOURCES})
-set_property(TARGET ov PROPERTY CXX_STANDARD 14)
-set_property(TARGET ov PROPERTY CXX_STANDARD_REQUIRED ON)
 set_target_properties(tascar PROPERTIES PUBLIC_HEADER "${HEADER}")
 target_include_directories(ov
         PRIVATE
         ${SOUNDIO_INCLUDE_DIR}
+        ${LIBXML++_INCLUDE_DIRS}
         )
 target_link_libraries(ov
         PRIVATE
@@ -96,6 +88,7 @@ target_link_libraries(ov
         OpenSSL::Crypto
         cpprestsdk::cpprest
         ${SOUNDIO_LIBRARY}
+        ${LIBXML++_LIBRARIES}
         )
 set_target_properties(ov PROPERTIES
         VERSION ${PROJECT_VERSION}
