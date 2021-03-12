@@ -71,6 +71,7 @@ private:
   double selfmonitor_delay;
   // metronome settings:
   metronome_t metronome;
+  const std::string zita_path;
   /**
      \brief serve as proxy
 

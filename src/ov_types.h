@@ -1,6 +1,7 @@
 #ifndef OV_TYPES
 #define OV_TYPES
 
+#include <iostream>
 #include <map>
 #include <string>
 #include <unordered_map>
@@ -322,9 +323,29 @@ public:
   // provide additional configuration as json string:
   virtual void set_extra_config(const std::string&){};
 
+  /**
+   * Sets the folder, where runtime related files are written and read from
+   * @param folder, used to write and read
+   */
+  virtual void set_runtime_folder(const std::string& value)
+  {
+    if(value.compare(value.size() - 1, 1, "/") != 0) {
+      folder = value + "/";
+    } else {
+      folder = value;
+    }
+    std::cout << "Using folder " << folder << std::endl;
+  };
+  /**
+   * Returns the folder, where runtime related files are written and read from
+   * @return runtime application folder
+   */
+  virtual const std::string& get_runtime_folder() const { return folder; };
+
 protected:
   audio_device_t audiodevice;
   stage_t stage;
+  std::string folder;
 
 private:
   bool session_active;
@@ -337,14 +358,18 @@ private:
 // ov_client_digitalstage_t.
 class ov_client_base_t {
 public:
-  ov_client_base_t(ov_render_base_t& backend) : backend(backend){};
+  ov_client_base_t(ov_render_base_t& backend) : backend(backend), folder(""){};
   virtual ~ov_client_base_t(){};
   virtual void start_service() = 0;
   virtual void stop_service() = 0;
   virtual bool is_going_to_stop() const = 0;
 
+  virtual void set_runtime_folder(const std::string& value) { folder = value; };
+  virtual const std::string& get_runtime_folder() const { return folder; };
+
 protected:
   ov_render_base_t& backend;
+  std::string folder;
 };
 
 const char* get_libov_version();

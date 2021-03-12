@@ -77,6 +77,23 @@ bool file_exists(const std::string& fname)
   }
 }
 
+std::string get_zita_path()
+{
+  std::string zitapath(ZITAPATH);
+#ifdef __APPLE__
+  // Running on mac will result in either having zita-n2j besides the executable
+  // or inside an app bundle
+  if(file_exists("./zita-n2j")) {
+    zitapath = "./";
+    std::cout << "Found zita beside executable" << std::endl;
+  } else if(file_exists("./DigitalStage.app/Contents/MacOS/zita-n2j")) {
+    zitapath = "./DigitalStage.app/Contents/MacOS/";
+    std::cout << "Found zita inside app bundle" << std::endl;
+  }
+#endif
+  return zitapath;
+}
+
 TASCAR::pos_t to_tascar(const pos_t& src)
 {
   return TASCAR::pos_t(src.x, src.y, src.z);
@@ -103,7 +120,7 @@ ov_render_tascar_t::ov_render_tascar_t(const std::string& deviceid,
       ovboxclient(NULL), pinglogport(pinglogport_), pinglogaddr(nullptr),
       inputports({"system:capture_1", "system:capture_2"}),
       headtrack_tauref(33.315), selfmonitor_delay(0.0), is_proxy(false),
-      use_proxy(false)
+      use_proxy(false), zita_path(get_zita_path())
 {
   // avoid problems with number format in xml file:
   setlocale(LC_ALL, "C");
@@ -279,7 +296,7 @@ void ov_render_tascar_t::create_virtual_acoustics(xmlpp::Element* e_session,
   // create zita-n2j receivers:
   // this variable holds the path to zita
   // binaries, or empty (default) for system installed:
-  std::string zitapath(ZITAPATH);
+  const std::string zitapath = get_zita_path();
   for(auto stagemember : stage.stage) {
     // only create a network receiver when the stage member is sending audio:
     if(stagemember.second.channels.size()) {
@@ -452,7 +469,7 @@ void ov_render_tascar_t::create_raw_dev(xmlpp::Element* e_session)
   e_mods->add_child("touchosc");
   //
   uint32_t chcnt(0);
-  std::string zitapath(ZITAPATH);
+  const std::string zitapath = get_zita_path();
   for(auto stagemember : stage.stage) {
     std::string chanlist;
     for(uint32_t k = 0; k < stagemember.second.channels.size(); ++k) {
@@ -643,7 +660,7 @@ void ov_render_tascar_t::start_session()
         e_snd->set_attribute("x", "4");
         xmlpp::Element* e_plugs(e_snd->add_child("plugins"));
         xmlpp::Element* e_sndfile(e_plugs->add_child("sndfile"));
-        e_sndfile->set_attribute("name", "announce.flac");
+        e_sndfile->set_attribute("name", folder + "announce.flac");
         e_sndfile->set_attribute("level", "57");
         e_sndfile->set_attribute("transport", "false");
         e_sndfile->set_attribute("resample", "true");
@@ -676,7 +693,7 @@ void ov_render_tascar_t::start_session()
       if(pinglogaddr)
         ovboxclient->set_ping_callback(sendpinglog, pinglogaddr);
     }
-    tsc.doc->write_to_file_formatted("ov-client_debugsession.tsc");
+    tsc.doc->write_to_file_formatted(folder + "ov-client_debugsession.tsc");
     tascar = new TASCAR::session_t(tsc.doc->write_to_string(),
                                    TASCAR::session_t::LOAD_STRING, "");
     tascar->start();
@@ -691,6 +708,14 @@ void ov_render_tascar_t::start_session()
     if(file_exists("webmixer.js")) {
       command = "node webmixer.js " + ipaddr;
     }
+#ifdef __APPLE__
+    if(file_exists("./webmixer")) {
+      command = "./webmixer " + ipaddr;
+    }
+    if(file_exists("DigitalStage.app/Contents/MacOS/webmixer")) {
+      command = "./DigitalStage.app/Contents/MacOS/webmixer " + ipaddr;
+    }
+#endif
     if(!command.empty())
       h_webmixer = new spawn_process_t(command);
   }

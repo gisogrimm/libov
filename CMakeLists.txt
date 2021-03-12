@@ -9,9 +9,9 @@ project(ov
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(POSITION_INDEPENDENT_CODE ON)
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules)
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
 if (APPLE)
-    include(cmake/FixAppleArchitecture.cmake)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/FixAppleArchitecture.cmake)
 endif (APPLE)
 
 
@@ -64,6 +64,7 @@ if (TARGET tascar)
 else ()
     find_package(tascar REQUIRED)
 endif ()
+find_package(Jack REQUIRED)
 find_package(CURL REQUIRED)
 find_package(nlohmann_json 3.2.0 REQUIRED)
 find_package(cpprestsdk REQUIRED NAMES cpprestsdk cpprest)
@@ -79,6 +80,7 @@ target_include_directories(ov
         PRIVATE
         ${SOUNDIO_INCLUDE_DIR}
         ${LIBXML++_INCLUDE_DIRS}
+        ${JACK_INCLUDE_DIRS}
         )
 target_link_libraries(ov
         PRIVATE
@@ -89,6 +91,7 @@ target_link_libraries(ov
         cpprestsdk::cpprest
         ${SOUNDIO_LIBRARY}
         ${LIBXML++_LIBRARIES}
+        ${JACK_LIBRARIES}
         )
 set_target_properties(ov PROPERTIES
         VERSION ${PROJECT_VERSION}
