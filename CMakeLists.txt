@@ -134,13 +134,9 @@ if (APPLE)
             )
 endif ()
 if (UNIX AND NOT APPLE)
-    target_include_directories(ov
-            PRIVATE
-            ${ALSA_LIBRARIES}
-            )
     target_link_libraries(ov
             PRIVATE
-            ${ALSA_INCLUDE_DIRS}
+            ALSA::ALSA
             )
 endif ()
 
