@@ -47,7 +47,7 @@ HEADER := $(wildcard src/*.h) $(wildcard libov/src/*.h) tscver
 CXXFLAGS += -Itascar/libtascar/build
 
 TASCAROBJECTS = licensehandler.o audiostates.o coordinates.o		\
-  audiochunks.o xmlconfig.o dynamicobjects.o sourcemod.o		\
+  audiochunks.o tscconfig.o dynamicobjects.o sourcemod.o		\
   receivermod.o filterclass.o osc_helper.o pluginprocessor.o		\
   acousticmodel.o scene.o render.o session_reader.o session.o		\
   jackclient.o delayline.o errorhandling.o osc_scene.o ringbuffer.o	\

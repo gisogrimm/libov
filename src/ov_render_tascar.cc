@@ -119,8 +119,8 @@ ov_render_tascar_t::ov_render_tascar_t(const std::string& deviceid,
     : ov_render_base_t(deviceid), h_jack(NULL), h_webmixer(NULL), tascar(NULL),
       ovboxclient(NULL), pinglogport(pinglogport_), pinglogaddr(nullptr),
       inputports({"system:capture_1", "system:capture_2"}),
-      headtrack_tauref(33.315), selfmonitor_delay(0.0), is_proxy(false),
-      use_proxy(false), zita_path(get_zita_path())
+      headtrack_tauref(33.315), selfmonitor_delay(0.0),
+      zita_path(get_zita_path()), is_proxy(false), use_proxy(false)
 {
   // avoid problems with number format in xml file:
   setlocale(LC_ALL, "C");
