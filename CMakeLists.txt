@@ -138,7 +138,7 @@ if (UNIX AND NOT APPLE)
             PRIVATE
             ${ALSA_LIBRARIES}
             )
-    target_link_libraries(DigitalStage
+    target_link_libraries(ov
             PRIVATE
             ${ALSA_INCLUDE_DIRS}
             )
