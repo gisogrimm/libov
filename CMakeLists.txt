@@ -95,6 +95,10 @@ find_package(nlohmann_json 3.2.0 REQUIRED)
 find_package(cpprestsdk REQUIRED)
 find_package(SoundIo REQUIRED)
 find_package(LibXml++ REQUIRED)
+if (UNIX AND NOT APPLE)
+    find_package(ALSA REQUIRED)
+endif ()
+
 
 
 ### TARGETS
@@ -127,6 +131,16 @@ if (APPLE)
             PUBLIC
             "-framework IOKit"
             "-framework CoreFoundation"
+            )
+endif ()
+if (UNIX AND NOT APPLE)
+    target_include_directories(DigitalStage
+            PRIVATE
+            ${ALSA_LIBRARIES}
+            )
+    target_link_libraries(DigitalStage
+            PRIVATE
+            ${ALSA_INCLUDE_DIRS}
             )
 endif ()
 
