@@ -134,7 +134,7 @@ if (APPLE)
             )
 endif ()
 if (UNIX AND NOT APPLE)
-    target_include_directories(DigitalStage
+    target_include_directories(ov
             PRIVATE
             ${ALSA_LIBRARIES}
             )
