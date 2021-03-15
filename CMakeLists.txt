@@ -16,6 +16,23 @@ endif (APPLE)
 
 
 ### ADDITIONAL FLAGS
+include("${CMAKE_CURRENT_LIST_DIR}/version.cmake")
+if (UNIX)
+    execute_process(
+            COMMAND "${CMAKE_CURRENT_LIST_DIR}/get_version.sh"
+            WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
+            RESULT_VARIABLE VERSION_RETURN_CODE
+            OUTPUT_VARIABLE OVBOXVERSION
+    )
+    if (NOT VERSION_RETURN_CODE STREQUAL "0")
+        message(FATAL_ERROR "Could not determine version")
+    endif ()
+    string(STRIP "${OVBOXVERSION}" OVBOXVERSION)
+    if (NOT ${OVBOXVERSION} STREQUAL ${PROJECT_VERSION})
+        message(FATAL_ERROR "Please check version.cmake and get_version.sh, since they deliver different versions!\nversion.cmake provides  ${PROJECT_VERSION}\nget_version.sh provides ${OVBOXVERSION}")
+    endif ()
+endif ()
+message("Building version ${PROJECT_VERSION}")
 set(PLUGINPREFIX "ovclient")
 add_compile_definitions(PLUGINPREFIX="ovclient")
 option(DEBUG_EVENTS "Debug events to console" ON)
@@ -26,7 +43,6 @@ if (LINUX)
     add_compile_definitions(LINUX)
 elseif (APPLE)
     add_compile_definitions(OSX)
-    #set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -framework IOKit -framework CoreFoundation")
 elseif (WIN32)
     add_compile_definitions(WIN32)
 endif ()
@@ -37,8 +53,7 @@ elseif (CMAKE_SYSTEM_PROCESSOR MATCHES x86_64)
 elseif (CMAKE_SYSTEM_PROCESSOR MATCHES *86)
     add_compile_definitions(IA32)
 endif ()
-set(OVBOXVERSION ${PROJECT_VERSION})
-add_compile_definitions(OVBOXVERSION="${OVBOXVERSION}")
+add_compile_definitions(OVBOXVERSION="${PROJECT_VERSION}")
 add_compile_definitions(${CMAKE_SYSTEM_PROCESSOR})
 
 
