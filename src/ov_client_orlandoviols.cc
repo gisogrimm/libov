@@ -52,12 +52,14 @@ ov_client_orlandoviols_t::ov_client_orlandoviols_t(ov_render_base_t& backend,
 
 void ov_client_orlandoviols_t::start_service()
 {
+  std::cout << "ov_client_orlandoviols_t::start_service " << std::endl;
   runservice = true;
   servicethread = std::thread(&ov_client_orlandoviols_t::service, this);
 }
 
 void ov_client_orlandoviols_t::stop_service()
 {
+  std::cout << "ov_client_orlandoviols_t::stop_service " << std::endl;
   runservice = false;
   if(servicethread.joinable())
     servicethread.join();
@@ -67,6 +69,7 @@ bool ov_client_orlandoviols_t::report_error(std::string url,
                                             const std::string& device,
                                             const std::string& msg)
 {
+  std::cout << "ov_client_orlandoviols_t::report_error " << msg << std::endl;
   std::string retv;
   struct webCURL::MemoryStruct chunk;
   chunk.memory =
@@ -92,6 +95,8 @@ bool ov_client_orlandoviols_t::report_error(std::string url,
 bool ov_client_orlandoviols_t::download_file(const std::string& url,
                                              const std::string& dest)
 {
+  std::cout << "ov_client_orlandoviols_t::download_file " << url << " to "
+            << dest << std::endl;
   CURLcode res;
   struct webCURL::MemoryStruct chunk;
   chunk.memory =
@@ -125,6 +130,7 @@ std::string ov_client_orlandoviols_t::device_update(std::string url,
                                                     const std::string& device,
                                                     std::string& hash)
 {
+  std::cout << "ov_client_orlandoviols_t::device_update " << url << std::endl;
   char chost[1024];
   memset(chost, 0, 1024);
   std::string hostname;
@@ -203,6 +209,8 @@ std::string ov_client_orlandoviols_t::device_update(std::string url,
 void ov_client_orlandoviols_t::register_device(std::string url,
                                                const std::string& device)
 {
+  std::cout << "ov_client_orlandoviols_t::register_device " << url
+            << " and device " << device << std::endl;
   struct webCURL::MemoryStruct chunk;
   chunk.memory =
       (char*)malloc(1); /* will be grown as needed by the realloc above */

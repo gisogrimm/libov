@@ -122,6 +122,7 @@ ov_render_tascar_t::ov_render_tascar_t(const std::string& deviceid,
       headtrack_tauref(33.315), selfmonitor_delay(0.0),
       zita_path(get_zita_path()), is_proxy(false), use_proxy(false)
 {
+  std::cout << "ov_render_tascar_t::ov_render_tascar_t" << std::endl;
   // avoid problems with number format in xml file:
   setlocale(LC_ALL, "C");
   audiodevice = {"jack", "hw:1", 48000, 96, 2};
@@ -582,6 +583,7 @@ void ov_render_tascar_t::create_raw_dev(xmlpp::Element* e_session)
 
 void ov_render_tascar_t::clear_stage()
 {
+  std::cout << "ov_render_tascar_t::clear_stage" << std::endl;
   ov_render_base_t::clear_stage();
   if(is_session_active()) {
     end_session();
@@ -590,6 +592,7 @@ void ov_render_tascar_t::clear_stage()
 
 void ov_render_tascar_t::start_session()
 {
+  std::cout << "ov_render_tascar_t::start_session" << std::endl;
   // do whatever needs to be done in base class:
   ov_render_base_t::start_session();
   // create a short link to this device:
@@ -729,6 +732,7 @@ void ov_render_tascar_t::start_session()
 
 void ov_render_tascar_t::end_session()
 {
+  std::cout << "ov_render_tascar_t::end_session" << std::endl;
   ov_render_base_t::end_session();
   if(h_webmixer)
     delete h_webmixer;
@@ -748,6 +752,7 @@ void ov_render_tascar_t::end_session()
 
 void ov_render_tascar_t::start_audiobackend()
 {
+  std::cout << "ov_render_tascar_t::start_audiobackend" << std::endl;
   ov_render_base_t::start_audiobackend();
   if((audiodevice.drivername == "jack") &&
      (audiodevice.devicename != "manual")) {
@@ -825,6 +830,7 @@ void ov_render_tascar_t::start_audiobackend()
 
 void ov_render_tascar_t::stop_audiobackend()
 {
+  std::cout << "ov_render_tascar_t::stop_audiobackend" << std::endl;
   ov_render_base_t::stop_audiobackend();
   if(h_jack) {
     delete h_jack;
@@ -836,6 +842,7 @@ void ov_render_tascar_t::stop_audiobackend()
 
 void ov_render_tascar_t::add_stage_device(const stage_device_t& stagedevice)
 {
+  std::cout << "ov_render_tascar_t::add_stage_device" << stagedevice.id << std::endl;
   // compare with current stage:
   auto p_stage(stage.stage);
   ov_render_base_t::add_stage_device(stagedevice);
@@ -847,6 +854,7 @@ void ov_render_tascar_t::add_stage_device(const stage_device_t& stagedevice)
 
 void ov_render_tascar_t::rm_stage_device(stage_device_id_t stagedeviceid)
 {
+  std::cout << "ov_render_tascar_t::rm_stage_device" << stagedeviceid << std::endl;
   // compare with current stage:
   auto p_stage(stage.stage);
   ov_render_base_t::rm_stage_device(stagedeviceid);
@@ -923,6 +931,7 @@ void ov_render_tascar_t::set_render_settings(
     const render_settings_t& rendersettings,
     stage_device_id_t thisstagedeviceid)
 {
+  std::cout << "ov_render_tascar_t::set_render_settings " << rendersettings.id << ", thisstagedeviceId: " << thisstagedeviceid << std::endl;
   if((rendersettings != stage.rendersettings) ||
      (thisstagedeviceid != stage.thisstagedeviceid)) {
     ov_render_base_t::set_render_settings(rendersettings, thisstagedeviceid);
