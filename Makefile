@@ -10,7 +10,7 @@ OBJ = ov_types errmsg common udpsocket callerlist ovboxclient		\
   MACAddressUtility ov_tools spawn_process ov_client_orlandoviols	\
   ov_render_tascar soundcardtools
 
-CXXFLAGS = -Wall -Wno-deprecated-declarations -std=c++20 -pthread	\
+CXXFLAGS = -Wall -Wno-deprecated-declarations -std=c++2a -pthread	\
 -ggdb -fno-finite-math-only -fPIC
 
 EXTERNALS = jack libxml++-2.6 liblo sndfile libcurl gsl samplerate fftw3f xerces-c
@@ -24,7 +24,7 @@ ifeq "$(ARCH)" "x86_64"
 CXXFLAGS += -msse -msse2 -mfpmath=sse -ffast-math
 endif
 
-CPPFLAGS = -std=c++20
+CPPFLAGS = -std=c++2a
 PREFIX = /usr/local
 BUILD_DIR = build
 SOURCE_DIR = src
