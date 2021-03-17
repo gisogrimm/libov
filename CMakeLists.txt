@@ -113,11 +113,11 @@ target_include_directories(ov
 target_link_libraries(ov
         PRIVATE
         tascar::tascar
-        #${CURL_LIBRARIES}
+        ${CURL_LIBRARIES}
         nlohmann_json::nlohmann_json
         OpenSSL::Crypto
         cpprestsdk::cpprest
-        #${SOUNDIO_LIBRARY}
+        ${SOUNDIO_LIBRARY}
         #XercesC::XercesC
         #${JACK_LIBRARIES}
         )
