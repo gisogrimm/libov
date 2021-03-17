@@ -6,10 +6,10 @@
 #define DS_STORE_H
 
 #include "ds_types.h"
-#include <boost/optional.hpp>
 #include <map>
 #include <mutex>
 #include <nlohmann/json.hpp>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -25,17 +25,17 @@ namespace ds {
 
     void updateLocalDevice(const json update);
 
-    boost::optional<const ds::device_t> getLocalDevice();
+    std::optional<const ds::device_t> getLocalDevice();
 
     void setLocalUser(const json localUser);
 
-    boost::optional<const ds::user_t> getLocalUser();
+    std::optional<const ds::user_t> getLocalUser();
 
     void createUser(const json user);
 
     void updateUser(const std::string& id, const json update);
 
-    boost::optional<const ds::user_t> readUser(const std::string& id);
+    std::optional<const ds::user_t> readUser(const std::string& id);
 
     void removeUser(const std::string& id);
 
@@ -45,7 +45,7 @@ namespace ds {
 
     void updateStage(const std::string& stageId, const json update);
 
-    boost::optional<const ds::stage_t> readStage(const std::string& stageId);
+    std::optional<const ds::stage_t> readStage(const std::string& stageId);
 
     void removeStage(const std::string& stageId);
 
@@ -55,7 +55,7 @@ namespace ds {
 
     void updateGroup(const std::string& id, const json update);
 
-    boost::optional<const ds::group_t> readGroup(const std::string& id);
+    std::optional<const ds::group_t> readGroup(const std::string& id);
 
     void removeGroup(const std::string& id);
 
@@ -65,7 +65,7 @@ namespace ds {
 
     void updateCustomGroupPosition(const std::string& id, const json update);
 
-    boost::optional<const ds::custom_group_position_t>
+    std::optional<const ds::custom_group_position_t>
     readCustomGroupPosition(const std::string& id);
 
     void removeCustomGroupPosition(const std::string& id);
@@ -76,7 +76,7 @@ namespace ds {
 
     void updateCustomGroupVolume(const std::string& id, const json update);
 
-    boost::optional<const ds::custom_group_volume_t>
+    std::optional<const ds::custom_group_volume_t>
     readCustomGroupVolume(const std::string& id);
 
     void removeCustomGroupVolume(const std::string& id);
@@ -87,7 +87,7 @@ namespace ds {
 
     void updateStageMember(const std::string& id, const json update);
 
-    boost::optional<const ds::stage_member_t>
+    std::optional<const ds::stage_member_t>
     readStageMember(const std::string& id);
 
     const std::vector<ds::stage_member_t>
@@ -105,10 +105,10 @@ namespace ds {
     void updateCustomStageMemberPosition(const std::string& id,
                                          const json update);
 
-    boost::optional<const ds::custom_stage_member_position_t>
+    std::optional<const ds::custom_stage_member_position_t>
     readCustomStageMemberPosition(const std::string& id);
 
-    boost::optional<const ds::custom_stage_member_position_t>
+    std::optional<const ds::custom_stage_member_position_t>
     readCustomStageMemberPositionByStageMember(
         const std::string& stageMemberId);
 
@@ -121,10 +121,10 @@ namespace ds {
     void updateCustomStageMemberVolume(const std::string& id,
                                        const json update);
 
-    boost::optional<const ds::custom_stage_member_volume_t>
+    std::optional<const ds::custom_stage_member_volume_t>
     readCustomStageMemberVolume(const std::string& id);
 
-    boost::optional<const ds::custom_stage_member_volume_t>
+    std::optional<const ds::custom_stage_member_volume_t>
     readCustomStageMemberVolumeByStageMember(const std::string& stageMemberId);
 
     void removeCustomStageMemberVolume(const std::string& id);
@@ -135,9 +135,9 @@ namespace ds {
 
     void updateSoundCard(const std::string& id, const json update);
 
-    boost::optional<const ds::soundcard_t> readSoundCard(const std::string& id);
+    std::optional<const ds::soundcard_t> readSoundCard(const std::string& id);
 
-    boost::optional<const ds::soundcard_t>
+    std::optional<const ds::soundcard_t>
     readSoundCardByName(const std::string& name);
 
     void removeSoundCard(const std::string& id);
@@ -148,7 +148,7 @@ namespace ds {
 
     void updateOvTrack(const std::string& id, const json update);
 
-    boost::optional<const ds::ov_track_t> readOvTrack(const std::string& id);
+    std::optional<const ds::ov_track_t> readOvTrack(const std::string& id);
 
     const std::vector<ds::ov_track_t> readOvTracks();
 
@@ -160,7 +160,7 @@ namespace ds {
 
     void updateRemoteOvTrack(const std::string& id, const json update);
 
-    boost::optional<const ds::remote_ov_track_t>
+    std::optional<const ds::remote_ov_track_t>
     readRemoteOvTrack(const std::string& id);
 
     void removeRemoteOvTrack(const std::string& id);
@@ -172,7 +172,7 @@ namespace ds {
     void updateCustomRemoteOvTrackPosition(const std::string& id,
                                            const json update);
 
-    boost::optional<const ds::custom_remote_ov_track_position_t>
+    std::optional<const ds::custom_remote_ov_track_position_t>
     readCustomRemoteOvTrackPosition(const std::string& id);
 
     void removeCustomRemoteOvTrackPosition(const std::string& id);
@@ -184,7 +184,7 @@ namespace ds {
     void updateCustomRemoteOvTrackVolume(const std::string& id,
                                          const json update);
 
-    boost::optional<const ds::custom_remote_ov_track_volume_t>
+    std::optional<const ds::custom_remote_ov_track_volume_t>
     readCustomRemoteOvTrackVolume(const std::string& id);
 
     void removeCustomRemoteOvTrackVolume(const std::string& id);
@@ -197,27 +197,27 @@ namespace ds {
 
     void setCurrentStageId(const std::string& stageId);
 
-    boost::optional<const ds::stage_t> getCurrentStage();
+    std::optional<const ds::stage_t> getCurrentStage();
 
-    boost::optional<const ds::stage_member_t> getCurrentStageMember();
+    std::optional<const ds::stage_member_t> getCurrentStageMember();
 
-    boost::optional<const ds::custom_stage_member_position_t>
+    std::optional<const ds::custom_stage_member_position_t>
     getCustomStageMemberPositionByStageMemberId(
         const std::string& stageMemberId);
 
-    boost::optional<const ds::custom_stage_member_volume_t>
+    std::optional<const ds::custom_stage_member_volume_t>
     getCustomStageMemberVolumeByStageMemberId(const std::string& stageMemberId);
 
-    boost::optional<const ds::custom_group_position_t>
+    std::optional<const ds::custom_group_position_t>
     getCustomGroupPositionByGroupId(const std::string& customStageMemberId);
 
-    boost::optional<const ds::custom_group_volume_t>
+    std::optional<const ds::custom_group_volume_t>
     getCustomGroupVolumeByGroupId(const std::string& customStageMemberId);
 
-    boost::optional<const ds::custom_remote_ov_track_position_t>
+    std::optional<const ds::custom_remote_ov_track_position_t>
     getCustomOvTrackPositionByOvTrackId(const std::string& ovTrackId);
 
-    boost::optional<const ds::custom_remote_ov_track_volume_t>
+    std::optional<const ds::custom_remote_ov_track_volume_t>
     getCustomOvTrackVolumeByOvTrackId(const std::string& ovTrackId);
 
     const std::vector<ds::remote_ov_track_t>

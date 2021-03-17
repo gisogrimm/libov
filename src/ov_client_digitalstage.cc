@@ -86,7 +86,7 @@ void ov_client_digitalstage_t::service()
         if(event == ds::events::READY) {
           this->ready_ = true;
           if(this->isInsideStage()) {
-            boost::optional<const ds::device_t> localDevice =
+            std::optional<const ds::device_t> localDevice =
                 this->store_->getLocalDevice();
             if(localDevice && localDevice->sendAudio) {
 #ifdef DEBUG
@@ -134,7 +134,7 @@ void ov_client_digitalstage_t::service()
             std::cerr << "[WARNING] No soundcards available!" << std::endl;
           }
         } else if(event == ds::events::DEVICE_CHANGED) {
-          boost::optional<const ds::device_t> localDevice =
+          std::optional<const ds::device_t> localDevice =
               this->store_->getLocalDevice();
           if(localDevice && localDevice->_id == payload["_id"]) {
             // The events refers this device
@@ -145,7 +145,7 @@ void ov_client_digitalstage_t::service()
                   payload.at("soundCardName").get<std::string>();
               if(soundCardName != localDevice->soundCardName) {
                 // Soundcard has been switched
-                boost::optional<const ds::soundcard_t> soundCard =
+                std::optional<const ds::soundcard_t> soundCard =
                     this->store_->readSoundCardByName(payload["soundCardName"]);
                 if(soundCard) {
                   // Use sound card
@@ -255,7 +255,7 @@ void ov_client_digitalstage_t::service()
           }
 
           if(this->ready_) {
-            boost::optional<const ds::device_t> localDevice =
+            std::optional<const ds::device_t> localDevice =
                 this->store_->getLocalDevice();
             if(localDevice && localDevice->sendAudio) {
               this->syncLocalStageMember();
@@ -265,7 +265,7 @@ void ov_client_digitalstage_t::service()
           } else {
             // Not ready means this is an initial commit, so configure also the
             // stage connection
-            boost::optional<const ds::stage_t> currentStage =
+            std::optional<const ds::stage_t> currentStage =
                 this->store_->readStage(currentStageId);
 
             if(currentStage) {
@@ -302,7 +302,7 @@ void ov_client_digitalstage_t::service()
           const std::string currentStageId = this->store_->getCurrentStageId();
           this->store_->updateStage(stageId, payload);
           if(currentStageId == stageId) {
-            boost::optional<const ds::stage_t> stage =
+            std::optional<const ds::stage_t> stage =
                 this->store_->readStage(currentStageId);
             if(stage) {
               if(stage->supportsOv) {
@@ -519,7 +519,7 @@ void ov_client_digitalstage_t::service()
           const std::string _id = payload.at("_id").get<std::string>();
           this->store_->updateCustomRemoteOvTrackPosition(_id, payload);
           if(this->isInsideStage()) {
-            boost::optional<const ds::custom_remote_ov_track_position_t>
+            std::optional<const ds::custom_remote_ov_track_position_t>
                 customRemoteOvTrack =
                     this->store_->readCustomRemoteOvTrackPosition(_id);
             if(customRemoteOvTrack) {
@@ -534,7 +534,7 @@ void ov_client_digitalstage_t::service()
         } else if(event ==
                   ds::events::CUSTOM_REMOTE_OV_TRACK_POSITION_REMOVED) {
           const std::string _id = payload.get<std::string>();
-          boost::optional<const ds::custom_remote_ov_track_position_t>
+          std::optional<const ds::custom_remote_ov_track_position_t>
               customRemoteOvTrack =
                   this->store_->readCustomRemoteOvTrackPosition(_id);
           this->store_->removeCustomRemoteOvTrackPosition(_id);
@@ -559,7 +559,7 @@ void ov_client_digitalstage_t::service()
           const std::string _id = payload.at("_id").get<std::string>();
           this->store_->updateCustomRemoteOvTrackPosition(_id, payload);
           if(this->isInsideStage()) {
-            boost::optional<const ds::custom_remote_ov_track_volume_t>
+            std::optional<const ds::custom_remote_ov_track_volume_t>
                 customRemoteOvTrackVolume =
                     this->store_->readCustomRemoteOvTrackVolume(_id);
             if(customRemoteOvTrackVolume) {
@@ -573,7 +573,7 @@ void ov_client_digitalstage_t::service()
           }
         } else if(event == ds::events::CUSTOM_REMOTE_OV_TRACK_VOLUME_REMOVED) {
           const std::string _id = payload.get<std::string>();
-          boost::optional<const ds::custom_remote_ov_track_volume_t>
+          std::optional<const ds::custom_remote_ov_track_volume_t>
               customRemoteOvTrack =
                   this->store_->readCustomRemoteOvTrackVolume(_id);
           this->store_->removeCustomRemoteOvTrackVolume(_id);
@@ -589,7 +589,7 @@ void ov_client_digitalstage_t::service()
           }
         } else if(event == ds::events::SOUND_CARD_ADDED) {
           this->store_->createSoundCard(payload);
-          boost::optional<const ds::device_t> localDevice =
+          std::optional<const ds::device_t> localDevice =
               this->store_->getLocalDevice();
           const std::string soundCardName =
               payload.at("name").get<std::string>();
@@ -656,12 +656,12 @@ void ov_client_digitalstage_t::service()
           }
         } else if(event == ds::events::SOUND_CARD_REMOVED) {
           const std::string _id = payload.get<std::string>();
-          boost::optional<const ds::soundcard_t> soundCard =
+          std::optional<const ds::soundcard_t> soundCard =
               this->store_->readSoundCard(_id);
           this->store_->removeSoundCard(_id);
           if(this->isInsideStage()) {
             if(soundCard) {
-              boost::optional<const ds::device_t> localDevice =
+              std::optional<const ds::device_t> localDevice =
                   this->store_->getLocalDevice();
               if(localDevice->soundCardName == soundCard->name) {
                 this->stopOv();
@@ -785,9 +785,9 @@ void ov_client_digitalstage_t::syncLocalStageMember()
   std::cout << "[TRACE] Syncing local stage member" << std::endl;
 #endif
 
-  boost::optional<const ds::device_t> localDevice =
+  std::optional<const ds::device_t> localDevice =
       this->store_->getLocalDevice();
-  boost::optional<const ds::user_t> localUser = this->store_->getLocalUser();
+  std::optional<const ds::user_t> localUser = this->store_->getLocalUser();
 
   if(!localDevice) {
     std::cerr << "[ERROR] Local device not set yet - server side error?"
@@ -800,25 +800,25 @@ void ov_client_digitalstage_t::syncLocalStageMember()
     return;
   }
 
-  boost::optional<const ds::stage_member_t> currentStageMember =
+  std::optional<const ds::stage_member_t> currentStageMember =
       this->store_->getCurrentStageMember();
 
   if(currentStageMember) {
     // we have to create the tracks, maybe the decorating events has been
     // thrown...
-    boost::optional<const ds::group_t> group =
+    std::optional<const ds::group_t> group =
         this->store_->readGroup(currentStageMember->groupId);
-    boost::optional<const ds::custom_stage_member_volume_t>
+    std::optional<const ds::custom_stage_member_volume_t>
         customStageMemberVolume =
             this->store_->getCustomStageMemberVolumeByStageMemberId(
                 currentStageMember->_id);
-    boost::optional<const ds::custom_stage_member_position_t>
+    std::optional<const ds::custom_stage_member_position_t>
         customStageMemberPosition =
             this->store_->getCustomStageMemberPositionByStageMemberId(
                 currentStageMember->_id);
-    boost::optional<const ds::custom_group_volume_t> customGroupVolume =
+    std::optional<const ds::custom_group_volume_t> customGroupVolume =
         this->store_->getCustomGroupVolumeByGroupId(group->_id);
-    boost::optional<const ds::custom_group_position_t> customGroupPosition =
+    std::optional<const ds::custom_group_position_t> customGroupPosition =
         this->store_->getCustomGroupPositionByGroupId(group->_id);
 
     const std::vector<ds::remote_ov_track_t> tracks =
@@ -831,10 +831,10 @@ void ov_client_digitalstage_t::syncLocalStageMember()
       std::cout << "[TRACE] Adding local track " << track.channel << std::endl;
 #endif
       // Look for custom track
-      boost::optional<const ds::custom_remote_ov_track_volume_t>
+      std::optional<const ds::custom_remote_ov_track_volume_t>
           customTrackVolume =
               this->store_->getCustomOvTrackVolumeByOvTrackId(track._id);
-      boost::optional<const ds::custom_remote_ov_track_position_t>
+      std::optional<const ds::custom_remote_ov_track_position_t>
           customTrackPosition =
               this->store_->getCustomOvTrackPositionByOvTrackId(track._id);
       double volume =
@@ -935,8 +935,8 @@ void ov_client_digitalstage_t::syncRemoteStageMembers()
 #ifdef DEBUG
   std::cout << "[TRACE] Syncing remote stage members" << std::endl;
 #endif
-  boost::optional<const ds::stage_t> stage = this->store_->getCurrentStage();
-  boost::optional<const ds::device_t> localDevice =
+  std::optional<const ds::stage_t> stage = this->store_->getCurrentStage();
+  std::optional<const ds::device_t> localDevice =
       this->store_->getLocalDevice();
   if(localDevice && stage) {
     std::map<stage_device_id_t, stage_device_t> stageDeviceMap;
@@ -945,21 +945,21 @@ void ov_client_digitalstage_t::syncRemoteStageMembers()
         this->store_->readStageMembersByStage(stage->_id);
 
     for(const auto& stageMember : stageMembers) {
-      boost::optional<const ds::user_t> user =
+      std::optional<const ds::user_t> user =
           this->store_->readUser(stageMember.userId);
-      boost::optional<const ds::group_t> group =
+      std::optional<const ds::group_t> group =
           this->store_->readGroup(stageMember.groupId);
-      boost::optional<const ds::custom_stage_member_position_t>
+      std::optional<const ds::custom_stage_member_position_t>
           customStageMemberPosition =
               this->store_->getCustomStageMemberPositionByStageMemberId(
                   stageMember._id);
-      boost::optional<const ds::custom_stage_member_volume_t>
+      std::optional<const ds::custom_stage_member_volume_t>
           customStageMemberVolume =
               this->store_->getCustomStageMemberVolumeByStageMemberId(
                   stageMember._id);
-      boost::optional<const ds::custom_group_position_t> customGroupPosition =
+      std::optional<const ds::custom_group_position_t> customGroupPosition =
           this->store_->getCustomGroupPositionByGroupId(group->_id);
-      boost::optional<const ds::custom_group_volume_t> customGroupVolume =
+      std::optional<const ds::custom_group_volume_t> customGroupVolume =
           this->store_->getCustomGroupVolumeByGroupId(group->_id);
       const std::vector<ds::remote_ov_track_t> tracks =
           this->store_->getRemoteOvTracksByStageMemberId(stageMember._id);
@@ -967,10 +967,10 @@ void ov_client_digitalstage_t::syncRemoteStageMembers()
       std::vector<device_channel_t> deviceChannels;
       for(const auto& track : tracks) {
         // Look for custom track
-        boost::optional<const ds::custom_remote_ov_track_position_t>
+        std::optional<const ds::custom_remote_ov_track_position_t>
             customTrackPosition =
                 this->store_->getCustomOvTrackPositionByOvTrackId(track._id);
-        boost::optional<const ds::custom_remote_ov_track_volume_t>
+        std::optional<const ds::custom_remote_ov_track_volume_t>
             customTrackVolume =
                 this->store_->getCustomOvTrackVolumeByOvTrackId(track._id);
 
@@ -1072,17 +1072,17 @@ void ov_client_digitalstage_t::syncStageMemberPosition(
             << std::endl;
 #endif
   std::lock_guard<std::recursive_mutex>(this->backend_mutex_);
-  boost::optional<const ds::stage_member_t> stageMember =
+  std::optional<const ds::stage_member_t> stageMember =
       this->store_->readStageMember(stageMemberId);
 
   if(stageMember) {
-    boost::optional<const ds::group_t> group =
+    std::optional<const ds::group_t> group =
         this->store_->readGroup(stageMember->groupId);
-    boost::optional<const ds::custom_stage_member_position_t>
+    std::optional<const ds::custom_stage_member_position_t>
         customStageMemberPosition =
             this->store_->getCustomStageMemberPositionByStageMemberId(
                 stageMember->_id);
-    boost::optional<const ds::custom_group_position_t> customGroupPosition =
+    std::optional<const ds::custom_group_position_t> customGroupPosition =
         this->store_->getCustomGroupPositionByGroupId(group->_id);
     pos_t position;
     zyx_euler_t orientation;
@@ -1142,17 +1142,17 @@ void ov_client_digitalstage_t::syncStageMemberVolume(
             << std::endl;
 #endif
   std::lock_guard<std::recursive_mutex>(this->backend_mutex_);
-  boost::optional<const ds::stage_member_t> stageMember =
+  std::optional<const ds::stage_member_t> stageMember =
       this->store_->readStageMember(stageMemberId);
 
   if(stageMember) {
-    boost::optional<const ds::group_t> group =
+    std::optional<const ds::group_t> group =
         this->store_->readGroup(stageMember->groupId);
-    boost::optional<const ds::custom_stage_member_volume_t>
+    std::optional<const ds::custom_stage_member_volume_t>
         customStageMemberVolume =
             this->store_->getCustomStageMemberVolumeByStageMemberId(
                 stageMember->_id);
-    boost::optional<const ds::custom_group_volume_t> customGroupVolume =
+    std::optional<const ds::custom_group_volume_t> customGroupVolume =
         this->store_->getCustomGroupVolumeByGroupId(group->_id);
     double gain = customStageMemberVolume ? customStageMemberVolume->volume
                                           : stageMember->volume;
@@ -1257,14 +1257,14 @@ void ov_client_digitalstage_t::syncRemoteOvTrackVolume(
             << std::endl;
 #endif
   std::lock_guard<std::recursive_mutex>(this->backend_mutex_);
-  boost::optional<const ds::remote_ov_track_t> remoteOvTrack =
+  std::optional<const ds::remote_ov_track_t> remoteOvTrack =
       this->store_->readRemoteOvTrack(remoteOvTrackId);
   if(remoteOvTrack) {
-    boost::optional<const ds::stage_member_t> stageMember =
+    std::optional<const ds::stage_member_t> stageMember =
         this->store_->readStageMember(remoteOvTrack->stageMemberId);
 
     if(stageMember) {
-      boost::optional<const ds::custom_remote_ov_track_volume_t>
+      std::optional<const ds::custom_remote_ov_track_volume_t>
           customRemoteOvTrackVolume =
               this->store_->getCustomOvTrackVolumeByOvTrackId(remoteOvTrackId);
       const double gain = customRemoteOvTrackVolume
@@ -1290,13 +1290,13 @@ void ov_client_digitalstage_t::syncRemoteOvTrackPosition(
   std::cout << "[TRACE] Syncing position of remote track " << remoteOvTrackId
             << std::endl;
 #endif
-  boost::optional<const ds::remote_ov_track_t> remoteOvTrack =
+  std::optional<const ds::remote_ov_track_t> remoteOvTrack =
       this->store_->readRemoteOvTrack(remoteOvTrackId);
   if(remoteOvTrack) {
-    boost::optional<const ds::stage_member_t> stageMember =
+    std::optional<const ds::stage_member_t> stageMember =
         this->store_->readStageMember(remoteOvTrack->stageMemberId);
     if(stageMember) {
-      boost::optional<const ds::custom_remote_ov_track_position_t>
+      std::optional<const ds::custom_remote_ov_track_position_t>
           customRemoteOvTrackPosition =
               this->store_->getCustomOvTrackPositionByOvTrackId(
                   remoteOvTrackId);

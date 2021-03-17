@@ -6,7 +6,7 @@ project(ov
         VERSION 0.5
         DESCRIPTION "common header files and library code for ov-client and ov-server"
         )
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
@@ -94,7 +94,7 @@ find_package(CURL REQUIRED)
 find_package(nlohmann_json 3.2.0 REQUIRED)
 find_package(cpprestsdk REQUIRED)
 find_package(SoundIo REQUIRED)
-find_package(LibXml++ REQUIRED)
+find_package(XercesC REQUIRED)
 if (UNIX AND NOT APPLE)
     find_package(ALSA REQUIRED)
 endif ()
@@ -107,20 +107,19 @@ add_library(ov STATIC ${SOURCES})
 set_target_properties(tascar PROPERTIES PUBLIC_HEADER "${HEADER}")
 target_include_directories(ov
         PRIVATE
-        ${SOUNDIO_INCLUDE_DIR}
-        ${LIBXML++_INCLUDE_DIRS}
-        ${JACK_INCLUDE_DIRS}
+        #${SOUNDIO_INCLUDE_DIR}
+        #${JACK_INCLUDE_DIRS}
         )
 target_link_libraries(ov
         PRIVATE
         tascar::tascar
-        ${CURL_LIBRARIES}
+        #${CURL_LIBRARIES}
         nlohmann_json::nlohmann_json
         OpenSSL::Crypto
         cpprestsdk::cpprest
-        ${SOUNDIO_LIBRARY}
-        ${LIBXML++_LIBRARIES}
-        ${JACK_LIBRARIES}
+        #${SOUNDIO_LIBRARY}
+        #XercesC::XercesC
+        #${JACK_LIBRARIES}
         )
 set_target_properties(ov PROPERTIES
         VERSION ${PROJECT_VERSION}
