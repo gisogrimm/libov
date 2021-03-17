@@ -13,7 +13,7 @@ OBJ = ov_types errmsg common udpsocket callerlist ovboxclient		\
 CXXFLAGS = -Wall -Wno-deprecated-declarations -std=c++11 -pthread	\
 -ggdb -fno-finite-math-only -fPIC
 
-EXTERNALS = jack libxml++-2.6 liblo sndfile libcurl gsl samplerate fftw3f
+EXTERNALS = jack libxml++-2.6 liblo sndfile libcurl gsl samplerate fftw3f xerces-c
 
 BUILD_OBJ = $(patsubst %,build/%.o,$(OBJ))
 

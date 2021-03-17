@@ -39,7 +39,7 @@ public:
     metronome_t();
     metronome_t(const nlohmann::json& js);
     bool operator!=(const metronome_t& a);
-    void set_xmlattr(xmlpp::Element* em, xmlpp::Element* ed) const;
+    void set_xmlattr(tsccfg::node_t em, tsccfg::node_t ed) const;
     void update_osc(TASCAR::osc_server_t* srv, const std::string& dev) const;
 
     uint32_t bpb;
@@ -50,9 +50,9 @@ public:
   };
 
 private:
-  void create_virtual_acoustics(xmlpp::Element* session, xmlpp::Element* e_rec,
-                                xmlpp::Element* e_scene);
-  void create_raw_dev(xmlpp::Element* session);
+  void create_virtual_acoustics(tsccfg::node_t session, tsccfg::node_t e_rec,
+                                tsccfg::node_t e_scene);
+  void create_raw_dev(tsccfg::node_t session);
   // for the time being we (optionally if jack is chosen as an audio
   // backend) start the jack backend. This will be replaced by a more
   // generic audio backend interface:
