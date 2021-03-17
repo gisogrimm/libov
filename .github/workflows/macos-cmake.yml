@@ -18,7 +18,7 @@ jobs:
     - name: Install submodules
       run: git submodule init && git submodule update
     - name: Install Dependencies
-      run: brew install pkgconfig libxml2 glibmm libxml++ jack liblo libsndfile gtkmm3 eigen boost gsl fftw libsamplerate cpprestsdk nlohmann-json openssl coreutils libsoundio
+      run: brew install pkgconfig libxml2 glibmm xerces-c jack liblo libsndfile gtkmm3 eigen boost gsl fftw libsamplerate cpprestsdk nlohmann-json openssl coreutils libsoundio
     - name: Configure & Make
     # Following flag may be necessary: -DOPENSSL_ROOT_DIR=/opt/homebrew/opt/openssl@1.1
       run: mkdir build && cd build && cmake .. && make
