@@ -38,12 +38,12 @@ void session_add_connect(tsccfg::node_t e_session, const std::string& src,
 void ov_render_tascar_t::metronome_t::set_xmlattr(tsccfg::node_t em,
                                                   tsccfg::node_t ed) const
 {
-  tsccfg::node_set_attribute(em,"bpm", std::to_string(bpm));
-  tsccfg::node_set_attribute(em,"bpb", std::to_string(bpb));
-  tsccfg::node_set_attribute(em,"bypass", (bypass ? "true" : "false"));
-  tsccfg::node_set_attribute(ed,"delay", "0 " + std::to_string(0.001 * delay));
-  tsccfg::node_set_attribute(em,"a1", std::to_string(level));
-  tsccfg::node_set_attribute(em,"ao", std::to_string(level));
+  tsccfg::node_set_attribute(em, "bpm", std::to_string(bpm));
+  tsccfg::node_set_attribute(em, "bpb", std::to_string(bpb));
+  tsccfg::node_set_attribute(em, "bypass", (bypass ? "true" : "false"));
+  tsccfg::node_set_attribute(ed, "delay", "0 " + std::to_string(0.001 * delay));
+  tsccfg::node_set_attribute(em, "a1", std::to_string(level));
+  tsccfg::node_set_attribute(em, "ao", std::to_string(level));
 }
 
 void ov_render_tascar_t::metronome_t::update_osc(TASCAR::osc_server_t* srv,
@@ -482,10 +482,10 @@ void ov_render_tascar_t::create_raw_dev(tsccfg::node_t e_session)
   // list of ports on which TASCAR will wait before attempting to connect:
   std::vector<std::string> waitports;
   // configure extra modules:
-  tsccfg::node_t e_mods(tsccfg::node_add_child(e_session,"modules"));
-  tsccfg::node_t e_jackrec = tsccfg::node_add_child(e_mods,"jackrec");
-  tsccfg::node_set_attribute(e_jackrec,"url", "osc.udp://localhost:9000/");
-  tsccfg::node_add_child(e_mods,"touchosc");
+  tsccfg::node_t e_mods(tsccfg::node_add_child(e_session, "modules"));
+  tsccfg::node_t e_jackrec = tsccfg::node_add_child(e_mods, "jackrec");
+  tsccfg::node_set_attribute(e_jackrec, "url", "osc.udp://localhost:9000/");
+  tsccfg::node_add_child(e_mods, "touchosc");
   //
   uint32_t chcnt(0);
   const std::string zitapath = get_zita_path();
@@ -498,14 +498,15 @@ void ov_render_tascar_t::create_raw_dev(tsccfg::node_t e_session)
     }
     if(stage.thisstagedeviceid != stagemember.second.id) {
       std::string clientname(get_stagedev_name(stagemember.second.id));
-      tsccfg::node_t e_sys = tsccfg::node_add_child(e_mods,"system");
+      tsccfg::node_t e_sys = tsccfg::node_add_child(e_mods, "system");
       double buff(thisdev.receiverjitter + stagemember.second.senderjitter);
-      tsccfg::node_set_attribute(e_sys,
-          "command", zitapath + "zita-n2j --chan " + chanlist + " --jname " +
-                         clientname + "." + stage.thisdeviceid + " --buf " +
-                         TASCAR::to_string(buff) + " 0.0.0.0 " +
-                         TASCAR::to_string(4464 + 2 * stagemember.second.id));
-      tsccfg::node_set_attribute(e_sys,"onunload", "killall zita-n2j");
+      tsccfg::node_set_attribute(
+          e_sys, "command",
+          zitapath + "zita-n2j --chan " + chanlist + " --jname " + clientname +
+              "." + stage.thisdeviceid + " --buf " + TASCAR::to_string(buff) +
+              " 0.0.0.0 " +
+              TASCAR::to_string(4464 + 2 * stagemember.second.id));
+      tsccfg::node_set_attribute(e_sys, "onunload", "killall zita-n2j");
       for(size_t c = 0; c < stagemember.second.channels.size(); ++c) {
         ++chcnt;
         if(stage.thisstagedeviceid != stagemember.second.id) {
@@ -518,9 +519,10 @@ void ov_render_tascar_t::create_raw_dev(tsccfg::node_t e_session)
             destport = stage.rendersettings.outputport2;
           if(!destport.empty()) {
             waitports.push_back(srcport);
-            tsccfg::node_t e_port = tsccfg::node_add_child(e_session,"connect");
-            tsccfg::node_set_attribute(e_port,"src", srcport);
-            tsccfg::node_set_attribute(e_port,"dest", destport);
+            tsccfg::node_t e_port =
+                tsccfg::node_add_child(e_session, "connect");
+            tsccfg::node_set_attribute(e_port, "src", srcport);
+            tsccfg::node_set_attribute(e_port, "dest", destport);
           }
         }
       }
@@ -530,23 +532,26 @@ void ov_render_tascar_t::create_raw_dev(tsccfg::node_t e_session)
                                  "_sec");
           std::string netclientname(
               "n2j_" + std::to_string(stagemember.second.id) + "_sec");
-          tsccfg::node_t e_sys = tsccfg::node_add_child(e_mods,"system");
+          tsccfg::node_t e_sys = tsccfg::node_add_child(e_mods, "system");
           double buff(thisdev.receiverjitter + stagemember.second.senderjitter);
-          tsccfg::node_set_attribute(e_sys,
-              "command",
+          tsccfg::node_set_attribute(
+              e_sys, "command",
               zitapath + "zita-n2j --chan " + chanlist + " --jname " +
                   netclientname + "." + stage.thisdeviceid + " --buf " +
                   TASCAR::to_string(stage.rendersettings.secrec + buff) +
                   " 0.0.0.0 " +
                   TASCAR::to_string(4464 + 2 * stagemember.second.id + 100));
-          tsccfg::node_set_attribute(e_sys,"onunload", "killall zita-n2j");
-          tsccfg::node_t e_route = tsccfg::node_add_child(e_mods,"route");
-          tsccfg::node_set_attribute(e_route,"name", clientname);
-          tsccfg::node_set_attribute(e_route,
-              "channels", std::to_string(stagemember.second.channels.size()));
-          tsccfg::node_set_attribute(e_route,
-              "gain", TASCAR::to_string(20 * log10(stagemember.second.gain)));
-          tsccfg::node_set_attribute(e_route,"connect", netclientname + ":out_[0-9]*");
+          tsccfg::node_set_attribute(e_sys, "onunload", "killall zita-n2j");
+          tsccfg::node_t e_route = tsccfg::node_add_child(e_mods, "route");
+          tsccfg::node_set_attribute(e_route, "name", clientname);
+          tsccfg::node_set_attribute(
+              e_route, "channels",
+              std::to_string(stagemember.second.channels.size()));
+          tsccfg::node_set_attribute(
+              e_route, "gain",
+              TASCAR::to_string(20 * log10(stagemember.second.gain)));
+          tsccfg::node_set_attribute(e_route, "connect",
+                                     netclientname + ":out_[0-9]*");
         }
       }
     }
@@ -555,47 +560,53 @@ void ov_render_tascar_t::create_raw_dev(tsccfg::node_t e_session)
   // with a delayed version of the self monitor:
   if(stage.rendersettings.secrec > 0) {
     std::string clientname(get_stagedev_name(thisdev.id) + "_sec");
-    tsccfg::node_t mod = tsccfg::node_add_child(e_mods,"route");
-    tsccfg::node_set_attribute(mod,"name", clientname);
-    tsccfg::node_set_attribute(mod,"channels", std::to_string(thisdev.channels.size()));
-    tsccfg::node_t plgs = tsccfg::node_add_child(mod,"plugins");
-    tsccfg::node_t del = tsccfg::node_add_child(plgs,"delay");
-    tsccfg::node_set_attribute(del,"delay",
-                       TASCAR::to_string(0.001 * (stage.rendersettings.secrec +
-                                                  thisdev.receiverjitter +
-                                                  thisdev.senderjitter)));
-    tsccfg::node_set_attribute(mod,"gain", TASCAR::to_string(20 * log10(thisdev.gain)));
+    tsccfg::node_t mod = tsccfg::node_add_child(e_mods, "route");
+    tsccfg::node_set_attribute(mod, "name", clientname);
+    tsccfg::node_set_attribute(mod, "channels",
+                               std::to_string(thisdev.channels.size()));
+    tsccfg::node_t plgs = tsccfg::node_add_child(mod, "plugins");
+    tsccfg::node_t del = tsccfg::node_add_child(plgs, "delay");
+    tsccfg::node_set_attribute(
+        del, "delay",
+        TASCAR::to_string(0.001 *
+                          (stage.rendersettings.secrec +
+                           thisdev.receiverjitter + thisdev.senderjitter)));
+    tsccfg::node_set_attribute(mod, "gain",
+                               TASCAR::to_string(20 * log10(thisdev.gain)));
     int chn(0);
     for(auto ch : thisdev.channels) {
-      tsccfg::node_t e_port = tsccfg::node_add_child(e_session,"connect");
-      tsccfg::node_set_attribute(e_port,"src", ch.sourceport);
-      tsccfg::node_set_attribute(e_port,"dest", clientname + ":in." + std::to_string(chn));
+      tsccfg::node_t e_port = tsccfg::node_add_child(e_session, "connect");
+      tsccfg::node_set_attribute(e_port, "src", ch.sourceport);
+      tsccfg::node_set_attribute(e_port, "dest",
+                                 clientname + ":in." + std::to_string(chn));
       ++chn;
     }
   }
   if(thisdev.channels.size() > 0) {
-    tsccfg::node_t e_sys = tsccfg::node_add_child(e_mods,"system");
-    tsccfg::node_set_attribute(e_sys,
-        "command", zitapath + "zita-j2n --chan " +
-                       std::to_string(thisdev.channels.size()) +
-                       " --jname sender --16bit 127.0.0.1 " +
-                       std::to_string(4464 + 2 * stage.thisstagedeviceid));
-    tsccfg::node_set_attribute(e_sys,"onunload", "killall zita-j2n");
+    tsccfg::node_t e_sys = tsccfg::node_add_child(e_mods, "system");
+    tsccfg::node_set_attribute(
+        e_sys, "command",
+        zitapath + "zita-j2n --chan " +
+            std::to_string(thisdev.channels.size()) +
+            " --jname sender --16bit 127.0.0.1 " +
+            std::to_string(4464 + 2 * stage.thisstagedeviceid));
+    tsccfg::node_set_attribute(e_sys, "onunload", "killall zita-j2n");
     int chn(0);
     for(auto ch : thisdev.channels) {
       ++chn;
-      tsccfg::node_t e_port = tsccfg::node_add_child(e_session,"connect");
-      tsccfg::node_set_attribute(e_port,"src", ch.sourceport);
-      tsccfg::node_set_attribute(e_port,"dest", stage.thisdeviceid + "_sender:in_" +
-                                        std::to_string(chn));
+      tsccfg::node_t e_port = tsccfg::node_add_child(e_session, "connect");
+      tsccfg::node_set_attribute(e_port, "src", ch.sourceport);
+      tsccfg::node_set_attribute(e_port, "dest",
+                                 stage.thisdeviceid + "_sender:in_" +
+                                     std::to_string(chn));
       waitports.push_back(stage.thisdeviceid + "_sender:in_" +
                           std::to_string(chn));
     }
   }
-  tsccfg::node_t e_wait = tsccfg::node_add_child(e_mods,"waitforjackport");
+  tsccfg::node_t e_wait = tsccfg::node_add_child(e_mods, "waitforjackport");
   for(auto port : waitports) {
-    tsccfg::node_t e_p = tsccfg::node_add_child(e_wait,"port");
-    tsccfg::node_set_text(e_p,port);
+    tsccfg::node_t e_p = tsccfg::node_add_child(e_wait, "port");
+    tsccfg::node_set_text(e_p, port);
   }
 }
 
@@ -696,7 +707,7 @@ void ov_render_tascar_t::start_session()
       }
     }
     for(auto xport : stage.rendersettings.xports)
-      session_add_connect(e_session, xport.first,xport.second);
+      session_add_connect(e_session, xport.first, xport.second);
     if(!stage.host.empty()) {
       ovboxclient = new ovboxclient_t(
           stage.host, stage.port, 4464 + 2 * stage.thisstagedeviceid, 0, 30,
@@ -719,22 +730,16 @@ void ov_render_tascar_t::start_session()
     std::string ipaddr(ep2ipstr(getipaddr()));
     ipaddr += " '";
     ipaddr += stage.thisdeviceid + " (" + stage.thisdevice.label + ")'";
+#ifndef GUI
     if(file_exists("/usr/share/ovclient/webmixer.js")) {
       command = "(cd /usr/share/ovclient/ && node webmixer.js " + ipaddr + ")";
     }
     if(file_exists("webmixer.js")) {
       command = "node webmixer.js " + ipaddr;
     }
-#ifdef __APPLE__
-    if(file_exists("./webmixer")) {
-      command = "./webmixer " + ipaddr;
-    }
-    if(file_exists("DigitalStage.app/Contents/MacOS/webmixer")) {
-      command = "./DigitalStage.app/Contents/MacOS/webmixer " + ipaddr;
-    }
-#endif
     if(!command.empty())
       h_webmixer = new spawn_process_t(command);
+#endif
   }
   catch(...) {
     delete tascar;
@@ -808,11 +813,11 @@ void ov_render_tascar_t::start_audiobackend()
             audiodevice.numperiods);
     std::cout << "[ov_render_tascar] Starting jack server" << std::endl;
 #else
-    sprintf(cmd,
-            "JACK_NO_AUDIO_RESERVATION=1 jackd --sync -P 40 -d alsa -d %s "
-            "-r %g -p %d -n %d",
-            devname.c_str(), audiodevice.srate, audiodevice.periodsize,
-            audiodevice.numperiods);
+      sprintf(cmd,
+              "JACK_NO_AUDIO_RESERVATION=1 jackd --sync -P 40 -d alsa -d %s "
+              "-r %g -p %d -n %d",
+              devname.c_str(), audiodevice.srate, audiodevice.periodsize,
+              audiodevice.numperiods);
 #endif
     h_jack = new spawn_process_t(cmd);
     // replace sleep by testing for jack presence with timeout:
@@ -856,7 +861,8 @@ void ov_render_tascar_t::stop_audiobackend()
 
 void ov_render_tascar_t::add_stage_device(const stage_device_t& stagedevice)
 {
-  std::cout << "ov_render_tascar_t::add_stage_device" << stagedevice.id << std::endl;
+  std::cout << "ov_render_tascar_t::add_stage_device" << stagedevice.id
+            << std::endl;
   // compare with current stage:
   auto p_stage(stage.stage);
   ov_render_base_t::add_stage_device(stagedevice);
@@ -868,7 +874,8 @@ void ov_render_tascar_t::add_stage_device(const stage_device_t& stagedevice)
 
 void ov_render_tascar_t::rm_stage_device(stage_device_id_t stagedeviceid)
 {
-  std::cout << "ov_render_tascar_t::rm_stage_device" << stagedeviceid << std::endl;
+  std::cout << "ov_render_tascar_t::rm_stage_device" << stagedeviceid
+            << std::endl;
   // compare with current stage:
   auto p_stage(stage.stage);
   ov_render_base_t::rm_stage_device(stagedeviceid);
@@ -945,7 +952,8 @@ void ov_render_tascar_t::set_render_settings(
     const render_settings_t& rendersettings,
     stage_device_id_t thisstagedeviceid)
 {
-  std::cout << "ov_render_tascar_t::set_render_settings " << rendersettings.id << ", thisstagedeviceId: " << thisstagedeviceid << std::endl;
+  std::cout << "ov_render_tascar_t::set_render_settings " << rendersettings.id
+            << ", thisstagedeviceId: " << thisstagedeviceid << std::endl;
   if((rendersettings != stage.rendersettings) ||
      (thisstagedeviceid != stage.thisstagedeviceid)) {
     ov_render_base_t::set_render_settings(rendersettings, thisstagedeviceid);
