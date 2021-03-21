@@ -244,7 +244,8 @@ stage_device_t get_stage_dev(nlohmann::json& dev)
     if(channels.is_array())
       for(auto ch : channels) {
         device_channel_t devchannel;
-        devchannel.id = stagedev.label + "c" + std::to_string(chcnt++);
+        devchannel.id = stagedev.label + "_" + std::to_string(stagedev.id) +
+                        "_c" + std::to_string(chcnt++);
         devchannel.sourceport = my_js_value(ch, "sourceport", std::string(""));
         devchannel.gain = my_js_value(ch, "gain", 1.0);
         nlohmann::json chpos(ch["position"]);
