@@ -1,7 +1,9 @@
 #ifndef SOUNDCARDTOOLS_H
 #define SOUNDCARDTOOLS_H
 
+#ifndef LINUX
 #include <soundio/soundio.h>
+#endif
 #include <string>
 #include <vector>
 
@@ -28,6 +30,8 @@ struct sound_card_t {
   bool is_default;
 };
 
+#ifndef LINUX
+
 class sound_card_tools_t {
 
 public:
@@ -46,6 +50,8 @@ public:
 private:
   struct SoundIo* soundio;
 };
+
+#endif
 
 #endif
 

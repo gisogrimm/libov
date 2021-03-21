@@ -86,6 +86,8 @@ std::string url2localfilename(const std::string& url)
   return std::to_string(std::hash<std::string>{}(url)) + extension;
 }
 
+#ifndef LINUX
+
 sound_card_tools_t::sound_card_tools_t()
 {
   this->soundio = soundio_create();
@@ -173,6 +175,8 @@ struct SoundIo* sound_card_tools_t::get_sound_io()
 {
   return this->soundio;
 }
+
+#endif
 
 /*
  * Local Variables:
