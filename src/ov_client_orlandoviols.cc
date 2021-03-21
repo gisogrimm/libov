@@ -308,7 +308,7 @@ void ov_client_orlandoviols_t::service()
           nlohmann::json js_stagecfg(nlohmann::json::parse(stagecfg));
           if(!js_stagecfg["frontendconfig"].is_null()) {
             std::ofstream ofh(folder + "ov-client.cfg");
-            ofh << js_stagecfg["../Resourcesfrontendconfig"].dump();
+            ofh << js_stagecfg["frontendconfig"].dump();
             quitrequest_ = true;
           }
           if(my_js_value(js_stagecfg, "firmwareupdate", false)) {
