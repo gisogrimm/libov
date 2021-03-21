@@ -10,7 +10,9 @@ OBJ = ov_types errmsg common udpsocket callerlist ovboxclient		\
   MACAddressUtility ov_tools spawn_process ov_client_orlandoviols	\
   ov_render_tascar soundcardtools
 
-CXXFLAGS = -Wall -Wno-deprecated-declarations -std=c++2a -pthread	\
+# please no c++2a or c++20, max 17 for the time being (c++-2a breaks
+# build on CI pipeline for Ubuntu and arm)
+CXXFLAGS = -Wall -Wno-deprecated-declarations -std=c++17 -pthread	\
 -ggdb -fno-finite-math-only -fPIC
 
 EXTERNALS = jack xerces-c liblo sndfile libcurl gsl samplerate fftw3f xerces-c
