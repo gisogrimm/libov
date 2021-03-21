@@ -2,7 +2,6 @@
 #define DS_TYPES
 
 #include "ov_types.h"
-#include <boost/optional.hpp>
 #include <nlohmann/json.hpp>
 #include <string>
 #include <vector>
