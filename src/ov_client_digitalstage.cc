@@ -149,7 +149,7 @@ void ov_client_digitalstage_t::service()
                     this->store_->readSoundCardByName(payload["soundCardName"]);
                 if(soundCard) {
                   // Use sound card
-                  this->configureAudio(soundCard.value());
+                  this->configureAudio(*soundCard);
                   // We have to remove all existing tracks and propagate new
                   // tracks
                   std::vector<ds::ov_track_t> existingTracks =
