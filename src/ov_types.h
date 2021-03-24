@@ -341,6 +341,21 @@ public:
    * @return runtime application folder
    */
   virtual const std::string& get_runtime_folder() const { return folder; };
+  /**
+   * Indicate if a session restart is needed
+   * @return true if restart is needed
+   */
+  const bool need_restart() const;
+  /**
+   * Set session restart flag to true
+   */
+  void require_session_restart();
+  /**
+   * If a session is active and a restart is needed then restart the
+   * session; if the session is inactive, then start the
+   * session. Otherwise do nothing.
+   */
+  void restart_session_if_needed();
 
 protected:
   audio_device_t audiodevice;
@@ -350,6 +365,7 @@ protected:
 private:
   bool session_active;
   bool audio_active;
+  bool restart_needed;
 };
 
 // This class manages the communication with the frontend and calls

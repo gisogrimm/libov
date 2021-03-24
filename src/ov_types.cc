@@ -161,7 +161,7 @@ bool operator!=(const render_settings_t& a, const render_settings_t& b)
 
 ov_render_base_t::ov_render_base_t(const std::string& deviceid)
     : audiodevice({"", "", 48000, 96, 2}), stage(default_stage),
-      session_active(false), audio_active(false)
+      session_active(false), audio_active(false), restart_needed(false)
 {
   stage.thisdeviceid = deviceid;
 }
@@ -169,11 +169,24 @@ ov_render_base_t::ov_render_base_t(const std::string& deviceid)
 void ov_render_base_t::start_session()
 {
   session_active = true;
+  restart_needed = false;
 }
 
 void ov_render_base_t::end_session()
 {
   session_active = false;
+}
+
+void ov_render_base_t::restart_session_if_needed()
+{
+  if(restart_needed) {
+    if(session_active)
+      end_session();
+    start_session();
+  } else {
+    if(!session_active)
+      start_session();
+  }
 }
 
 void ov_render_base_t::start_audiobackend()
@@ -212,18 +225,16 @@ void ov_render_base_t::configure_audio_backend(
   // audio backend changed or was not active before:
   if((audiodevice != audiodevice_) || (!audio_active)) {
     audiodevice = audiodevice_;
-    bool session_was_active(session_active);
     // audio was active before, so we need to restart:
     if(audio_active) {
-      if(session_active)
+      if(session_active) {
+        require_session_restart();
         end_session();
+      }
       stop_audiobackend();
     }
     // now start audio:
     start_audiobackend();
-    // if a sesion was active then restart session:
-    if(session_was_active)
-      start_session();
   }
 }
 
@@ -280,8 +291,18 @@ void ov_render_base_t::set_relay_server(const std::string& host, port_t port,
   stage.pin = pin;
   if(restart) {
     end_session();
-    start_session();
+    require_session_restart();
   }
+}
+
+const bool ov_render_base_t::need_restart() const
+{
+  return restart_needed;
+}
+
+void ov_render_base_t::require_session_restart()
+{
+  restart_needed = true;
 }
 
 void ov_render_base_t::getbitrate(double& txrate, double& rxrate) {}

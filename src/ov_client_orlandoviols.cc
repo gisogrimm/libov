@@ -352,7 +352,7 @@ void ov_client_orlandoviols_t::service()
                 backend.stop_audiobackend();
                 backend.start_audiobackend();
                 if(session_was_active)
-                  backend.start_session();
+                  backend.require_session_restart();
               }
             }
             nlohmann::json js_rendersettings(js_stagecfg["rendersettings"]);
@@ -463,8 +463,7 @@ void ov_client_orlandoviols_t::service()
             }
             if(!backend.is_audio_active())
               backend.start_audiobackend();
-            if(!backend.is_session_active())
-              backend.start_session();
+            backend.restart_session_if_needed();
           }
           report_error(lobby, backend.get_deviceid(), "");
         }

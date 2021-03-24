@@ -53,6 +53,11 @@ private:
   void create_virtual_acoustics(tsccfg::node_t session, tsccfg::node_t e_rec,
                                 tsccfg::node_t e_scene);
   void create_raw_dev(tsccfg::node_t session);
+  void add_secondary_bus(const stage_device_t& stagemember,
+                         tsccfg::node_t& e_mods, tsccfg::node_t& e_session,
+                         std::vector<std::string>& waitports,
+                         const std::string& zitapath,
+                         const std::string& chanlist);
   // for the time being we (optionally if jack is chosen as an audio
   // backend) start the jack backend. This will be replaced by a more
   // generic audio backend interface:
