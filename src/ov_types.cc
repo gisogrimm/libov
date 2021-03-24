@@ -122,6 +122,7 @@ bool operator!=(const std::vector<device_channel_t>& a,
 
 bool operator!=(const stage_device_t& a, const stage_device_t& b)
 {
+#ifdef SHOWDEBUG
   DEBUGNEQ(a.id, b.id);
   DEBUGNEQ(a.label, b.label);
   DEBUGNEQ2(a.channels, b.channels);
@@ -132,6 +133,7 @@ bool operator!=(const stage_device_t& a, const stage_device_t& b)
   DEBUGNEQ(a.senderjitter, b.senderjitter);
   DEBUGNEQ(a.receiverjitter, b.receiverjitter);
   DEBUGNEQ(a.sendlocal, b.sendlocal);
+#endif
   return (a.id != b.id) || (a.label != b.label) || (a.channels != b.channels) ||
          (a.position != b.position) || (a.orientation != b.orientation) ||
          (a.gain != b.gain) || (a.mute != b.mute) ||
@@ -292,16 +294,22 @@ const char* get_libov_version()
 bool operator!=(const std::map<stage_device_id_t, stage_device_t>& a,
                 const std::map<stage_device_id_t, stage_device_t>& b)
 {
+#ifdef SHOWDEBUG
   DEBUGNEQ(a.size(), b.size());
+#endif
   if(a.size() != b.size())
     return true;
   auto a_it = a.begin();
   auto b_it = b.begin();
   while((a_it != a.end()) && (b_it != b.end())) {
+#ifdef SHOWDEBUG
     DEBUGNEQ(a_it->first, b_it->first);
+#endif
     if(a_it->first != b_it->first)
       return true;
+#ifdef SHOWDEBUG
     DEBUGNEQ2(a_it->second, b_it->second);
+#endif
     if(a_it->second != b_it->second)
       return true;
     ++a_it;
