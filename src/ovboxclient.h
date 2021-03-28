@@ -38,6 +38,17 @@ public:
   void announce_latency(stage_device_id_t cid, double lmin, double lmean,
                         double lmax, uint32_t received, uint32_t lost);
   void add_extraport(port_t dest);
+  /**
+     \brief Add a proxy client
+
+     \param cid Device ID of proxy client
+     \param host Hostname or IP address of proxy client
+
+     If proxy clients are added, then ovboxclient_t will send all data
+     not only to localhost but also to the list of clients. Also the
+     own audio will be forwarded to the proxy clients.
+   */
+  void add_proxy_client(stage_device_id_t cid, const std::string& host);
   void add_receiverport(port_t srcport_t, port_t destport_t);
   void set_ping_callback(
       std::function<void(stage_device_id_t, double, const endpoint_t&, void*)>
@@ -61,7 +72,11 @@ private:
   udpsocket_t local_server;
   // additional port offsets to send data to locally:
   std::vector<port_t> xdest;
+  // list of proxy clients:
+  std::map<stage_device_id_t, endpoint_t> proxyclients;
+  // destination port of relay server:
   port_t toport;
+  // receiver ports:
   port_t recport;
   // port offset for primary port, added to nominal port, e.g., in case of local
   // setup:

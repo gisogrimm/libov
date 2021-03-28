@@ -2,6 +2,23 @@
 #include <condition_variable>
 #include <string.h>
 #include <strings.h>
+#if defined(WIN32) || defined(UNDER_CE)
+#include <ws2tcpip.h>
+// for ifaddrs.h
+#include <iphlpapi.h>
+#define MSG_CONFIRM 0
+
+#elif defined(LINUX) || defined(linux) || defined(__APPLE__)
+#include <ifaddrs.h>
+#include <net/if.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+#endif
+
+#include "errmsg.h"
+#include <errno.h>
 
 ovboxclient_t::ovboxclient_t(const std::string& desthost, port_t destport,
                              port_t recport, port_t portoffset, int prio,
@@ -76,6 +93,32 @@ void ovboxclient_t::add_receiverport(port_t srcxport, port_t destxport)
 void ovboxclient_t::add_extraport(port_t dest)
 {
   xdest.push_back(dest);
+}
+
+void ovboxclient_t::add_proxy_client(stage_device_id_t cid,
+                                     const std::string& host)
+{
+  // resolve host:
+  struct hostent* server;
+  server = gethostbyname(host.c_str());
+  if(server == NULL)
+#if defined(WIN32) || defined(UNDER_CE)
+    // windows:
+    throw ErrMsg("No such host: " + std::to_string(WSAGetLastError()));
+#else
+    throw ErrMsg("No such host: " + std::string(hstrerror(h_errno)));
+#endif
+  endpoint_t serv_addr;
+#if defined(WIN32) || defined(UNDER_CE)
+  // windows:
+  memset((char*)&serv_addr, 0, sizeof(serv_addr));
+#else
+  bzero((char*)&serv_addr, sizeof(serv_addr));
+#endif
+  serv_addr.sin_family = AF_INET;
+  memcpy((char*)&serv_addr.sin_addr.s_addr, (char*)server->h_addr,
+         server->h_length);
+  proxyclients[cid] = serv_addr;
 }
 
 void ovboxclient_t::announce_new_connection(stage_device_id_t cid,
@@ -172,6 +215,8 @@ void ovboxclient_t::sendsrv()
       if(msg) {
         // the first port numbers are reserved for the control infos:
         if(destport > MAXSPECIALPORT) {
+          // not a special port, thus we forward data to localhost and proxy
+          // clients:
           if(rcallerid != callerid) {
             sequence_t dseq(seq - endpoints[rcallerid].seq);
             if(dseq != 0) {
@@ -190,6 +235,13 @@ void ovboxclient_t::sendsrv()
                 endpoints[rcallerid].num_lost += (dseq - 1);
               }
               endpoints[rcallerid].seq = seq;
+            }
+          }
+          // now send to proxy clients:
+          for(auto client : proxyclients) {
+            if(rcallerid != client.first) {
+              client.second.sin_port = destport;
+              local_server.send(msg, un, client.second);
             }
           }
         } else {
