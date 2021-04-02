@@ -77,6 +77,7 @@ private:
   // metronome settings:
   metronome_t metronome;
   const std::string zita_path;
+  std::map<stage_device_id_t, std::string> proxyclients;
   /**
      \brief serve as proxy
 
@@ -92,6 +93,8 @@ private:
 
   */
   bool use_proxy;
+  std::string proxyip;
+  std::string localip;
 };
 
 #endif

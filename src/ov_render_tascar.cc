@@ -139,6 +139,7 @@ ov_render_tascar_t::ov_render_tascar_t(const std::string& deviceid,
   if(pinglogport)
     pinglogaddr =
         lo_address_new("localhost", std::to_string(pinglogport_).c_str());
+  localip = ep2ipstr(getipaddr());
 }
 
 ov_render_tascar_t::~ov_render_tascar_t()
@@ -745,6 +746,14 @@ void ov_render_tascar_t::start_session()
       ovboxclient->add_receiverport(9870, 9871);
       if(pinglogaddr)
         ovboxclient->set_ping_callback(sendpinglog, pinglogaddr);
+      for(auto proxyclient : proxyclients) {
+        DEBUG((int)(proxyclient.first));
+        DEBUG(proxyclient.second);
+        ovboxclient->add_proxy_client(proxyclient.first, proxyclient.second);
+      }
+      if(use_proxy) {
+        DEBUG(proxyip);
+      }
     }
     tsc.save(folder + "ov-client_debugsession.tsc");
     tascar = new TASCAR::session_t(tsc.save_to_string(),
@@ -1049,10 +1058,28 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
       if(xcfg["proxy"].is_object()) {
         bool cfg_is_proxy = my_js_value(xcfg["proxy"], "isproxy", false);
         bool cfg_use_proxy = my_js_value(xcfg["proxy"], "useproxy", false);
-        if((cfg_is_proxy != is_proxy) || (cfg_use_proxy != use_proxy))
+        std::string cfg_proxyip;
+        if(cfg_use_proxy)
+          cfg_proxyip = my_js_value(xcfg["proxy"], "proxyip", std::string(""));
+        nlohmann::json js_proxyclients(xcfg["proxy"]["clients"]);
+        std::map<stage_device_id_t, std::string> cfg_proxyclients;
+        if(cfg_is_proxy && js_proxyclients.is_array()) {
+          for(auto proxyclient : js_proxyclients) {
+            int32_t cfg_proxy_id = my_js_value(proxyclient, "id", -1);
+            std::string cfg_proxy_ip =
+                my_js_value(proxyclient, "ip", std::string(""));
+            if((cfg_proxy_id >= 0) && (cfg_proxy_id < MAX_STAGE_ID) &&
+               cfg_proxy_ip.size() && (cfg_proxy_ip != localip))
+              cfg_proxyclients[cfg_proxy_id] = cfg_proxy_ip;
+          }
+        }
+        if((cfg_is_proxy != is_proxy) || (cfg_use_proxy != use_proxy) ||
+           (cfg_proxyclients != proxyclients) || (cfg_proxyip != proxyip))
           restart_session = true;
         is_proxy = cfg_is_proxy;
         use_proxy = cfg_use_proxy;
+        proxyclients = cfg_proxyclients;
+        proxyip = cfg_proxyip;
       }
       if(is_session_active() && restart_session) {
         require_session_restart();

@@ -216,7 +216,7 @@ ovbox_udpsocket_t::ovbox_udpsocket_t(secret_t secret) : secret(secret) {}
 
 void ovbox_udpsocket_t::send_ping(stage_device_id_t cid, const endpoint_t& ep)
 {
-  if(cid >= MAXEP)
+  if(cid >= MAX_STAGE_ID)
     return;
   char buffer[pingbufsize];
   std::chrono::high_resolution_clock::time_point t1(

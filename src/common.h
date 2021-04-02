@@ -17,7 +17,7 @@
 #define BUFSIZE 4096
 
 /// maximum number of clients in a stage
-#define MAXEP 32
+#define MAX_STAGE_ID 32
 
 // the first few ports are reserved for control packages:
 enum {

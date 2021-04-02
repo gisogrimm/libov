@@ -22,7 +22,7 @@ ep_desc_t::ep_desc_t()
 
 endpoint_list_t::endpoint_list_t() : runthread(true)
 {
-  endpoints.resize(MAXEP);
+  endpoints.resize(MAX_STAGE_ID);
   statusthread = std::thread(&endpoint_list_t::checkstatus, this);
 }
 
@@ -35,7 +35,7 @@ endpoint_list_t::~endpoint_list_t()
 void endpoint_list_t::cid_register(stage_device_id_t cid, const endpoint_t& ep,
                                    epmode_t mode, const std::string& rver)
 {
-  if(cid < MAXEP) {
+  if(cid < MAX_STAGE_ID) {
     endpoints[cid].ep = ep;
     if(mode != endpoints[cid].mode)
       endpoints[cid].announced = false;
@@ -48,14 +48,14 @@ void endpoint_list_t::cid_register(stage_device_id_t cid, const endpoint_t& ep,
 void endpoint_list_t::cid_setlocalip(stage_device_id_t cid,
                                      const endpoint_t& localep)
 {
-  if(cid < MAXEP) {
+  if(cid < MAX_STAGE_ID) {
     endpoints[cid].localep = localep;
   }
 }
 
 void endpoint_list_t::cid_setpingtime(stage_device_id_t cid, double pingtime)
 {
-  if(cid < MAXEP) {
+  if(cid < MAX_STAGE_ID) {
     endpoints[cid].timeout = TIMEOUT;
     if(pingtime > 0) {
       if(mstat.try_lock()) {
@@ -74,7 +74,7 @@ void endpoint_list_t::checkstatus()
   uint32_t statlogcnt(STATLOGPERIOD);
   while(runthread) {
     std::this_thread::sleep_for(std::chrono::milliseconds(PINGPERIODMS));
-    for(stage_device_id_t ep = 0; ep != MAXEP; ++ep) {
+    for(stage_device_id_t ep = 0; ep != MAX_STAGE_ID; ++ep) {
       if(endpoints[ep].timeout) {
         // bookkeeping of connected endpoints:
         if(!endpoints[ep].announced) {
@@ -94,7 +94,7 @@ void endpoint_list_t::checkstatus()
       // logging of ping statistics:
       statlogcnt = STATLOGPERIOD;
       std::lock_guard<std::mutex> lk(mstat);
-      for(stage_device_id_t ep = 0; ep != MAXEP; ++ep) {
+      for(stage_device_id_t ep = 0; ep != MAX_STAGE_ID; ++ep) {
         if(endpoints[ep].timeout) {
           announce_latency(ep, endpoints[ep].pingt_min,
                            endpoints[ep].pingt_sum /

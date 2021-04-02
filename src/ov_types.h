@@ -46,7 +46,7 @@ typedef uint32_t secret_t;
 /**
 \brief unique device ID number in a stage
 
- This ID is a number between 0 and MAXEP (defined in
+ This ID is a number between 0 and MAX_STAGE_ID (defined in
 common.h). Uniqueness must be guaranteed within one stage session,
 i.e., the database backend needs to ensure a correct assignment.
 */
