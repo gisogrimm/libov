@@ -240,8 +240,8 @@ void ovboxclient_t::sendsrv()
           // now send to proxy clients:
           for(auto client : proxyclients) {
             if(rcallerid != client.first) {
-              client.second.sin_port = destport;
-              local_server.send(msg, un, client.second);
+              client.second.sin_port = htons((unsigned short)destport);
+              remote_server.send(msg, un, client.second);
             }
           }
         } else {
@@ -336,6 +336,12 @@ void ovboxclient_t::recsrv()
               }
             }
             ++ocid;
+          }
+          // serve proxy clients:
+          for(auto client : proxyclients) {
+            // send unencoded message:
+            client.second.sin_port = htons((unsigned short)recport);
+            remote_server.send(buffer, n, client.second);
           }
         }
         if(sendtoserver) {
