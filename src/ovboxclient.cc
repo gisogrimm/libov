@@ -30,8 +30,7 @@ ovboxclient_t::ovboxclient_t(const std::string& desthost, port_t destport,
       runsession(true), mode(0), cb_ping(nullptr), cb_ping_data(nullptr),
       sendlocal(sendlocal_), last_tx(0), last_rx(0),
       t_bitrate(std::chrono::high_resolution_clock::now()), cb_seqerr(nullptr),
-      cb_seqerr_data(nullptr)
-
+      cb_seqerr_data(nullptr), msgbuffers(new msgbuf_t[MAX_STAGE_ID])
 {
   if(peer2peer_)
     mode |= B_PEER2PEER;
@@ -60,6 +59,7 @@ ovboxclient_t::~ovboxclient_t()
   pingthread.join();
   for(auto th = xrecthread.begin(); th != xrecthread.end(); ++th)
     th->join();
+  delete[] msgbuffers;
 }
 
 void ovboxclient_t::getbitrate(double& txrate, double& rxrate)
@@ -231,21 +231,43 @@ void ovboxclient_t::sendsrv()
           if(rcallerid != callerid) {
             sequence_t dseq(seq - endpoints[rcallerid].seq);
             if(cb_seqerr && (dseq != 1) && (endpoints[rcallerid].seq != 0))
-              cb_seqerr(rcallerid, endpoints[rcallerid].seq + 1, seq, destport,
+              cb_seqerr(rcallerid, endpoints[rcallerid].seq, seq, destport,
                         cb_seqerr_data);
+            // handle only messages which are not a duplicate:
             if(dseq != 0) {
-              local_server.send(msg, un, destport + portoffset);
-              for(auto xd : xdest)
-                local_server.send(msg, un, destport + xd);
-              ++endpoints[rcallerid].num_received;
-              if(dseq < 0) {
-                //// report sequence error:
-                // size_t un =
-                //    packmsg(buffer, BUFSIZE, secret, callerid, PORT_SEQREP, 0,
-                //            (char*)(&rcallerid), sizeof(rcallerid));
-                // un = addmsg(buffer, BUFSIZE, un, (char*)(&dseq),
-                // sizeof(dseq)); remote_server.send(buffer, un, toport);
+              if(dseq == 2) {
+                // exactly one package missing. Hold this package back
+                // to see if next message is the missing one.
+                msgbuffers[rcallerid].valid = true;
+                msgbuffers[rcallerid].seq = seq;
+                msgbuffers[rcallerid].destport = destport;
+                msgbuffers[rcallerid].size = un;
+                memcpy(msgbuffers[rcallerid].buffer, msg, un);
+                // std::cout << "buffered " << seq << std::endl;
               } else {
+                if((dseq == -1) && msgbuffers[rcallerid].valid &&
+                   (msgbuffers[rcallerid].seq == seq + 1)) {
+                  // std::cout << "recovered " << seq << " "
+                  //          << msgbuffers[rcallerid].seq << std::endl;
+                  // this message should be sent after the previous
+                  // one. If a valid message is in the buffer then
+                  // send it now:
+                  local_server.send(
+                      msgbuffers[rcallerid].buffer, msgbuffers[rcallerid].size,
+                      msgbuffers[rcallerid].destport + portoffset);
+                  for(auto xd : xdest)
+                    local_server.send(msgbuffers[rcallerid].buffer,
+                                      msgbuffers[rcallerid].size,
+                                      msgbuffers[rcallerid].destport + xd);
+                  msgbuffers[rcallerid].valid = false;
+                  ++endpoints[rcallerid].num_received;
+                }
+                local_server.send(msg, un, destport + portoffset);
+                for(auto xd : xdest)
+                  local_server.send(msg, un, destport + xd);
+                ++endpoints[rcallerid].num_received;
+              }
+              if(dseq > 0) {
                 if(endpoints[rcallerid].seq != 0)
                   endpoints[rcallerid].num_lost += (dseq - 1);
               }
@@ -416,6 +438,17 @@ void ovboxclient_t::xrecsrv(port_t srcport, port_t destport)
     std::cerr << "Error: " << e.what() << std::endl;
     runsession = false;
   }
+}
+
+msgbuf_t::msgbuf_t()
+    : valid(false), seq(0), destport(0), size(0), buffer(new char[BUFSIZE])
+{
+  memset(buffer, 0, BUFSIZE);
+}
+
+msgbuf_t::~msgbuf_t()
+{
+  delete[] buffer;
 }
 
 /*
