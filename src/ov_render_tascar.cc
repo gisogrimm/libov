@@ -128,7 +128,8 @@ ov_render_tascar_t::ov_render_tascar_t(const std::string& deviceid,
       ovboxclient(NULL), pinglogport(pinglogport_), pinglogaddr(nullptr),
       inputports({"system:capture_1", "system:capture_2"}),
       headtrack_tauref(33.315), selfmonitor_delay(0.0),
-      zita_path(get_zita_path()), is_proxy(false), use_proxy(false)
+      zita_path(get_zita_path()), is_proxy(false), use_proxy(false),
+      cb_seqerr(nullptr), cb_seqerr_data(nullptr)
 {
 #ifdef SHOWDEBUG
   std::cout << "ov_render_tascar_t::ov_render_tascar_t" << std::endl;
@@ -739,6 +740,8 @@ void ov_render_tascar_t::start_session()
           stage.host, stage.port, 4464 + 2 * stage.thisstagedeviceid, 0, 30,
           stage.pin, stage.thisstagedeviceid, stage.rendersettings.peer2peer,
           use_proxy, false, stage.stage[stage.thisstagedeviceid].sendlocal);
+      if(cb_seqerr)
+        ovboxclient->set_seqerr_callback(cb_seqerr, cb_seqerr_data);
       if(stage.rendersettings.secrec > 0)
         ovboxclient->add_extraport(100);
       for(auto p : stage.rendersettings.xrecport)
@@ -1089,6 +1092,16 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
   catch(const std::exception& e) {
     throw TASCAR::ErrMsg(std::string("set_extra_config: ") + e.what());
   }
+}
+
+void ov_render_tascar_t::set_seqerr_callback(
+    std::function<void(stage_device_id_t, sequence_t, sequence_t, port_t,
+                       void*)>
+        f,
+    void* d)
+{
+  cb_seqerr = f;
+  cb_seqerr_data = d;
 }
 
 /*

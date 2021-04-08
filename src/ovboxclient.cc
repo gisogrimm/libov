@@ -29,7 +29,8 @@ ovboxclient_t::ovboxclient_t(const std::string& desthost, port_t destport,
       recport(recport), portoffset(portoffset), callerid(callerid),
       runsession(true), mode(0), cb_ping(nullptr), cb_ping_data(nullptr),
       sendlocal(sendlocal_), last_tx(0), last_rx(0),
-      t_bitrate(std::chrono::high_resolution_clock::now())
+      t_bitrate(std::chrono::high_resolution_clock::now()), cb_seqerr(nullptr),
+      cb_seqerr_data(nullptr)
 
 {
   if(peer2peer_)
@@ -82,6 +83,16 @@ void ovboxclient_t::set_ping_callback(
 {
   cb_ping = f;
   cb_ping_data = d;
+}
+
+void ovboxclient_t::set_seqerr_callback(
+    std::function<void(stage_device_id_t, sequence_t, sequence_t, port_t,
+                       void*)>
+        f,
+    void* d)
+{
+  cb_seqerr = f;
+  cb_seqerr_data = d;
 }
 
 void ovboxclient_t::add_receiverport(port_t srcxport, port_t destxport)
@@ -219,20 +230,24 @@ void ovboxclient_t::sendsrv()
           // clients:
           if(rcallerid != callerid) {
             sequence_t dseq(seq - endpoints[rcallerid].seq);
+            if(cb_seqerr && (dseq != 1) && (endpoints[rcallerid].seq != 0))
+              cb_seqerr(rcallerid, endpoints[rcallerid].seq + 1, seq, destport,
+                        cb_seqerr_data);
             if(dseq != 0) {
               local_server.send(msg, un, destport + portoffset);
               for(auto xd : xdest)
                 local_server.send(msg, un, destport + xd);
               ++endpoints[rcallerid].num_received;
               if(dseq < 0) {
-                // report sequence error:
-                size_t un =
-                    packmsg(buffer, BUFSIZE, secret, callerid, PORT_SEQREP, 0,
-                            (char*)(&rcallerid), sizeof(rcallerid));
-                un = addmsg(buffer, BUFSIZE, un, (char*)(&dseq), sizeof(dseq));
-                remote_server.send(buffer, un, toport);
+                //// report sequence error:
+                // size_t un =
+                //    packmsg(buffer, BUFSIZE, secret, callerid, PORT_SEQREP, 0,
+                //            (char*)(&rcallerid), sizeof(rcallerid));
+                // un = addmsg(buffer, BUFSIZE, un, (char*)(&dseq),
+                // sizeof(dseq)); remote_server.send(buffer, un, toport);
               } else {
-                endpoints[rcallerid].num_lost += (dseq - 1);
+                if(endpoints[rcallerid].seq != 0)
+                  endpoints[rcallerid].num_lost += (dseq - 1);
               }
               endpoints[rcallerid].seq = seq;
             }

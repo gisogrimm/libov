@@ -34,6 +34,10 @@ public:
   std::vector<std::string> get_input_channel_ids() const;
   double get_load() const;
   void set_extra_config(const std::string&);
+  void set_seqerr_callback(std::function<void(stage_device_id_t, sequence_t,
+                                              sequence_t, port_t, void*)>
+                               cb,
+                           void* data);
   class metronome_t {
   public:
     metronome_t();
@@ -95,6 +99,10 @@ private:
   bool use_proxy;
   std::string proxyip;
   std::string localip;
+  std::function<void(stage_device_id_t sender, sequence_t expected,
+                     sequence_t received, port_t destport, void* data)>
+      cb_seqerr;
+  void* cb_seqerr_data;
 };
 
 #endif

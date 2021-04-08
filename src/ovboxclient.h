@@ -55,6 +55,10 @@ public:
           f,
       void* d);
   void getbitrate(double& txrate, double& rxrate);
+  void set_seqerr_callback(std::function<void(stage_device_id_t, sequence_t,
+                                              sequence_t, port_t, void*)>
+                               cb,
+                           void* data);
 
 private:
   void sendsrv();
@@ -97,6 +101,10 @@ private:
   size_t last_tx;
   size_t last_rx;
   std::chrono::high_resolution_clock::time_point t_bitrate;
+  std::function<void(stage_device_id_t sender, sequence_t expected,
+                     sequence_t received, port_t destport, void* data)>
+      cb_seqerr;
+  void* cb_seqerr_data;
 };
 
 #endif
