@@ -262,8 +262,6 @@ char* ovbox_udpsocket_t::recv_sec_msg(char* inputbuf, size_t& ilen, size_t& len,
     return NULL;
   // check secret:
   if(msg_secret(inputbuf) != secret) {
-    // log( 0, "invalid secret "+std::to_string(msg_secret(inputbuf)) +" from
-    // "+ep2str(addr));
     return NULL;
   }
   cid = msg_callerid(inputbuf);

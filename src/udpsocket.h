@@ -80,6 +80,22 @@ public:
   void send_ping(stage_device_id_t cid, const endpoint_t& ep);
   void send_registration(stage_device_id_t cid, epmode_t, port_t port,
                          const endpoint_t& localep);
+  /**
+   * Receive a message, extract header and validate secret.
+   *
+   * @param inputbuf Start of memory area where data can be written
+   * @param[out] ilen Number of bytes received from network
+   * @param[out] len Length of unpacked message, in bytes
+   * @param[out] cid Session ID of sending device
+   * @param[out] destport Destination port number or special control code
+   * @param[out] seq Sequence number
+   * @param[out] addr Sender IP address and port number
+   *
+   * @return Start of memory area where the unpacked data can be read,
+   *    or NULL in case of timeout, insufficient memory or invalid
+   *    secret code
+   *
+   */
   char* recv_sec_msg(char* inputbuf, size_t& ilen, size_t& len,
                      stage_device_id_t& cid, port_t& destport, sequence_t& seq,
                      endpoint_t& addr);
