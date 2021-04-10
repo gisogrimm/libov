@@ -119,6 +119,7 @@ tascar/Makefile:
 
 lib: build/libov.a
 
+libovserver: EXTERNALS=libcurl
 libovserver: build/libovserver.a
 
 build/libov.a: $(BUILD_OBJ) $(patsubst %,tascar/libtascar/build/%,$(TASCAROBJECTS)) $(patsubst %,tascar/libtascar/build/%,$(TASCARDMXOBJECTS))
