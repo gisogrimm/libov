@@ -144,7 +144,7 @@ clangformat:
 	clang-format-9 -i $(wildcard src/*.cc) $(wildcard src/*.h)
 
 clean:
-	rm -Rf build src/*~ .ov_version .ov_minor_version .ov_full_version
+	rm -Rf build src/*~ .ov_version .ov_minor_version .ov_full_version libtascar googletest CMakeFiles
 	$(MAKE) -C tascar clean
 
 ## unit testing:
@@ -156,15 +156,15 @@ googletest/WORKSPACE:
 gtest:
 	$(MAKE) googlemock
 
-unit-tests: gtest
+unit-tests: lib gtest
 
 googlemock: $(BUILD_DIR)/googlemock.is_installed
 
 $(BUILD_DIR)/googlemock.is_installed: googletest/WORKSPACE \
 	$(BUILD_DIR)/lib/.directory $(BUILD_DIR)/include/.directory
 	echo $(CXXFLAGS)
-	cd googletest/googlemock/make && $(MAKE)
-	cp googletest/googlemock/make/gmock_main.a $(BUILD_DIR)/lib/libgmock_main.a
+	cd googletest/ && cmake ./ && $(MAKE)
+	cp googletest/lib/*.a $(BUILD_DIR)/lib/
 	cp -a googletest/googletest/include/gtest $(BUILD_DIR)/include/
 	cp -a googletest/googlemock/include/gmock $(BUILD_DIR)/include/
 	touch $@
@@ -178,5 +178,5 @@ execute-unit-tests: $(BUILD_DIR)/unit-test-runner
 	if [ -x $< ]; then LD_LIBRARY_PATH=./build: $<; fi
 
 unit_tests_test_files = $(wildcard unittests/*.cc)
-$(BUILD_DIR)/unit-test-runner: $(BUILD_OBJ) $(BUILD_DIR)/.directory $(unit_tests_test_files)
-	if test -n "$(unit_tests_test_files)"; then $(CXX) $(CXXFLAGS) -I$(BUILD_DIR)/include -I$(SOURCE_DIR) -L$(BUILD_DIR) -L$(BUILD_DIR)/lib -o $@ $(wordlist 2, $(words $^), $^)  $(BUILD_OBJ) $(LDFLAGS) -lov $(LDLIBS) -lgmock_main -lpthread; fi
+$(BUILD_DIR)/unit-test-runner: $(BUILD_DIR)/.directory $(unit_tests_test_files)
+	if test -n "$(unit_tests_test_files)"; then $(CXX) $(CXXFLAGS) -I$(BUILD_DIR)/include -I$(SOURCE_DIR) -L$(BUILD_DIR) -L$(BUILD_DIR)/lib -o $@ $(wordlist 2, $(words $^), $^)  $(BUILD_OBJ) $(LDFLAGS) -lov $(LDLIBS) -lgtest_main -lgtest -lpthread; fi
