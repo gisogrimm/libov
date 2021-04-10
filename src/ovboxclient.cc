@@ -440,17 +440,6 @@ void ovboxclient_t::xrecsrv(port_t srcport, port_t destport)
   }
 }
 
-msgbuf_t::msgbuf_t()
-    : valid(false), seq(0), destport(0), size(0), buffer(new char[BUFSIZE])
-{
-  memset(buffer, 0, BUFSIZE);
-}
-
-msgbuf_t::~msgbuf_t()
-{
-  delete[] buffer;
-}
-
 /*
  * Local Variables:
  * compile-command: "make -C .."

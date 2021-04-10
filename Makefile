@@ -1,7 +1,4 @@
 VERSION=0.6
-#export MINORVERSION:=$(shell git rev-list --count 141b60167cafe272176c962f4a61da118cde8d03..HEAD)
-#export COMMIT:=$(shell git rev-parse --short HEAD)
-#export COMMITMOD:=$(shell test -z "`git status --porcelain -uno`" || echo "-modified")
 export FULLVERSION:=$(shell ./get_version.sh)
 
 all: tscver build showver lib tscobj tscplug
@@ -149,3 +146,37 @@ clangformat:
 clean:
 	rm -Rf build src/*~ .ov_version .ov_minor_version .ov_full_version
 	$(MAKE) -C tascar clean
+
+## unit testing:
+
+googletest/WORKSPACE:
+	git clone https://github.com/google/googletest
+	(cd googletest && git checkout release-1.10.0)
+
+gtest:
+	$(MAKE) googlemock
+
+unit-tests: gtest
+
+googlemock: $(BUILD_DIR)/googlemock.is_installed
+
+$(BUILD_DIR)/googlemock.is_installed: googletest/WORKSPACE \
+	$(BUILD_DIR)/lib/.directory $(BUILD_DIR)/include/.directory
+	echo $(CXXFLAGS)
+	cd googletest/googlemock/make && $(MAKE)
+	cp googletest/googlemock/make/gmock_main.a $(BUILD_DIR)/lib/libgmock_main.a
+	cp -a googletest/googletest/include/gtest $(BUILD_DIR)/include/
+	cp -a googletest/googlemock/include/gmock $(BUILD_DIR)/include/
+	touch $@
+
+unit-tests: execute-unit-tests $(patsubst %,%-subdir-unit-tests,$(SUBDIRS))
+
+$(patsubst %,%-subdir-unit-tests,$(SUBDIRS)):
+	$(MAKE) -C $(@:-subdir-unit-tests=) unit-tests
+
+execute-unit-tests: $(BUILD_DIR)/unit-test-runner
+	if [ -x $< ]; then LD_LIBRARY_PATH=./build: $<; fi
+
+unit_tests_test_files = $(wildcard $(SOURCE_DIR)/*_unit_tests.cc)
+$(BUILD_DIR)/unit-test-runner: $(OBJECTS) $(BUILD_DIR)/.directory $(unit_tests_test_files) $(patsubst %_unit_tests.cpp, %.cpp , $(unit_tests_test_files))
+	if test -n "$(unit_tests_test_files)"; then $(CXX) $(CXXFLAGS) -I$(BUILD_DIR)/include -L$(BUILD_DIR) -L$(BUILD_DIR)/lib -o $@ $(wordlist 2, $(words $^), $^)  $(BUILD_OBJ) $(LDFLAGS) -lov $(LDLIBS) -lgmock_main -lpthread; fi

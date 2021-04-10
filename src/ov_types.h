@@ -8,7 +8,7 @@
 #include <vector>
 
 /**
-    \brief cartesian coordinates in meters, e.g., for room positions.
+    cartesian coordinates in meters, e.g., for room positions.
  */
 struct pos_t {
   /// x is forward direction
@@ -22,7 +22,7 @@ struct pos_t {
 bool operator!=(const pos_t& a, const pos_t& b);
 
 /**
-   \brief Euler angles for rotation, in radians.
+   Euler angles for rotation, in radians.
  */
 struct zyx_euler_t {
   /// rotation around z axis
@@ -44,7 +44,7 @@ typedef uint16_t port_t;
 /// pin code type
 typedef uint32_t secret_t;
 /**
-\brief unique device ID number in a stage
+unique device ID number in a stage
 
  This ID is a number between 0 and MAX_STAGE_ID (defined in
 common.h). Uniqueness must be guaranteed within one stage session,
@@ -52,14 +52,14 @@ i.e., the database backend needs to ensure a correct assignment.
 */
 typedef uint8_t stage_device_id_t;
 /**
- \brief unique stage device channel id
+ unique stage device channel id
 
  This ID must be unique at least within one session.
 */
 typedef std::string device_channel_id_t;
 
 /**
-   \brief Description of an audio interface device
+   Description of an audio interface device
  */
 struct audio_device_t {
   /// driver name, e.g. jack, ALSA, ASIO
@@ -120,7 +120,7 @@ bool operator!=(const std::vector<device_channel_t>& a,
 bool operator!=(const stage_device_t& a, const stage_device_t& b);
 
 /**
-   \brief Settings of acoustic rendering and networking specific to the local
+   Settings of acoustic rendering and networking specific to the local
    device
 
    These settings do not need to be shared with other devices, or are
@@ -200,94 +200,95 @@ bool operator!=(const std::map<stage_device_id_t, stage_device_t>& a,
 class ov_render_base_t {
 public:
   /**
-     \brief Create a new renderer.
-     \param deviceid Device ID string (alphanumeric, no whitespace)
+     Create a new renderer.
+     @param deviceid Device ID string (alphanumeric, no whitespace)
   */
   ov_render_base_t(const std::string& deviceid);
   virtual ~ov_render_base_t(){};
   /**
-     \brief Configure the relay server (ov-server)
-     \param host IP address or host name of server
-     \param port Port number of server
-     \param pin Session key / PIN of session
+     Configure the relay server (ov-server)
+     @param host IP address or host name of server
+     @param port Port number of server
+     @param pin Session key / PIN of session
   */
   virtual void set_relay_server(const std::string& host, port_t port,
                                 secret_t pin);
   /**
-     \brief Start a new session (requires a running audio backend)
+     Start a new session (requires a running audio backend)
   */
   virtual void start_session();
   /**
-     \brief End session
+     End session
   */
   virtual void end_session();
   /**
-     \brief Configure audio backend and start (or restart) if required
-     \param audio Audio device descriptor
+     Configure audio backend and start (or restart) if required
+     @param audio Audio device descriptor
   */
   virtual void configure_audio_backend(const audio_device_t& audio);
   /**
-     \brief Setup the local device.
-     \param stagedevice Stage device descriptor
+     Setup the local device.
+     @param stagedevice Stage device descriptor
 
      If required and already running, the session is restarted
   */
   virtual void set_thisdev(const stage_device_t& stagedevice);
   /**
-     \brief Add a new device to the session
-     \param stagedevice Device descriptor
+     Add a new device to the session
+     @param stagedevice Device descriptor
   */
   virtual void add_stage_device(const stage_device_t& stagedevice);
   /**
-     \brief Remove a device from the stage
+     Remove a device from the stage
   */
   virtual void rm_stage_device(stage_device_id_t stagedeviceid);
   /**
-     \brief Remove all devices from a stage
+     Remove all devices from a stage
    */
   virtual void clear_stage();
   /**
-     \brief Set all stage devices of a stage
+     Set all stage devices of a stage
    */
   virtual void set_stage(const std::map<stage_device_id_t, stage_device_t>&);
   /**
-     \brief Set output gain of a stage device
-     \param stagedeviceid Stage device ID
-     \param gain Linear gain
-     \todo Discuss exact gain definition
+     Set output gain of a stage device
+     @param stagedeviceid Stage device ID
+     @param gain Linear gain
+     @todo Discuss exact gain definition
    */
   virtual void set_stage_device_gain(const stage_device_id_t& stagedeviceid,
                                      double gain);
   /**
-     \brief Set output gain of a single device channel of an stage device
-     \param stagedeviceid Stage device ID
-     \param devicechannelid Device channel ID
-     \param gain Linear gain
-     \todo @gisogrimm Is this easy to implement? And how should we identify the
+     Set output gain of a single device channel of an stage device
+     @param stagedeviceid Stage device ID
+     @param devicechannelid Device channel ID
+     @param gain Linear gain
+     @todo gisogrimm Is this easy to implement? And how should we identify the
      device channel? Could there maybe a simple string identifier?
    */
   virtual void
   set_stage_device_channel_gain(const stage_device_id_t& stagedeviceid,
-                                const device_channel_id_t& channeldeviceid,
+                                const device_channel_id_t& devicechannelid,
                                 double gain);
 
   /**
-     \brief Set position and orientation of a stage device
-     \param stagedeviceid Stage device ID
-     \param position Position of stage device inside stage
-     \param orientation Orientation of stage device inside stage
-     \todo Please implement me ;)
+     Set position and orientation of a stage device
+     @param stagedeviceid Stage device ID
+     @param position Position of stage device inside stage
+     @param orientation Orientation of stage device inside stage
+     @todo Please implement me ;)
    */
   virtual void set_stage_device_position(const stage_device_id_t& stagedeviceid,
                                          const pos_t& position,
                                          const zyx_euler_t& orientation);
 
   /**
-     \brief Set position and orientation of a stage device
-     \param stagedeviceid Stage device ID
-     \param position Position of stage device inside stage
-     \param orientation Orientation of stage device inside stage
-     \todo Please implement me ;)
+     Set position and orientation of a stage device channel relative to its parent object
+     @param stagedeviceid Stage device ID
+     @param channeldeviceid
+     @param position Position of stage device inside stage
+     @param orientation Orientation of stage device inside stage
+     @todo Please implement me ;)
    */
   virtual void
   set_stage_device_channel_position(const stage_device_id_t& stagedeviceid,
@@ -296,19 +297,19 @@ public:
                                     const zyx_euler_t& orientation);
 
   /**
-     \brief Set render settings of this device and stage combination
-     \param rendersettings Render settings including room acoustics, this device
-     gains, connections and similar \param thisstagedeviceid ID of this device
+     Set render settings of this device and stage combination
+     @param rendersettings Render settings including room acoustics, this device
+     gains, connections and similar @param thisstagedeviceid ID of this device
    */
   virtual void set_render_settings(const render_settings_t& rendersettings,
                                    stage_device_id_t thisstagedeviceid);
   /**
-     \brief Start audio backend
+     Start audio backend
   */
   virtual void start_audiobackend();
   /**
-     \brief Stop audio backend
-     \note Make sure that the session is ended before stopping the audio backend
+     Stop audio backend
+     @note Make sure that the session is ended before stopping the audio backend
    */
   virtual void stop_audiobackend();
   const bool is_session_active() const;
@@ -324,8 +325,8 @@ public:
   virtual void set_extra_config(const std::string&){};
 
   /**
-   * Sets the folder, where runtime related files are written and read from
-   * @param folder, used to write and read
+   * Sets the folder, where runtime related files are written and read from.
+   * @param value Folder name, used to write and read
    */
   virtual void set_runtime_folder(const std::string& value)
   {

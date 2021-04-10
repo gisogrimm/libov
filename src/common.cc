@@ -44,12 +44,8 @@ size_t packmsg(char* destbuf, size_t maxlen, secret_t secret,
                stage_device_id_t callerid, port_t destport, sequence_t seq,
                const char* msg, size_t msglen)
 {
-  if(maxlen < HEADERLEN + msglen) {
-    DEBUG(maxlen);
-    DEBUG(HEADERLEN);
-    DEBUG(msglen);
+  if(maxlen < HEADERLEN + msglen)
     return 0;
-  }
   msg_secret(destbuf) = secret;
   msg_callerid(destbuf) = callerid;
   msg_port(destbuf) = destport;
@@ -82,3 +78,32 @@ double get_pingtime(char*& msg, size_t& msglen)
   }
   return -1;
 }
+
+msgbuf_t::msgbuf_t()
+  : valid(false), cid(0), destport(0), seq(0), size(0), buffer(new char[BUFSIZE])
+{
+  memset(buffer, 0, BUFSIZE);
+}
+
+msgbuf_t::~msgbuf_t()
+{
+  delete[] buffer;
+}
+
+void msgbuf_t::unpack(const char* msg, size_t msglen)
+{
+  valid = false;
+  if( msglen <= BUFSIZE + HEADERLEN ){
+    cid = msg_callerid(msg);
+    destport = msg_port(msg);
+    seq = msg_seq(msg);
+    size = msglen;
+    memcpy(buffer,msg,size);
+  }
+}
+
+/*
+ * Local Variables:
+ * compile-command: "make -C .."
+ * End:
+ */

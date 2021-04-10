@@ -11,10 +11,6 @@
 // timeout of caller actvity, in ping periods:
 #define TIMEOUT 120
 
-#define B_PEER2PEER 1
-#define B_DOWNMIXONLY 2
-#define B_DONOTSEND 4
-
 class ep_desc_t {
 public:
   ep_desc_t();

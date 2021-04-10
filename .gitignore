@@ -6,3 +6,6 @@ build
 .ov_version
 .ov_minor_version
 .ov_full_version
+googletest
+libtascar
+CMakeFiles

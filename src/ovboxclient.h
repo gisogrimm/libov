@@ -4,17 +4,6 @@
 #include "callerlist.h"
 #include <functional>
 
-class msgbuf_t {
-public:
-  msgbuf_t();
-  ~msgbuf_t();
-  bool valid;
-  sequence_t seq;
-  port_t destport;
-  size_t size;
-  char* buffer;
-};
-
 /**
    \brief Main communication between ovboxclient and relay server
 
