@@ -3,10 +3,10 @@ export FULLVERSION:=$(shell ./get_version.sh)
 
 all: tscver build showver lib tscobj tscplug
 
-BASEOBJ = ov_types errmsg common udpsocket callerlist ov_tools
+BASEOBJ = ov_types errmsg common udpsocket callerlist ov_tools MACAddressUtility
 
-OBJ = $(BASEOBJ) ovboxclient MACAddressUtility spawn_process	\
-  ov_client_orlandoviols ov_render_tascar soundcardtools
+OBJ = $(BASEOBJ) ovboxclient spawn_process ov_client_orlandoviols	\
+  ov_render_tascar soundcardtools
 
 
 
