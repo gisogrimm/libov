@@ -177,6 +177,6 @@ $(patsubst %,%-subdir-unit-tests,$(SUBDIRS)):
 execute-unit-tests: $(BUILD_DIR)/unit-test-runner
 	if [ -x $< ]; then LD_LIBRARY_PATH=./build: $<; fi
 
-unit_tests_test_files = $(wildcard $(SOURCE_DIR)/*_unit_tests.cc)
-$(BUILD_DIR)/unit-test-runner: $(OBJECTS) $(BUILD_DIR)/.directory $(unit_tests_test_files) $(patsubst %_unit_tests.cpp, %.cpp , $(unit_tests_test_files))
-	if test -n "$(unit_tests_test_files)"; then $(CXX) $(CXXFLAGS) -I$(BUILD_DIR)/include -L$(BUILD_DIR) -L$(BUILD_DIR)/lib -o $@ $(wordlist 2, $(words $^), $^)  $(BUILD_OBJ) $(LDFLAGS) -lov $(LDLIBS) -lgmock_main -lpthread; fi
+unit_tests_test_files = $(wildcard unittests/*.cc)
+$(BUILD_DIR)/unit-test-runner: $(BUILD_OBJ) $(BUILD_DIR)/.directory $(unit_tests_test_files)
+	if test -n "$(unit_tests_test_files)"; then $(CXX) $(CXXFLAGS) -I$(BUILD_DIR)/include -I$(SOURCE_DIR) -L$(BUILD_DIR) -L$(BUILD_DIR)/lib -o $@ $(wordlist 2, $(words $^), $^)  $(BUILD_OBJ) $(LDFLAGS) -lov $(LDLIBS) -lgmock_main -lpthread; fi
