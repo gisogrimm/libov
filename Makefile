@@ -3,9 +3,12 @@ export FULLVERSION:=$(shell ./get_version.sh)
 
 all: tscver build showver lib tscobj tscplug
 
-OBJ = ov_types errmsg common udpsocket callerlist ovboxclient		\
-  MACAddressUtility ov_tools spawn_process ov_client_orlandoviols	\
-  ov_render_tascar soundcardtools
+BASEOBJ = ov_types errmsg common udpsocket callerlist ov_tools
+
+OBJ = $(BASEOBJ) ovboxclient MACAddressUtility spawn_process	\
+  ov_client_orlandoviols ov_render_tascar soundcardtools
+
+
 
 # please no c++2a or c++20, max 17 for the time being (c++-2a breaks
 # build on CI pipeline for Ubuntu and arm)
@@ -15,6 +18,8 @@ CXXFLAGS = -Wall -Wno-deprecated-declarations -std=c++17 -pthread	\
 EXTERNALS = jack xerces-c liblo sndfile libcurl gsl samplerate fftw3f xerces-c
 
 BUILD_OBJ = $(patsubst %,build/%.o,$(OBJ))
+
+BUILD_OBJ_SERVER = $(patsubst %,build/%.o,$(BASEOBJ))
 
 CXXFLAGS += -DOVBOXVERSION="\"$(FULLVERSION)\""
 
@@ -114,7 +119,12 @@ tascar/Makefile:
 
 lib: build/libov.a
 
+libovserver: build/libovserver.a
+
 build/libov.a: $(BUILD_OBJ) $(patsubst %,tascar/libtascar/build/%,$(TASCAROBJECTS)) $(patsubst %,tascar/libtascar/build/%,$(TASCARDMXOBJECTS))
+	ar rcs $@ $^
+
+build/libovserver.a: $(BUILD_OBJ_SERVER)
 	ar rcs $@ $^
 
 build: build/.directory
@@ -145,7 +155,7 @@ clangformat:
 
 clean:
 	rm -Rf build src/*~ .ov_version .ov_minor_version .ov_full_version libtascar googletest CMakeFiles
-	$(MAKE) -C tascar clean
+	-$(MAKE) -C tascar clean
 
 ## unit testing:
 
