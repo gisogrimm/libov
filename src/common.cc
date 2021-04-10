@@ -80,7 +80,8 @@ double get_pingtime(char*& msg, size_t& msglen)
 }
 
 msgbuf_t::msgbuf_t()
-  : valid(false), cid(0), destport(0), seq(0), size(0), buffer(new char[BUFSIZE])
+    : valid(false), cid(0), destport(0), seq(0), size(0),
+      buffer(new char[BUFSIZE])
 {
   memset(buffer, 0, BUFSIZE);
 }
@@ -93,13 +94,27 @@ msgbuf_t::~msgbuf_t()
 void msgbuf_t::unpack(const char* msg, size_t msglen)
 {
   valid = false;
-  if( msglen <= BUFSIZE + HEADERLEN ){
+  if(msglen <= BUFSIZE + HEADERLEN) {
     cid = msg_callerid(msg);
     destport = msg_port(msg);
     seq = msg_seq(msg);
     size = msglen;
-    memcpy(buffer,msg,size);
+    memcpy(buffer, msg, size);
   }
+}
+
+void msgbuf_t::set_tick()
+{
+  t = std::chrono::high_resolution_clock::now();
+}
+
+double msgbuf_t::get_age()
+{
+  std::chrono::high_resolution_clock::time_point t2(
+      std::chrono::high_resolution_clock::now());
+  std::chrono::duration<double> time_span =
+      std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t);
+  return (1000.0 * time_span.count());
 }
 
 /*

@@ -101,7 +101,7 @@ void udpsocket_t::close()
   isopen = false;
 }
 
-void udpsocket_t::destination(const char* host)
+void udpsocket_t::set_destination(const char* host)
 {
   struct hostent* server;
   server = gethostbyname(host);

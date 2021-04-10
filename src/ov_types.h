@@ -283,7 +283,8 @@ public:
                                          const zyx_euler_t& orientation);
 
   /**
-     Set position and orientation of a stage device channel relative to its parent object
+     Set position and orientation of a stage device channel relative to its
+     parent object
      @param stagedeviceid Stage device ID
      @param channeldeviceid
      @param position Position of stage device inside stage

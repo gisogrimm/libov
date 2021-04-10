@@ -39,9 +39,9 @@ ovboxclient_t::ovboxclient_t(const std::string& desthost, port_t destport,
   if(donotsend_)
     mode |= B_DONOTSEND;
   local_server.set_timeout_usec(100000);
-  local_server.destination("localhost");
+  local_server.set_destination("localhost");
   local_server.bind(recport, true);
-  remote_server.destination(desthost.c_str());
+  remote_server.set_destination(desthost.c_str());
   remote_server.set_timeout_usec(100000);
   remote_server.bind(0, false);
   localep = getipaddr();
@@ -399,7 +399,7 @@ void ovboxclient_t::xrecsrv(port_t srcport, port_t destport)
   try {
     udpsocket_t xlocal_server;
     xlocal_server.set_timeout_usec(100000);
-    xlocal_server.destination("localhost");
+    xlocal_server.set_destination("localhost");
     xlocal_server.bind(srcport, true);
     set_thread_prio(prio);
     char buffer[BUFSIZE];

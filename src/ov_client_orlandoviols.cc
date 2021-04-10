@@ -332,13 +332,15 @@ void ov_client_orlandoviols_t::service()
             std::ofstream ofh(folder + "ov-client.usedevversion");
             quitrequest_ = true;
           }
-	  if( js_stagecfg["wifisettings"].is_object() ){
+          if(js_stagecfg["wifisettings"].is_object()) {
             std::ofstream ofh(folder + "ov-client.wificfg");
-	    std::string ssid(my_js_value(js_stagecfg["wifisettings"],"ssid",std::string("")));
-	    std::string passwd(my_js_value(js_stagecfg["wifisettings"],"passwd",std::string("")));
-	    ofh << ssid << "\n" << passwd << "\n";
-	    quitrequest_ = true;
-	  }
+            std::string ssid(my_js_value(js_stagecfg["wifisettings"], "ssid",
+                                         std::string("")));
+            std::string passwd(my_js_value(js_stagecfg["wifisettings"],
+                                           "passwd", std::string("")));
+            ofh << ssid << "\n" << passwd << "\n";
+            quitrequest_ = true;
+          }
           if(!quitrequest_) {
             nlohmann::json js_audio(js_stagecfg["audiocfg"]);
             if(!js_audio.is_null()) {

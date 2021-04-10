@@ -27,13 +27,36 @@ std::string ep2ipstr(const endpoint_t& ep);
 std::string getmacaddr();
 endpoint_t getipaddr();
 
+/**
+ * Send and receive UDP messages
+ */
 class udpsocket_t {
 public:
   udpsocket_t();
   ~udpsocket_t();
+  /**
+   * Set the receive timeout
+   * @param usec Timeout in Microseconds, or zero to set to blocking mode
+   * (default)
+   */
   void set_timeout_usec(int usec);
   port_t bind(port_t port, bool loopback = false);
-  void destination(const char* host);
+  /**
+   * Set destination host or IP address.
+   * @param host Host name or IP address of destination.
+   *
+   * This function resolves the hostname and sets the resulting IP
+   * address as a destination.
+   */
+  void set_destination(const char* host);
+  /**
+   * Send a message to a port at the previously configured destination
+   *
+   * @param buf Start of memory area containing the message
+   * @param len Length of message in bytes
+   * @param portno Destination port number
+   * @return The number of bytes sent, or -1 in case of failure
+   */
   ssize_t send(const char* buf, size_t len, int portno);
   ssize_t send(const char* buf, size_t len, const endpoint_t& ep);
   ssize_t recvfrom(char* buf, size_t len, endpoint_t& addr);
