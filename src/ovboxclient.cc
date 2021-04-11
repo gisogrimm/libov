@@ -25,10 +25,10 @@ ovboxclient_t::ovboxclient_t(const std::string& desthost, port_t destport,
                              secret_t secret, stage_device_id_t callerid,
                              bool peer2peer_, bool donotsend_,
                              bool downmixonly_, bool sendlocal_)
-    : prio(prio), secret(secret), remote_server(secret), toport(destport),
-      recport(recport), portoffset(portoffset), callerid(callerid),
-      runsession(true), mode(0), cb_ping(nullptr), cb_ping_data(nullptr),
-      sendlocal(sendlocal_), last_tx(0), last_rx(0),
+    : prio(prio), secret(secret), remote_server(secret, callerid),
+      toport(destport), recport(recport), portoffset(portoffset),
+      callerid(callerid), runsession(true), mode(0), cb_ping(nullptr),
+      cb_ping_data(nullptr), sendlocal(sendlocal_), last_tx(0), last_rx(0),
       t_bitrate(std::chrono::high_resolution_clock::now()), cb_seqerr(nullptr),
       cb_seqerr_data(nullptr), msgbuffers(new msgbuf_t[MAX_STAGE_ID])
 {
@@ -173,10 +173,8 @@ void ovboxclient_t::announce_latency(stage_device_id_t cid, double lmin,
   data[3] = lmax;
   data[4] = received;
   data[5] = lost;
-  char buffer[BUFSIZE];
-  size_t n = packmsg(buffer, BUFSIZE, secret, callerid, PORT_PEERLATREP, 0,
-                     (const char*)data, 6 * sizeof(double));
-  remote_server.send(buffer, n, toport);
+  remote_server.pack_and_send(PORT_PEERLATREP, (const char*)data,
+                              6 * sizeof(double));
 }
 
 void ovboxclient_t::handle_endpoint_list_update(stage_device_id_t cid,
@@ -192,16 +190,16 @@ void ovboxclient_t::pingservice()
   while(runsession) {
     std::this_thread::sleep_for(std::chrono::milliseconds(PINGPERIODMS));
     // send registration to server:
-    remote_server.send_registration(callerid, mode, toport, localep);
+    remote_server.send_registration(mode, toport, localep);
     // send ping to other peers:
     size_t ocid(0);
     for(auto ep : endpoints) {
       if(ep.timeout && (ocid != callerid)) {
-        remote_server.send_ping(callerid, ep.ep);
+        remote_server.send_ping(ep.ep);
         // test if peer is in same network:
         if((endpoints[callerid].ep.sin_addr.s_addr == ep.ep.sin_addr.s_addr) &&
            (ep.localep.sin_addr.s_addr != 0))
-          remote_server.send_ping(callerid, ep.localep);
+          remote_server.send_ping(ep.localep);
       }
       ++ocid;
     }
@@ -224,15 +222,15 @@ void ovboxclient_t::sendsrv()
       char* msg(remote_server.recv_sec_msg(buffer, n, un, rcallerid, destport,
                                            seq, sender_endpoint));
       if(msg) {
+        sequence_t& expected_seq(endpoints[rcallerid].seq[destport]);
         // the first port numbers are reserved for the control infos:
         if(destport > MAXSPECIALPORT) {
           // not a special port, thus we forward data to localhost and proxy
           // clients:
           if(rcallerid != callerid) {
-            sequence_t dseq(seq - endpoints[rcallerid].seq);
-            if(cb_seqerr && (dseq != 1) && (endpoints[rcallerid].seq != 0))
-              cb_seqerr(rcallerid, endpoints[rcallerid].seq, seq, destport,
-                        cb_seqerr_data);
+            sequence_t dseq(seq - expected_seq);
+            if(cb_seqerr && (dseq != 1) && (expected_seq != 0))
+              cb_seqerr(rcallerid, expected_seq, seq, destport, cb_seqerr_data);
             // handle only messages which are not a duplicate:
             if(dseq != 0) {
               if(dseq == 2) {
@@ -243,12 +241,9 @@ void ovboxclient_t::sendsrv()
                 msgbuffers[rcallerid].destport = destport;
                 msgbuffers[rcallerid].size = un;
                 memcpy(msgbuffers[rcallerid].buffer, msg, un);
-                // std::cout << "buffered " << seq << std::endl;
               } else {
                 if((dseq == -1) && msgbuffers[rcallerid].valid &&
                    (msgbuffers[rcallerid].seq == seq + 1)) {
-                  // std::cout << "recovered " << seq << " "
-                  //          << msgbuffers[rcallerid].seq << std::endl;
                   // this message should be sent after the previous
                   // one. If a valid message is in the buffer then
                   // send it now:
@@ -268,10 +263,10 @@ void ovboxclient_t::sendsrv()
                 ++endpoints[rcallerid].num_received;
               }
               if(dseq > 0) {
-                if(endpoints[rcallerid].seq != 0)
+                if(expected_seq != 0)
                   endpoints[rcallerid].num_lost += (dseq - 1);
               }
-              endpoints[rcallerid].seq = seq;
+              expected_seq = seq;
             }
           }
           // now send to proxy clients:
@@ -338,13 +333,10 @@ void ovboxclient_t::recsrv()
     char msg[BUFSIZE];
     endpoint_t sender_endpoint;
     log(recport, "listening");
-    sequence_t seq(0);
     while(runsession) {
       ssize_t n = local_server.recvfrom(buffer, BUFSIZE, sender_endpoint);
       if(n > 0) {
-        ++seq;
-        size_t un =
-            packmsg(msg, BUFSIZE, secret, callerid, recport, seq, buffer, n);
+        size_t un = remote_server.packmsg(msg, BUFSIZE, recport, buffer, n);
         bool sendtoserver(!(mode & B_PEER2PEER));
         if(mode & B_PEER2PEER) {
           // we are in peer-to-peer mode.
@@ -406,13 +398,10 @@ void ovboxclient_t::xrecsrv(port_t srcport, port_t destport)
     char msg[BUFSIZE];
     endpoint_t sender_endpoint;
     log(recport, "listening");
-    sequence_t seq(0);
     while(runsession) {
       ssize_t n = xlocal_server.recvfrom(buffer, BUFSIZE, sender_endpoint);
       if(n > 0) {
-        ++seq;
-        size_t un =
-            packmsg(msg, BUFSIZE, secret, callerid, destport, seq, buffer, n);
+        size_t un = remote_server.packmsg(msg, BUFSIZE, destport, buffer, n);
         bool sendtoserver(!(mode & B_PEER2PEER));
         if(mode & B_PEER2PEER) {
           size_t ocid(0);

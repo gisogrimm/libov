@@ -212,40 +212,67 @@ std::string ep2ipstr(const endpoint_t& ep)
   return addr2str(ep.sin_addr);
 }
 
-ovbox_udpsocket_t::ovbox_udpsocket_t(secret_t secret) : secret(secret) {}
-
-void ovbox_udpsocket_t::send_ping(stage_device_id_t cid, const endpoint_t& ep)
+ovbox_udpsocket_t::ovbox_udpsocket_t(secret_t secret, stage_device_id_t cid)
+    : secret(secret), callerid(cid)
 {
-  if(cid >= MAX_STAGE_ID)
-    return;
+  if(cid > MAX_STAGE_ID)
+    throw ErrMsg("Invalid stage device ID " + std::to_string(cid));
+}
+
+void ovbox_udpsocket_t::send_ping(const endpoint_t& ep)
+{
   char buffer[pingbufsize];
   std::chrono::high_resolution_clock::time_point t1(
       std::chrono::high_resolution_clock::now());
-  size_t n = packmsg(buffer, pingbufsize, secret, cid, PORT_PING, 0,
-                     (const char*)(&t1), sizeof(t1));
+  size_t n =
+      packmsg(buffer, pingbufsize, PORT_PING, (const char*)(&t1), sizeof(t1));
   n = addmsg(buffer, pingbufsize, n, (char*)(&ep), sizeof(ep));
   send(buffer, n, ep);
 }
 
-void ovbox_udpsocket_t::send_registration(stage_device_id_t cid, epmode_t mode,
-                                          port_t port,
+void ovbox_udpsocket_t::send_registration(epmode_t mode, port_t port,
                                           const endpoint_t& localep)
 {
   std::string rver(OVBOXVERSION);
   {
     size_t buflen(HEADERLEN + rver.size() + 1);
     char buffer[buflen];
-    size_t n(packmsg(buffer, buflen, secret, cid, PORT_REGISTER, mode,
-                     rver.c_str(), rver.size() + 1));
+    // here we are not using the internal packing method for backward
+    // compatibility. This should be no problem because this type of
+    // message is handled only by the server, not by peers
+    size_t n(::packmsg(buffer, buflen, secret, callerid, PORT_REGISTER, mode,
+                       rver.c_str(), rver.size() + 1));
     send(buffer, n, port);
   }
   {
     size_t buflen(HEADERLEN + sizeof(endpoint_t));
     char buffer[buflen];
-    size_t n(packmsg(buffer, buflen, secret, cid, PORT_SETLOCALIP, 0,
-                     (const char*)(&localep), sizeof(endpoint_t)));
+    size_t n(packmsg(buffer, buflen, PORT_SETLOCALIP, (const char*)(&localep),
+                     sizeof(endpoint_t)));
     send(buffer, n, port);
   }
+}
+
+size_t ovbox_udpsocket_t::packmsg(char* destbuf, size_t maxlen, port_t destport,
+                                  const char* msg, size_t msglen)
+{
+  sequence_t& seq(seqmap[destport]);
+  seq++;
+  return ::packmsg(destbuf, maxlen, secret, callerid, destport, seq, msg,
+                   msglen);
+}
+
+bool ovbox_udpsocket_t::pack_and_send(port_t destport, const char* msg,
+                                      size_t msglen)
+{
+  char buffer[BUFSIZE];
+  size_t len(packmsg(buffer, BUFSIZE, destport, msg, msglen));
+  if(len == 0)
+    return false;
+  ssize_t sendlen(send(buffer, len, destport));
+  if(sendlen == -1)
+    return false;
+  return true;
 }
 
 char* ovbox_udpsocket_t::recv_sec_msg(char* inputbuf, size_t& ilen, size_t& len,

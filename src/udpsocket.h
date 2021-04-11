@@ -74,12 +74,23 @@ public:
   std::atomic_size_t rx_bytes;
 };
 
+class sequence_map_t : public std::map<port_t, sequence_t> {
+public:
+  inline sequence_t& operator[](port_t port)
+  {
+    auto it = find(port);
+    if(it == end()) {
+      insert(std::pair<port_t, sequence_t>(port, 0));
+    }
+    return at(port);
+  };
+};
+
 class ovbox_udpsocket_t : public udpsocket_t {
 public:
-  ovbox_udpsocket_t(secret_t secret);
-  void send_ping(stage_device_id_t cid, const endpoint_t& ep);
-  void send_registration(stage_device_id_t cid, epmode_t, port_t port,
-                         const endpoint_t& localep);
+  ovbox_udpsocket_t(secret_t secret, stage_device_id_t id);
+  void send_ping(const endpoint_t& ep);
+  void send_registration(epmode_t, port_t port, const endpoint_t& localep);
   /**
    * Receive a message, extract header and validate secret.
    *
@@ -100,9 +111,32 @@ public:
                      stage_device_id_t& cid, port_t& destport, sequence_t& seq,
                      endpoint_t& addr);
   void set_secret(secret_t s) { secret = s; };
+  /**
+   * Pack a message with current secret, caller id and sequence number.
+   *
+   * @param[out] destbuf Start of memory area where the data is stored.
+   * @param[in] maxlen Size of the data memory in bytes.
+   * @param[in] destport Destination port of message
+   * @param[in] msg Start of memory area of original message
+   * @param[in] msglen Lenght of original message
+   *
+   * If successful, the size of the serialized new message will be
+   * returned. If the size of the destination buffer is not large enough
+   * to pack header and message, then zero is returned.
+   *
+   * This method will increment the port and receiver specific sequence number.
+   */
+  size_t packmsg(char* destbuf, size_t maxlen, port_t destport, const char* msg,
+                 size_t msglen);
+  /**
+   * Pack and send message
+   */
+  bool pack_and_send(port_t destport, const char* msg, size_t msglen);
 
 protected:
   secret_t secret;
+  stage_device_id_t callerid;
+  sequence_map_t seqmap;
 };
 
 #endif

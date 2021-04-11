@@ -19,16 +19,14 @@ public:
   uint32_t timeout;
   bool announced;
   epmode_t mode;
-  // bool peer2peer;
-  // bool downmixonly;
   double pingt_min;
   double pingt_max;
   double pingt_sum;
   uint32_t pingt_n;
   uint32_t num_received;
   uint32_t num_lost;
-  sequence_t seq;
   std::string version;
+  sequence_map_t seq;
 };
 
 class endpoint_list_t {
@@ -63,5 +61,6 @@ private:
 /*
  * Local Variables:
  * mode: c++
+ * compile-command: "make -C .."
  * End:
  */

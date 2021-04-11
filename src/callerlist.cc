@@ -11,12 +11,9 @@ ep_desc_t::ep_desc_t()
   pingt_max = 0;
   pingt_sum = 0;
   pingt_n = 0;
-  seq = 0;
   num_lost = 0;
   num_received = 0;
   mode = B_PEER2PEER;
-  // peer2peer = true;
-  // downmixonly = false;
   version = "";
 }
 
@@ -121,3 +118,10 @@ uint32_t endpoint_list_t::get_num_clients()
     c += (ep.timeout > 0);
   return c;
 }
+
+/*
+ * Local Variables:
+ * mode: c++
+ * compile-command: "make -C .."
+ * End:
+ */
