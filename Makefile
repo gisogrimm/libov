@@ -167,8 +167,6 @@ googletest/WORKSPACE:
 gtest:
 	$(MAKE) googlemock
 
-unit-tests: lib gtest
-
 googlemock: $(BUILD_DIR)/googlemock.is_installed
 
 $(BUILD_DIR)/googlemock.is_installed: googletest/WORKSPACE \
@@ -180,7 +178,7 @@ $(BUILD_DIR)/googlemock.is_installed: googletest/WORKSPACE \
 	cp -a googletest/googlemock/include/gmock $(BUILD_DIR)/include/
 	touch $@
 
-unit-tests: execute-unit-tests $(patsubst %,%-subdir-unit-tests,$(SUBDIRS))
+unit-tests: lib gtest execute-unit-tests $(patsubst %,%-subdir-unit-tests,$(SUBDIRS))
 
 $(patsubst %,%-subdir-unit-tests,$(SUBDIRS)):
 	$(MAKE) -C $(@:-subdir-unit-tests=) unit-tests
@@ -189,5 +187,5 @@ execute-unit-tests: $(BUILD_DIR)/unit-test-runner
 	if [ -x $< ]; then LD_LIBRARY_PATH=./build: $<; fi
 
 unit_tests_test_files = $(wildcard unittests/*.cc)
-$(BUILD_DIR)/unit-test-runner: $(BUILD_DIR)/.directory $(unit_tests_test_files)
-	if test -n "$(unit_tests_test_files)"; then $(CXX) $(CXXFLAGS) -I$(BUILD_DIR)/include -I$(SOURCE_DIR) -L$(BUILD_DIR) -L$(BUILD_DIR)/lib -o $@ $(wordlist 2, $(words $^), $^)  $(BUILD_OBJ) $(LDFLAGS) -lov $(LDLIBS) -lgtest_main -lgtest -lpthread; fi
+$(BUILD_DIR)/unit-test-runner: $(BUILD_DIR)/.directory $(unit_tests_test_files) $(BUILD_OBJ)
+	if test -n "$(unit_tests_test_files)"; then $(CXX) $(CXXFLAGS) -I$(BUILD_DIR)/include -I$(SOURCE_DIR) -L$(BUILD_DIR) -L$(BUILD_DIR)/lib -o $@ $(wordlist 2, $(words $^), $^)  $(LDFLAGS) -lov $(LDLIBS) -lgtest_main -lgtest -lpthread; fi
