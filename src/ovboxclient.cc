@@ -157,14 +157,23 @@ void ovboxclient_t::announce_latency(stage_device_id_t cid, double lmin,
 {
   if(cid == callerid)
     return;
+  message_stat_t stat(sorter.get_stat(cid));
+  message_stat_t ostat(stats[cid]);
+  stats[cid] = stat;
+  stat -= ostat;
   char ctmp[1024];
   if(lmean > 0) {
     sprintf(ctmp, "latency %d min=%1.2fms, mean=%1.2fms, max=%1.2fms", cid,
             lmin, lmean, lmax);
     log(recport, ctmp);
   }
-  sprintf(ctmp, "packages from %d received=%d lost=%d (%1.2f%%)", cid, received,
-          lost, 100.0 * (double)lost / (double)(std::max(1u, received + lost)));
+  sprintf(ctmp,
+          "packages from %d received=%lu lost=%lu (%1.2f%%) seqerr=%lu "
+          "recovered=%lu",
+          cid, stat.received, stat.lost,
+          100.0 * (double)stat.lost /
+              (double)(std::max(1lu, stat.received + stat.lost)),
+          stat.seqerr_in, stat.seqerr_in - stat.seqerr_out);
   log(recport, ctmp);
   double data[6];
   data[0] = cid;
@@ -394,43 +403,88 @@ void ovboxclient_t::xrecsrv(port_t srcport, port_t destport)
 bool message_sorter_t::process(msgbuf_t** ppmsg)
 {
   if((*ppmsg)->valid) {
-    // we received a message, check for sequence order:
+    // we received a message, check for sequence order
     msgbuf_t* pmsg(*ppmsg);
-    sequence_t& exseq(seq[pmsg->cid][pmsg->destport]);
-    sequence_t dseq(exseq - pmsg->seq);
-    exseq = pmsg->seq;
+    ++stat[pmsg->cid].received;
+    bool notfirst(seq_in[pmsg->cid].find(pmsg->destport) !=
+                  seq_in[pmsg->cid].end());
+    // get input sequence difference:
+    sequence_t dseq_in(deltaseq(seq_in, *pmsg));
+    sequence_t dseq_io(deltaseq_const(seq_out, *pmsg));
+    if((dseq_in != 0) && notfirst)
+      stat[pmsg->cid].lost += dseq_in - 1;
     // dropout:
-    if(dseq == -2) {
+    if((dseq_in > 1) && (dseq_io > 1)) {
       buf1.copy(*pmsg);
+      (*ppmsg)->valid = false;
       return false;
     }
-    if(dseq != 1) {
-      // test if we have a stored value for cid/port:
+    stat[pmsg->cid].seqerr_in += (dseq_in < 0);
+    if((dseq_in < -1) || ((dseq_io > 1) && (dseq_in > 0))) {
       if(buf1.valid && (buf1.cid == pmsg->cid) &&
-         (buf1.destport == pmsg->destport)) {
+         (buf1.destport == pmsg->destport) && (buf1.seq < pmsg->seq)) {
         buf2.copy(*pmsg);
         *ppmsg = &buf1;
         buf1.valid = false;
-        seq[pmsg->cid][pmsg->destport] = buf1.seq;
+        sequence_t dseq_out(deltaseq(seq_out, buf1));
+        stat[pmsg->cid].seqerr_out += (dseq_out < 0);
         return true;
       }
     }
-    (*ppmsg)->valid = false;
+    sequence_t dseq_out(deltaseq(seq_out, *pmsg));
+    pmsg->valid = false;
+    stat[pmsg->cid].seqerr_out += (dseq_out < 0);
     return true;
   }
   if(buf1.valid) {
     *ppmsg = &buf1;
+    sequence_t dseq_out(deltaseq(seq_out, buf1));
     buf1.valid = false;
-    seq[buf1.cid][buf1.destport] = buf1.seq;
+    stat[buf1.cid].seqerr_out += (dseq_out < 0);
     return true;
   }
   if(buf2.valid) {
+    sequence_t dseq_out(deltaseq(seq_out, buf2));
     *ppmsg = &buf2;
     buf2.valid = false;
-    seq[buf2.cid][buf2.destport] = buf2.seq;
+    stat[buf2.cid].seqerr_out += (dseq_out < 0);
     return true;
   }
   return false;
+}
+
+message_stat_t::message_stat_t()
+    : received(0u), lost(0u), seqerr_in(0u), seqerr_out(0u)
+{
+}
+
+void message_stat_t::reset()
+{
+  received = 0u;
+  lost = 0u;
+  seqerr_in = 0u;
+  seqerr_out = 0u;
+}
+
+void message_stat_t::operator+=(const message_stat_t& src)
+{
+  received += src.received;
+  lost += src.lost;
+  seqerr_in += src.seqerr_in;
+  seqerr_out += src.seqerr_out;
+}
+
+void message_stat_t::operator-=(const message_stat_t& src)
+{
+  received -= src.received;
+  lost -= src.lost;
+  seqerr_in -= src.seqerr_in;
+  seqerr_out -= src.seqerr_out;
+}
+
+message_stat_t message_sorter_t::get_stat(stage_device_id_t id)
+{
+  return stat[id];
 }
 
 /*

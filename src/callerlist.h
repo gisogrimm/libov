@@ -26,7 +26,6 @@ public:
   uint32_t num_received;
   uint32_t num_lost;
   std::string version;
-  sequence_map_t seq;
 };
 
 class endpoint_list_t {

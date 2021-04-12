@@ -4,6 +4,18 @@
 #include "callerlist.h"
 #include <functional>
 
+class message_stat_t {
+public:
+  message_stat_t();
+  void reset();
+  void operator+=(const message_stat_t&);
+  void operator-=(const message_stat_t&);
+  size_t received;
+  size_t lost;
+  size_t seqerr_in;
+  size_t seqerr_out;
+};
+
 /**
  * Sort out-of-order messages.
  *
@@ -14,11 +26,27 @@
 class message_sorter_t {
 public:
   bool process(msgbuf_t** msg);
+  message_stat_t get_stat(stage_device_id_t id);
 
 private:
-  std::map<stage_device_id_t, sequence_map_t> seq;
+  inline sequence_t deltaseq(std::map<stage_device_id_t, sequence_map_t>& seq,
+                             const msgbuf_t& msg)
+  {
+    sequence_t dseq_(msg.seq - seq[msg.cid][msg.destport]);
+    seq[msg.cid][msg.destport] = msg.seq;
+    return dseq_;
+  };
+  inline sequence_t
+  deltaseq_const(std::map<stage_device_id_t, sequence_map_t>& seq,
+                 const msgbuf_t& msg)
+  {
+    return msg.seq - seq[msg.cid][msg.destport];
+  };
+  std::map<stage_device_id_t, sequence_map_t> seq_in;
+  std::map<stage_device_id_t, sequence_map_t> seq_out;
   msgbuf_t buf1;
   msgbuf_t buf2;
+  std::map<stage_device_id_t, message_stat_t> stat;
 };
 
 /**
@@ -125,6 +153,7 @@ private:
   void* cb_seqerr_data;
   msgbuf_t* msgbuffers;
   message_sorter_t sorter;
+  std::map<stage_device_id_t, message_stat_t> stats;
 };
 
 #endif
