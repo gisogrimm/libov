@@ -2,6 +2,48 @@
 
 #include "udpsocket.h"
 
+TEST(msgbuf, age)
+{
+  msgbuf_t msg;
+  msg.set_tick();
+  usleep(1000.0);
+  double age(msg.get_age());
+  ASSERT_NEAR(1.0, age, 0.5);
+}
+
+TEST(msgbuf, pack)
+{
+  secret_t sec(1234567);
+  stage_device_id_t id(13);
+  port_t port(1234);
+  msgbuf_t msg;
+  msg.pack(sec, id, port, 1, "", 0);
+  EXPECT_EQ(true,msg.valid);
+}
+
+TEST(msgbuf, copy)
+{
+  secret_t sec(1234567);
+  stage_device_id_t id(13);
+  port_t port(1234);
+  msgbuf_t msg;
+  msg.pack(sec, id, port, 1, "", 0);
+  EXPECT_EQ(true,msg.valid);
+  msgbuf_t msg2;
+  msg2.copy(msg);
+  EXPECT_EQ(msg.valid,msg2.valid);
+  EXPECT_EQ(msg.cid,msg2.cid);
+  EXPECT_EQ(msg.destport,msg2.destport);
+  EXPECT_EQ(msg.seq,msg2.seq);
+  EXPECT_EQ(msg.size,msg2.size);
+  msg2.unpack(msg2.size+HEADERLEN);
+  EXPECT_EQ(msg.valid,msg2.valid);
+  EXPECT_EQ(msg.cid,msg2.cid);
+  EXPECT_EQ(msg.destport,msg2.destport);
+  EXPECT_EQ(msg.seq,msg2.seq);
+  EXPECT_EQ(msg.size,msg2.size);
+}
+
 TEST(ovboxsocket, packmsg)
 {
   ovbox_udpsocket_t socket(12345678, 13);

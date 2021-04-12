@@ -5,7 +5,24 @@
 #include <functional>
 
 /**
-   \brief Main communication between ovboxclient and relay server
+ * Sort out-of-order messages.
+ *
+ * This class tries to sort out-of-order messages. It can re-order
+ * swapped messages (e.g., series like 1-2-4-3-5), if the missing
+ * message is arriving within a certain time.
+ */
+class message_sorter_t {
+public:
+  bool process(msgbuf_t** msg);
+
+private:
+  std::map<stage_device_id_t, sequence_map_t> seq;
+  msgbuf_t buf1;
+  msgbuf_t buf2;
+};
+
+/**
+   Main communication between ovboxclient and relay server.
 
    This class implements the communication protocol between relay
    server and ov-clients. Its counterpart on the server side is
@@ -66,6 +83,7 @@ private:
   void xrecsrv(port_t srcport, port_t destport);
   void pingservice();
   void handle_endpoint_list_update(stage_device_id_t cid, const endpoint_t& ep);
+  void process_msg(msgbuf_t& msg);
   // real time priority:
   const int prio;
   // PIN code to connect to server:
@@ -106,6 +124,7 @@ private:
       cb_seqerr;
   void* cb_seqerr_data;
   msgbuf_t* msgbuffers;
+  message_sorter_t sorter;
 };
 
 #endif

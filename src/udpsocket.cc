@@ -215,8 +215,6 @@ std::string ep2ipstr(const endpoint_t& ep)
 ovbox_udpsocket_t::ovbox_udpsocket_t(secret_t secret, stage_device_id_t cid)
     : secret(secret), callerid(cid)
 {
-  if(cid > MAX_STAGE_ID)
-    throw ErrMsg("Invalid stage device ID " + std::to_string(cid));
 }
 
 void ovbox_udpsocket_t::send_ping(const endpoint_t& ep)
@@ -296,6 +294,22 @@ char* ovbox_udpsocket_t::recv_sec_msg(char* inputbuf, size_t& ilen, size_t& len,
   seq = msg_seq(inputbuf);
   len = ilen - HEADERLEN;
   return &(inputbuf[HEADERLEN]);
+}
+
+bool ovbox_udpsocket_t::recv_sec_msg(msgbuf_t& msg)
+{
+  msg.valid = false;
+  ssize_t ilens = recvfrom(msg.rawbuffer, BUFSIZE, msg.sender);
+  if(ilens < 0)
+    return false;
+  size_t ilen(ilens);
+  if(ilen < HEADERLEN)
+    return false;
+  // check secret:
+  if(msg_secret(msg.rawbuffer) != secret)
+    return false;
+  msg.unpack(ilen);
+  return msg.valid;
 }
 
 #if defined(__linux__)
@@ -405,6 +419,65 @@ endpoint_t getipaddr()
   freeifaddrs(addrs);
 #endif
   return my_addr;
+}
+
+msgbuf_t::msgbuf_t()
+    : valid(false), cid(0), destport(0), seq(0), size(0),
+      rawbuffer(new char[BUFSIZE]), msg(rawbuffer)
+{
+  memset(rawbuffer, 0, BUFSIZE);
+}
+
+void msgbuf_t::copy(const msgbuf_t& src)
+{
+  valid = src.valid;
+  cid = src.cid;
+  destport = src.destport;
+  seq = src.seq;
+  size = src.size;
+  memcpy(rawbuffer, src.rawbuffer, BUFSIZE);
+  msg = &(rawbuffer[HEADERLEN]);
+}
+
+msgbuf_t::~msgbuf_t()
+{
+  delete[] rawbuffer;
+}
+
+void msgbuf_t::pack(secret_t secret, stage_device_id_t callerid,
+                    port_t destport, sequence_t seq, const char* msg,
+                    size_t msglen)
+{
+  size_t len(packmsg(rawbuffer, BUFSIZE, secret, callerid, destport, seq, msg,
+                     msglen));
+  unpack(len);
+}
+
+void msgbuf_t::unpack(size_t msglen)
+{
+  valid = false;
+  if((msglen >= HEADERLEN) && (msglen <= BUFSIZE)) {
+    cid = msg_callerid(rawbuffer);
+    destport = msg_port(rawbuffer);
+    seq = msg_seq(rawbuffer);
+    size = msglen - HEADERLEN;
+    msg = &(rawbuffer[HEADERLEN]);
+    valid = true;
+  }
+}
+
+void msgbuf_t::set_tick()
+{
+  t = std::chrono::high_resolution_clock::now();
+}
+
+double msgbuf_t::get_age()
+{
+  std::chrono::high_resolution_clock::time_point t2(
+      std::chrono::high_resolution_clock::now());
+  std::chrono::duration<double> time_span =
+      std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t);
+  return (1000.0 * time_span.count());
 }
 
 /*

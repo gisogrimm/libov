@@ -20,15 +20,6 @@ TEST(packmsg, packget)
   EXPECT_EQ(0u, len);
 }
 
-TEST(msgbuf, age)
-{
-  msgbuf_t msg;
-  msg.set_tick();
-  usleep(1000.0);
-  double age(msg.get_age());
-  ASSERT_NEAR(1.0, age, 0.5);
-}
-
 // Local Variables:
 // compile-command: "make -C .. unit-tests"
 // coding: utf-8-unix

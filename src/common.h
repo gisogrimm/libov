@@ -248,47 +248,6 @@ size_t addmsg(char* destbuf, size_t maxlen, size_t currentlen, const char* msg,
  */
 double get_pingtime(char*& msg, size_t& msglen);
 
-/**
- * @ingroup networkprotocol
- * Container for an unpacked message buffer.
- */
-class msgbuf_t {
-public:
-  /**
-   * Default constructor, invalidates and allocates BUFSIZE bytes in
-   * buffer
-   */
-  msgbuf_t();
-  ~msgbuf_t();
-  /**
-   * Unpack a packed message and store result.
-   *
-   * @param msg Packed source message
-   * @param msglen Length of packed source message
-   *
-   * On success valid member is set to true, otherwise to false
-   */
-  void unpack(const char* msg, size_t msglen);
-  /**
-   * Return age of a message in Milliseconds.
-   * The age is measured since it was unpacked.
-   */
-  double get_age();
-  /**
-   * Reset timer for age measurement.
-   */
-  void set_tick();
-  bool valid; ///< Status of message buffer, if true, the data can be read, if
-              ///< false, it can be overwritten
-  stage_device_id_t cid; ///< Device ID in session
-  port_t destport;       ///< Destination port
-  sequence_t seq;        ///< Sequence number
-  size_t size;           ///< Actual size of the unpacked message
-  char* buffer;          ///< Data containing the unpacked message
-private:
-  std::chrono::high_resolution_clock::time_point t;
-};
-
 #endif
 
 /*

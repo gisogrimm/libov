@@ -38,11 +38,11 @@ ovboxclient_t::ovboxclient_t(const std::string& desthost, port_t destport,
     mode |= B_DOWNMIXONLY;
   if(donotsend_)
     mode |= B_DONOTSEND;
-  local_server.set_timeout_usec(100000);
+  local_server.set_timeout_usec(10000);
   local_server.set_destination("localhost");
   local_server.bind(recport, true);
   remote_server.set_destination(desthost.c_str());
-  remote_server.set_timeout_usec(100000);
+  remote_server.set_timeout_usec(5000);
   remote_server.bind(0, false);
   localep = getipaddr();
   localep.sin_port = remote_server.getsockep().sin_port;
@@ -211,116 +211,78 @@ void ovboxclient_t::sendsrv()
 {
   try {
     set_thread_prio(prio);
-    char buffer[BUFSIZE];
-    endpoint_t sender_endpoint;
-    stage_device_id_t rcallerid;
-    port_t destport;
+    msgbuf_t msg;
     while(runsession) {
-      size_t n(BUFSIZE);
-      size_t un(BUFSIZE);
-      sequence_t seq(0);
-      char* msg(remote_server.recv_sec_msg(buffer, n, un, rcallerid, destport,
-                                           seq, sender_endpoint));
-      if(msg) {
-        sequence_t& expected_seq(endpoints[rcallerid].seq[destport]);
-        // the first port numbers are reserved for the control infos:
-        if(destport > MAXSPECIALPORT) {
-          // not a special port, thus we forward data to localhost and proxy
-          // clients:
-          if(rcallerid != callerid) {
-            sequence_t dseq(seq - expected_seq);
-            if(cb_seqerr && (dseq != 1) && (expected_seq != 0))
-              cb_seqerr(rcallerid, expected_seq, seq, destport, cb_seqerr_data);
-            // handle only messages which are not a duplicate:
-            if(dseq != 0) {
-              if(dseq == 2) {
-                // exactly one package missing. Hold this package back
-                // to see if next message is the missing one.
-                msgbuffers[rcallerid].valid = true;
-                msgbuffers[rcallerid].seq = seq;
-                msgbuffers[rcallerid].destport = destport;
-                msgbuffers[rcallerid].size = un;
-                memcpy(msgbuffers[rcallerid].buffer, msg, un);
-              } else {
-                if((dseq == -1) && msgbuffers[rcallerid].valid &&
-                   (msgbuffers[rcallerid].seq == seq + 1)) {
-                  // this message should be sent after the previous
-                  // one. If a valid message is in the buffer then
-                  // send it now:
-                  local_server.send(
-                      msgbuffers[rcallerid].buffer, msgbuffers[rcallerid].size,
-                      msgbuffers[rcallerid].destport + portoffset);
-                  for(auto xd : xdest)
-                    local_server.send(msgbuffers[rcallerid].buffer,
-                                      msgbuffers[rcallerid].size,
-                                      msgbuffers[rcallerid].destport + xd);
-                  msgbuffers[rcallerid].valid = false;
-                  ++endpoints[rcallerid].num_received;
-                }
-                local_server.send(msg, un, destport + portoffset);
-                for(auto xd : xdest)
-                  local_server.send(msg, un, destport + xd);
-                ++endpoints[rcallerid].num_received;
-              }
-              if(dseq > 0) {
-                if(expected_seq != 0)
-                  endpoints[rcallerid].num_lost += (dseq - 1);
-              }
-              expected_seq = seq;
-            }
-          }
-          // now send to proxy clients:
-          for(auto client : proxyclients) {
-            if(rcallerid != client.first) {
-              client.second.sin_port = htons((unsigned short)destport);
-              remote_server.send(msg, un, client.second);
-            }
-          }
-        } else {
-          switch(destport) {
-          case PORT_PING:
-            // we received a ping message, so we just send it back as a pong
-            // message and with our own stage device id:
-            msg_port(buffer) = PORT_PONG;
-            msg_callerid(buffer) = callerid;
-            remote_server.send(buffer, n, sender_endpoint);
-            break;
-          case PORT_PONG:
-            // we received a pong message, most likely a reply to an own ping
-            // message, so we extract the time and handle it:
-            if(rcallerid != callerid) {
-              double tms(get_pingtime(msg, un));
-              if(tms > 0) {
-                endpoint_t ep;
-                memset(&ep, 0, sizeof(ep));
-                if(un >= sizeof(endpoint_t))
-                  ep = *((endpoint_t*)msg);
-                cid_setpingtime(rcallerid, tms);
-                if(cb_ping)
-                  cb_ping(rcallerid, tms, ep, cb_ping_data);
-              }
-            }
-            break;
-          case PORT_SETLOCALIP:
-            // we received the local IP address of a peer:
-            if(un == sizeof(endpoint_t)) {
-              cid_setlocalip(rcallerid, *((endpoint_t*)msg));
-            }
-            break;
-          case PORT_LISTCID:
-            if(un == sizeof(endpoint_t)) {
-              // seq is peer2peer flag:
-              cid_register(rcallerid, *((endpoint_t*)msg), seq, "");
-            }
-            break;
-          }
-        }
-      }
+      remote_server.recv_sec_msg(msg);
+      msgbuf_t* pmsg(&msg);
+      while(sorter.process(&pmsg))
+        process_msg(*pmsg);
     }
   }
   catch(const std::exception& e) {
     std::cerr << "Error: " << e.what() << std::endl;
     runsession = false;
+  }
+}
+
+void ovboxclient_t::process_msg(msgbuf_t& msg)
+{
+  msg.valid = false;
+  // avoid handling of loopback messages:
+  if(msg.cid == callerid)
+    return;
+  // not a special port, thus we forward data to localhost and proxy
+  // clients:
+  if(msg.destport > MAXSPECIALPORT) {
+    local_server.send(msg.msg, msg.size, msg.destport + portoffset);
+    for(auto xd : xdest)
+      local_server.send(msg.msg, msg.size, msg.destport + xd);
+    // now send to proxy clients:
+    for(auto client : proxyclients) {
+      if(msg.cid != client.first) {
+        client.second.sin_port = htons((unsigned short)msg.destport);
+        remote_server.send(msg.msg, msg.size, client.second);
+      }
+    }
+    return;
+  }
+  switch(msg.destport) {
+  case PORT_PING:
+    // we received a ping message, so we just send it back as a pong
+    // message and with our own stage device id:
+    msg_port(msg.rawbuffer) = PORT_PONG;
+    msg_callerid(msg.rawbuffer) = callerid;
+    remote_server.send(msg.rawbuffer, msg.size + HEADERLEN, msg.sender);
+    break;
+  case PORT_PONG:
+    // we received a pong message, most likely a reply to an own ping
+    // message, so we extract the time and handle it:
+    if(msg.cid != callerid) {
+      double tms(get_pingtime(msg.msg, msg.size));
+      if(tms > 0) {
+        // valid ping time, try to extract original sender
+        endpoint_t ep;
+        memset(&ep, 0, sizeof(ep));
+        if(msg.size >= sizeof(endpoint_t))
+          ep = *((endpoint_t*)(msg.msg));
+        cid_setpingtime(msg.cid, tms);
+        if(cb_ping)
+          cb_ping(msg.cid, tms, ep, cb_ping_data);
+      }
+    }
+    break;
+  case PORT_SETLOCALIP:
+    // we received the local IP address of a peer:
+    if(msg.size == sizeof(endpoint_t)) {
+      cid_setlocalip(msg.cid, *((endpoint_t*)(msg.msg)));
+    }
+    break;
+  case PORT_LISTCID:
+    if(msg.size == sizeof(endpoint_t)) {
+      // seq is peer2peer flag:
+      cid_register(msg.cid, *((endpoint_t*)(msg.msg)), msg.seq, "");
+    }
+    break;
   }
 }
 
@@ -427,6 +389,48 @@ void ovboxclient_t::xrecsrv(port_t srcport, port_t destport)
     std::cerr << "Error: " << e.what() << std::endl;
     runsession = false;
   }
+}
+
+bool message_sorter_t::process(msgbuf_t** ppmsg)
+{
+  if((*ppmsg)->valid) {
+    // we received a message, check for sequence order:
+    msgbuf_t* pmsg(*ppmsg);
+    sequence_t& exseq(seq[pmsg->cid][pmsg->destport]);
+    sequence_t dseq(exseq - pmsg->seq);
+    exseq = pmsg->seq;
+    // dropout:
+    if(dseq == -2) {
+      buf1.copy(*pmsg);
+      return false;
+    }
+    if(dseq != 1) {
+      // test if we have a stored value for cid/port:
+      if(buf1.valid && (buf1.cid == pmsg->cid) &&
+         (buf1.destport == pmsg->destport)) {
+        buf2.copy(*pmsg);
+        *ppmsg = &buf1;
+        buf1.valid = false;
+        seq[pmsg->cid][pmsg->destport] = buf1.seq;
+        return true;
+      }
+    }
+    (*ppmsg)->valid = false;
+    return true;
+  }
+  if(buf1.valid) {
+    *ppmsg = &buf1;
+    buf1.valid = false;
+    seq[buf1.cid][buf1.destport] = buf1.seq;
+    return true;
+  }
+  if(buf2.valid) {
+    *ppmsg = &buf2;
+    buf2.valid = false;
+    seq[buf2.cid][buf2.destport] = buf2.seq;
+    return true;
+  }
+  return false;
 }
 
 /*

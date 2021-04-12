@@ -86,6 +86,65 @@ public:
   };
 };
 
+/**
+ * @ingroup networkprotocol
+ * Container for an unpacked message buffer.
+ */
+class msgbuf_t {
+public:
+  /**
+   * Default constructor, invalidates and allocates BUFSIZE bytes in
+   * buffer
+   */
+  msgbuf_t();
+  ~msgbuf_t();
+  msgbuf_t(const msgbuf_t&) = delete;
+  void copy(const msgbuf_t& src);
+  /**
+   * @ingroup networkprotocol
+   * Serialize header and original message info a destination buffer for
+   * transmission to peers.
+   * @param[in] secret Access code for session
+   * @param[in] callerid Identification of sender device
+   * @param[in] destport Destination port of message
+   * @param[in] seq Sequence number
+   * @param[in] msg Start of memory area of original message
+   * @param[in] msglen Lenght of original message
+   *
+   */
+  void pack(secret_t secret, stage_device_id_t callerid, port_t destport,
+            sequence_t seq, const char* msg, size_t msglen);
+  /**
+   * Unpack a packed message stored in the raw buffer.
+   *
+   * @param msglen Length of packed source message
+   *
+   * On success valid member is set to true and the msg pointer is
+   * updated, otherwise valid is set to false.
+   */
+  void unpack(size_t msglen);
+  /**
+   * Return age of a message in Milliseconds.
+   * The age is measured since it was unpacked.
+   */
+  double get_age();
+  /**
+   * Reset timer for age measurement.
+   */
+  void set_tick();
+  bool valid; ///< Status of message buffer, if true, the data can be read, if
+              ///< false, it can be overwritten
+  stage_device_id_t cid; ///< Device ID in session
+  port_t destport;       ///< Destination port
+  sequence_t seq;        ///< Sequence number
+  size_t size;           ///< Actual size of the unpacked message
+  char* rawbuffer;       ///< Data containing the packed message
+  char* msg;             ///< Data containing the unpacked message
+  endpoint_t sender;     ///< IP address and port of sender
+private:
+  std::chrono::high_resolution_clock::time_point t;
+};
+
 class ovbox_udpsocket_t : public udpsocket_t {
 public:
   ovbox_udpsocket_t(secret_t secret, stage_device_id_t id);
@@ -110,6 +169,17 @@ public:
   char* recv_sec_msg(char* inputbuf, size_t& ilen, size_t& len,
                      stage_device_id_t& cid, port_t& destport, sequence_t& seq,
                      endpoint_t& addr);
+  /**
+   * Receive a message, extract header and validate secret.
+   *
+   * @param msg Reference to message buffer to be updated
+   * @param[out] addr Sender IP address and port number
+   *
+   * @return True if receiving, decoding and validation of secret was
+   * successful, false otherwise.
+   *
+   */
+  bool recv_sec_msg(msgbuf_t& msg);
   void set_secret(secret_t s) { secret = s; };
   /**
    * Pack a message with current secret, caller id and sequence number.
