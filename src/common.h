@@ -32,6 +32,8 @@
 
 /// Maximum number of clients in a stage
 #define MAX_STAGE_ID 32
+/// Special stage ID of server
+#define STAGE_ID_SERVER 0xff
 
 /**
  * @ingroup networkprotocol
