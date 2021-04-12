@@ -172,7 +172,7 @@ void ovboxclient_t::announce_latency(stage_device_id_t cid, double lmin,
           "recovered=%lu",
           cid, stat.received, stat.lost,
           100.0 * (double)stat.lost /
-              (double)(std::max(1lu, stat.received + stat.lost)),
+              (double)(std::max((size_t)1, stat.received + stat.lost)),
           stat.seqerr_in, stat.seqerr_in - stat.seqerr_out);
   log(recport, ctmp);
   double data[6];
