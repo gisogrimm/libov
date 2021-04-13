@@ -433,7 +433,6 @@ msgbuf_t::msgbuf_t()
       rawbuffer(new char[BUFSIZE]), msg(rawbuffer)
 {
   memset(rawbuffer, 0, BUFSIZE);
-  DEBUG(sizeof(stage_device_id_t));
 }
 
 void msgbuf_t::copy(const msgbuf_t& src)

@@ -162,6 +162,8 @@ void ovboxclient_t::announce_latency(stage_device_id_t cid, double lmin,
   message_stat_t ostat(stats[cid]);
   stats[cid] = stat;
   stat -= ostat;
+  if(stat.lost == -1u)
+    stat.lost = 0;
   char ctmp[1024];
   sprintf(ctmp,
           "packages from %d received=%lu lost=%lu (%1.2f%%) seqerr=%lu "
@@ -281,24 +283,30 @@ void ovboxclient_t::process_ping_msg(msgbuf_t& msg)
 
 void ovboxclient_t::process_pong_msg(msgbuf_t& msg)
 {
+  // DEBUG(msg.destport);
   char* tbuf(msg.msg);
   size_t tsize(msg.size);
-  ping_stat_t& stat(pingstats_p2p[msg.cid]);
-  switch(msg.destport) {
-  case PORT_PONG_SRV:
+  if(msg.destport == PORT_PONG_SRV) {
     tbuf += sizeof(stage_device_id_t);
     tsize -= sizeof(stage_device_id_t);
-    stat = pingstats_srv[msg.cid];
-    break;
-  case PORT_PONG_LOCAL:
-    stat = pingstats_local[msg.cid];
-    break;
   }
   double tms(get_pingtime(tbuf, tsize));
+  // DEBUG(tms);
   if(tms > 0) {
     if(cb_ping)
       cb_ping(msg.cid, tms, msg.sender, cb_ping_data);
-    stat.add_value(tms);
+    switch(msg.destport) {
+    case PORT_PONG:
+      pingstats_p2p[msg.cid].add_value(tms);
+    case PORT_PONG_SRV:
+      tbuf += sizeof(stage_device_id_t);
+      tsize -= sizeof(stage_device_id_t);
+      pingstats_srv[msg.cid].add_value(tms);
+      break;
+    case PORT_PONG_LOCAL:
+      pingstats_local[msg.cid].add_value(tms);
+      break;
+    }
   }
 }
 
