@@ -298,6 +298,7 @@ void ovboxclient_t::process_pong_msg(msgbuf_t& msg)
     switch(msg.destport) {
     case PORT_PONG:
       pingstats_p2p[msg.cid].add_value(tms);
+      break;
     case PORT_PONG_SRV:
       tbuf += sizeof(stage_device_id_t);
       tsize -= sizeof(stage_device_id_t);
