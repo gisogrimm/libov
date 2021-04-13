@@ -16,6 +16,21 @@ public:
   size_t seqerr_out;
 };
 
+class ping_stat_t {
+public:
+  ping_stat_t(size_t N = 2048);
+  void add_value(double pt);
+  std::vector<double> get_min_med_99_mean_lost() const;
+  size_t sent;
+  size_t received;
+
+private:
+  std::vector<double> data;
+  size_t idx;
+  size_t filled;
+  double sum;
+};
+
 /**
  * Sort out-of-order messages.
  *
@@ -154,6 +169,9 @@ private:
   msgbuf_t* msgbuffers;
   message_sorter_t sorter;
   std::map<stage_device_id_t, message_stat_t> stats;
+  std::map<stage_device_id_t, ping_stat_t> pingstats_p2p;
+  std::map<stage_device_id_t, ping_stat_t> pingstats_srv;
+  std::map<stage_device_id_t, ping_stat_t> pingstats_local;
 };
 
 #endif

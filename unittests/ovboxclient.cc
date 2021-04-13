@@ -333,6 +333,76 @@ TEST(sorter, processJumpFirst)
   EXPECT_EQ(0u, stat.seqerr_out);
 }
 
+TEST(pingstat, get)
+{
+  ping_stat_t ps(8);
+  std::vector<double> res;
+  res = ps.get_min_med_99_mean_lost();
+  EXPECT_EQ(6u, res.size());
+  for(auto r : res)
+    EXPECT_EQ(0.0, r);
+  ++ps.sent;
+  res = ps.get_min_med_99_mean_lost();
+  EXPECT_EQ(1.0, res[4]);
+  ps.add_value(7.0);
+  res = ps.get_min_med_99_mean_lost();
+  EXPECT_EQ(6u, res.size());
+  EXPECT_EQ(7.0, res[0]);
+  EXPECT_EQ(7.0, res[1]);
+  EXPECT_EQ(7.0, res[2]);
+  EXPECT_EQ(7.0, res[3]);
+  EXPECT_EQ(1.0, res[4]);
+  EXPECT_EQ(1.0, res[5]);
+  ps.add_value(2.0);
+  res = ps.get_min_med_99_mean_lost();
+  EXPECT_EQ(2.0, res[0]);
+  EXPECT_EQ(4.5, res[1]);
+  EXPECT_EQ(7.0, res[2]);
+  EXPECT_EQ(4.5, res[3]);
+  ps.add_value(0.0);
+  res = ps.get_min_med_99_mean_lost();
+  EXPECT_EQ(0.0, res[0]);
+  EXPECT_EQ(2.0, res[1]);
+  EXPECT_EQ(7.0, res[2]);
+  EXPECT_EQ(3.0, res[3]);
+  ps.add_value(3.0);
+  res = ps.get_min_med_99_mean_lost();
+  EXPECT_EQ(0.0, res[0]);
+  EXPECT_EQ(2.5, res[1]);
+  EXPECT_EQ(7.0, res[2]);
+  EXPECT_EQ(3.0, res[3]);
+  ps.add_value(13.0);
+  res = ps.get_min_med_99_mean_lost();
+  EXPECT_EQ(0.0, res[0]);
+  EXPECT_EQ(3.0, res[1]);
+  EXPECT_EQ(13.0, res[2]);
+  EXPECT_EQ(5.0, res[3]);
+  ps.add_value(5.0);
+  res = ps.get_min_med_99_mean_lost();
+  EXPECT_EQ(0.0, res[0]);
+  EXPECT_EQ(4.0, res[1]);
+  EXPECT_EQ(13.0, res[2]);
+  EXPECT_EQ(5.0, res[3]);
+  ps.add_value(12.0);
+  res = ps.get_min_med_99_mean_lost();
+  EXPECT_EQ(0.0, res[0]);
+  EXPECT_EQ(5.0, res[1]);
+  EXPECT_EQ(13.0, res[2]);
+  EXPECT_EQ(6.0, res[3]);
+  ps.add_value(38.0);
+  res = ps.get_min_med_99_mean_lost();
+  EXPECT_EQ(0.0, res[0]);
+  EXPECT_EQ(6.0, res[1]);
+  EXPECT_EQ(38.0, res[2]);
+  EXPECT_EQ(10.0, res[3]);
+  ps.add_value(47.0);
+  res = ps.get_min_med_99_mean_lost();
+  EXPECT_EQ(0.0, res[0]);
+  EXPECT_EQ(8.5, res[1]);
+  EXPECT_EQ(47.0, res[2]);
+  EXPECT_EQ(15.0, res[3]);
+}
+
 // Local Variables:
 // compile-command: "make -C .. unit-tests"
 // coding: utf-8-unix

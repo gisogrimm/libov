@@ -217,14 +217,16 @@ ovbox_udpsocket_t::ovbox_udpsocket_t(secret_t secret, stage_device_id_t cid)
 {
 }
 
-void ovbox_udpsocket_t::send_ping(const endpoint_t& ep)
+void ovbox_udpsocket_t::send_ping(const endpoint_t& ep,
+                                  stage_device_id_t destid, port_t proto)
 {
   char buffer[pingbufsize];
   std::chrono::high_resolution_clock::time_point t1(
       std::chrono::high_resolution_clock::now());
   size_t n =
-      packmsg(buffer, pingbufsize, PORT_PING, (const char*)(&t1), sizeof(t1));
+      packmsg(buffer, pingbufsize, proto, (const char*)(&t1), sizeof(t1));
   n = addmsg(buffer, pingbufsize, n, (char*)(&ep), sizeof(ep));
+  n = addmsg(buffer, pingbufsize, n, (char*)(&destid), sizeof(destid));
   send(buffer, n, ep);
 }
 
@@ -255,9 +257,12 @@ size_t ovbox_udpsocket_t::packmsg(char* destbuf, size_t maxlen, port_t destport,
                                   const char* msg, size_t msglen)
 {
   sequence_t& seq(seqmap[destport]);
-  seq++;
-  return ::packmsg(destbuf, maxlen, secret, callerid, destport, seq, msg,
-                   msglen);
+  if(destport >= MAXSPECIALPORT) {
+    seq++;
+    return ::packmsg(destbuf, maxlen, secret, callerid, destport, seq, msg,
+                     msglen);
+  }
+  return ::packmsg(destbuf, maxlen, secret, callerid, destport, 0, msg, msglen);
 }
 
 bool ovbox_udpsocket_t::pack_and_send(port_t destport, const char* msg,

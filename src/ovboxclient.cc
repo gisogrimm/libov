@@ -18,6 +18,7 @@
 #endif
 
 #include "errmsg.h"
+#include <cmath>
 #include <errno.h>
 
 ovboxclient_t::ovboxclient_t(const std::string& desthost, port_t destport,
@@ -162,11 +163,6 @@ void ovboxclient_t::announce_latency(stage_device_id_t cid, double lmin,
   stats[cid] = stat;
   stat -= ostat;
   char ctmp[1024];
-  if(lmean > 0) {
-    sprintf(ctmp, "latency %d min=%1.2fms, mean=%1.2fms, max=%1.2fms", cid,
-            lmin, lmean, lmax);
-    log(recport, ctmp);
-  }
   sprintf(ctmp,
           "packages from %d received=%lu lost=%lu (%1.2f%%) seqerr=%lu "
           "recovered=%lu",
@@ -174,6 +170,24 @@ void ovboxclient_t::announce_latency(stage_device_id_t cid, double lmin,
           100.0 * (double)stat.lost /
               (double)(std::max((size_t)1, stat.received + stat.lost)),
           stat.seqerr_in, stat.seqerr_in - stat.seqerr_out);
+  log(recport, ctmp);
+  std::vector<double> lat(pingstats_p2p[cid].get_min_med_99_mean_lost());
+  sprintf(ctmp,
+          "lat-p2p %d min=%1.2fms, median=%1.2fms, p99=%1.2fms mean=%1.2fms "
+          "sent=%g received=%g",
+          cid, lat[0], lat[1], lat[2], lat[3], lat[4], lat[5]);
+  log(recport, ctmp);
+  lat = pingstats_local[cid].get_min_med_99_mean_lost();
+  sprintf(ctmp,
+          "lat-loc %d min=%1.2fms, median=%1.2fms, p99=%1.2fms mean=%1.2fms "
+          "sent=%g received=%g",
+          cid, lat[0], lat[1], lat[2], lat[3], lat[4], lat[5]);
+  log(recport, ctmp);
+  lat = pingstats_srv[cid].get_min_med_99_mean_lost();
+  sprintf(ctmp,
+          "lat-srv %d min=%1.2fms, median=%1.2fms, p99=%1.2fms mean=%1.2fms "
+          "sent=%g received=%g",
+          cid, lat[0], lat[1], lat[2], lat[3], lat[4], lat[5]);
   log(recport, ctmp);
   double data[6];
   data[0] = cid;
@@ -204,11 +218,17 @@ void ovboxclient_t::pingservice()
     size_t ocid(0);
     for(auto ep : endpoints) {
       if(ep.timeout && (ocid != callerid)) {
-        remote_server.send_ping(ep.ep);
+        remote_server.send_ping(ep.ep, ocid);
+        ++pingstats_p2p[ocid].sent;
+        remote_server.send_ping(remote_server.get_destination(), ocid,
+                                PORT_PING_SRV);
+        ++pingstats_srv[ocid].sent;
         // test if peer is in same network:
         if((endpoints[callerid].ep.sin_addr.s_addr == ep.ep.sin_addr.s_addr) &&
-           (ep.localep.sin_addr.s_addr != 0))
-          remote_server.send_ping(ep.localep);
+           (ep.localep.sin_addr.s_addr != 0)) {
+          remote_server.send_ping(ep.localep, ocid, PORT_PING_LOCAL);
+          ++pingstats_local[ocid].sent;
+        }
       }
       ++ocid;
     }
@@ -238,7 +258,7 @@ void ovboxclient_t::process_msg(msgbuf_t& msg)
 {
   msg.valid = false;
   // avoid handling of loopback messages:
-  if(msg.cid == callerid)
+  if((msg.cid == callerid) && (msg.destport != PORT_LISTCID))
     return;
   // not a special port, thus we forward data to localhost and proxy
   // clients:
@@ -263,6 +283,20 @@ void ovboxclient_t::process_msg(msgbuf_t& msg)
     msg_callerid(msg.rawbuffer) = callerid;
     remote_server.send(msg.rawbuffer, msg.size + HEADERLEN, msg.sender);
     break;
+  case PORT_PING_SRV:
+    // we received a ping message, so we just send it back as a pong
+    // message and with our own stage device id:
+    msg_port(msg.rawbuffer) = PORT_PONG_SRV;
+    msg_callerid(msg.rawbuffer) = callerid;
+    remote_server.send(msg.rawbuffer, msg.size + HEADERLEN, msg.sender);
+    break;
+  case PORT_PING_LOCAL:
+    // we received a ping message, so we just send it back as a pong
+    // message and with our own stage device id:
+    msg_port(msg.rawbuffer) = PORT_PONG_LOCAL;
+    msg_callerid(msg.rawbuffer) = callerid;
+    remote_server.send(msg.rawbuffer, msg.size + HEADERLEN, msg.sender);
+    break;
   case PORT_PONG:
     // we received a pong message, most likely a reply to an own ping
     // message, so we extract the time and handle it:
@@ -270,13 +304,34 @@ void ovboxclient_t::process_msg(msgbuf_t& msg)
       double tms(get_pingtime(msg.msg, msg.size));
       if(tms > 0) {
         // valid ping time, try to extract original sender
-        endpoint_t ep;
-        memset(&ep, 0, sizeof(ep));
-        if(msg.size >= sizeof(endpoint_t))
-          ep = *((endpoint_t*)(msg.msg));
         cid_setpingtime(msg.cid, tms);
         if(cb_ping)
-          cb_ping(msg.cid, tms, ep, cb_ping_data);
+          cb_ping(msg.cid, tms, msg.sender, cb_ping_data);
+        pingstats_p2p[msg.cid].add_value(tms);
+      }
+    }
+    break;
+  case PORT_PONG_SRV:
+    // we received a pong message, most likely a reply to an own ping
+    // message, so we extract the time and handle it:
+    if(msg.cid != callerid) {
+      double tms(get_pingtime(msg.msg, msg.size));
+      if(tms > 0) {
+        if(cb_ping)
+          cb_ping(msg.cid, tms, msg.sender, cb_ping_data);
+        pingstats_srv[msg.cid].add_value(tms);
+      }
+    }
+    break;
+  case PORT_PONG_LOCAL:
+    // we received a pong message, most likely a reply to an own ping
+    // message, so we extract the time and handle it:
+    if(msg.cid != callerid) {
+      double tms(get_pingtime(msg.msg, msg.size));
+      if(tms > 0) {
+        if(cb_ping)
+          cb_ping(msg.cid, tms, msg.sender, cb_ping_data);
+        pingstats_local[msg.cid].add_value(tms);
       }
     }
     break;
@@ -403,8 +458,13 @@ void ovboxclient_t::xrecsrv(port_t srcport, port_t destport)
 bool message_sorter_t::process(msgbuf_t** ppmsg)
 {
   if((*ppmsg)->valid) {
-    // we received a message, check for sequence order
     msgbuf_t* pmsg(*ppmsg);
+    // handle special ports separately:
+    if(pmsg->destport <= MAXSPECIALPORT) {
+      pmsg->valid = false;
+      return true;
+    }
+    // we received a message, check for sequence order
     ++stat[pmsg->cid].received;
     bool notfirst(seq_in[pmsg->cid].find(pmsg->destport) !=
                   seq_in[pmsg->cid].end());
@@ -485,6 +545,45 @@ void message_stat_t::operator-=(const message_stat_t& src)
 message_stat_t message_sorter_t::get_stat(stage_device_id_t id)
 {
   return stat[id];
+}
+
+ping_stat_t::ping_stat_t(size_t N)
+    : sent(0), received(0), data(N, 0.0), idx(0), filled(0), sum(0.0)
+{
+}
+
+void ping_stat_t::add_value(double pt)
+{
+  ++received;
+  sum -= data[idx];
+  data[idx] = pt;
+  sum += pt;
+  ++idx;
+  if(idx >= data.size())
+    idx = 0;
+  if(filled < data.size())
+    ++filled;
+}
+
+std::vector<double> ping_stat_t::get_min_med_99_mean_lost() const
+{
+  if(!filled)
+    return {0.0, 0.0, 0.0, 0.0, (double)sent, (double)received};
+  std::vector<double> sb(data);
+  sb.resize(filled);
+  std::sort(sb.begin(), sb.end());
+  size_t idx_med(std::round(0.5 * (filled - 1)));
+  size_t idx_99(std::round(0.99 * (filled - 1)));
+  double med(sb[idx_med]);
+  if((filled & 1) == 0) {
+    // even number of samples, median is mean of two neighbours
+    if(idx_med)
+      med += sb[idx_med - 1];
+    else
+      med += sb[idx_med + 1];
+    med *= 0.5;
+  }
+  return {sb[0], med, sb[idx_99], sum / filled, (double)sent, (double)received};
 }
 
 /*

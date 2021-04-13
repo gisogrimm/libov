@@ -63,6 +63,7 @@ public:
   endpoint_t getsockep();
   void close();
   const std::string addrname() const { return ep2str(serv_addr); };
+  const endpoint_t& get_destination() const { return serv_addr; };
 
 private:
   int sockfd;
@@ -148,7 +149,8 @@ private:
 class ovbox_udpsocket_t : public udpsocket_t {
 public:
   ovbox_udpsocket_t(secret_t secret, stage_device_id_t id);
-  void send_ping(const endpoint_t& ep);
+  void send_ping(const endpoint_t& ep, stage_device_id_t destid,
+                 port_t proto = PORT_PING);
   void send_registration(epmode_t, port_t port, const endpoint_t& localep);
   /**
    * Receive a message, extract header and validate secret.
