@@ -149,7 +149,7 @@ private:
 class ovbox_udpsocket_t : public udpsocket_t {
 public:
   ovbox_udpsocket_t(secret_t secret, stage_device_id_t id);
-  void send_ping(const endpoint_t& ep, stage_device_id_t destid,
+  void send_ping(const endpoint_t& ep, stage_device_id_t destid = 0,
                  port_t proto = PORT_PING);
   void send_registration(epmode_t, port_t port, const endpoint_t& localep);
   /**

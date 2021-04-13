@@ -254,6 +254,54 @@ void ovboxclient_t::sendsrv()
   }
 }
 
+void ovboxclient_t::process_ping_msg(msgbuf_t& msg)
+{
+  stage_device_id_t cid(msg.cid);
+  msg_callerid(msg.rawbuffer) = callerid;
+  switch(msg.destport) {
+  case PORT_PING:
+    // we received a ping message, so we just send it back as a pong
+    // message and with our own stage device id:
+    msg_port(msg.rawbuffer) = PORT_PONG;
+    break;
+  case PORT_PING_SRV:
+    // we received a ping message via server so we just send it back as a pong
+    // message and with our own stage device id:
+    msg_port(msg.rawbuffer) = PORT_PONG_SRV;
+    *((stage_device_id_t*)(msg.msg)) = cid;
+    break;
+  case PORT_PING_LOCAL:
+    // we received a ping message, so we just send it back as a pong
+    // message and with our own stage device id:
+    msg_port(msg.rawbuffer) = PORT_PONG_LOCAL;
+    break;
+  }
+  remote_server.send(msg.rawbuffer, msg.size + HEADERLEN, msg.sender);
+}
+
+void ovboxclient_t::process_pong_msg(msgbuf_t& msg)
+{
+  char* tbuf(msg.msg);
+  size_t tsize(msg.size);
+  ping_stat_t& stat(pingstats_p2p[msg.cid]);
+  switch(msg.destport) {
+  case PORT_PONG_SRV:
+    tbuf += sizeof(stage_device_id_t);
+    tsize -= sizeof(stage_device_id_t);
+    stat = pingstats_srv[msg.cid];
+    break;
+  case PORT_PONG_LOCAL:
+    stat = pingstats_local[msg.cid];
+    break;
+  }
+  double tms(get_pingtime(tbuf, tsize));
+  if(tms > 0) {
+    if(cb_ping)
+      cb_ping(msg.cid, tms, msg.sender, cb_ping_data);
+    stat.add_value(tms);
+  }
+}
+
 void ovboxclient_t::process_msg(msgbuf_t& msg)
 {
   msg.valid = false;
@@ -277,63 +325,14 @@ void ovboxclient_t::process_msg(msgbuf_t& msg)
   }
   switch(msg.destport) {
   case PORT_PING:
-    // we received a ping message, so we just send it back as a pong
-    // message and with our own stage device id:
-    msg_port(msg.rawbuffer) = PORT_PONG;
-    msg_callerid(msg.rawbuffer) = callerid;
-    remote_server.send(msg.rawbuffer, msg.size + HEADERLEN, msg.sender);
-    break;
   case PORT_PING_SRV:
-    // we received a ping message, so we just send it back as a pong
-    // message and with our own stage device id:
-    msg_port(msg.rawbuffer) = PORT_PONG_SRV;
-    msg_callerid(msg.rawbuffer) = callerid;
-    remote_server.send(msg.rawbuffer, msg.size + HEADERLEN, msg.sender);
-    break;
   case PORT_PING_LOCAL:
-    // we received a ping message, so we just send it back as a pong
-    // message and with our own stage device id:
-    msg_port(msg.rawbuffer) = PORT_PONG_LOCAL;
-    msg_callerid(msg.rawbuffer) = callerid;
-    remote_server.send(msg.rawbuffer, msg.size + HEADERLEN, msg.sender);
+    process_ping_msg(msg);
     break;
   case PORT_PONG:
-    // we received a pong message, most likely a reply to an own ping
-    // message, so we extract the time and handle it:
-    if(msg.cid != callerid) {
-      double tms(get_pingtime(msg.msg, msg.size));
-      if(tms > 0) {
-        // valid ping time, try to extract original sender
-        cid_setpingtime(msg.cid, tms);
-        if(cb_ping)
-          cb_ping(msg.cid, tms, msg.sender, cb_ping_data);
-        pingstats_p2p[msg.cid].add_value(tms);
-      }
-    }
-    break;
   case PORT_PONG_SRV:
-    // we received a pong message, most likely a reply to an own ping
-    // message, so we extract the time and handle it:
-    if(msg.cid != callerid) {
-      double tms(get_pingtime(msg.msg, msg.size));
-      if(tms > 0) {
-        if(cb_ping)
-          cb_ping(msg.cid, tms, msg.sender, cb_ping_data);
-        pingstats_srv[msg.cid].add_value(tms);
-      }
-    }
-    break;
   case PORT_PONG_LOCAL:
-    // we received a pong message, most likely a reply to an own ping
-    // message, so we extract the time and handle it:
-    if(msg.cid != callerid) {
-      double tms(get_pingtime(msg.msg, msg.size));
-      if(tms > 0) {
-        if(cb_ping)
-          cb_ping(msg.cid, tms, msg.sender, cb_ping_data);
-        pingstats_local[msg.cid].add_value(tms);
-      }
-    }
+    process_pong_msg(msg);
     break;
   case PORT_SETLOCALIP:
     // we received the local IP address of a peer:

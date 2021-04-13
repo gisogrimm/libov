@@ -127,6 +127,9 @@ private:
   void pingservice();
   void handle_endpoint_list_update(stage_device_id_t cid, const endpoint_t& ep);
   void process_msg(msgbuf_t& msg);
+  void process_ping_msg(msgbuf_t& msg);
+  void process_pong_msg(msgbuf_t& msg);
+
   // real time priority:
   const int prio;
   // PIN code to connect to server:

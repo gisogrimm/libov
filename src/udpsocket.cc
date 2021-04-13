@@ -36,7 +36,7 @@
 const size_t
     pingbufsize(HEADERLEN +
                 sizeof(std::chrono::high_resolution_clock::time_point) +
-                sizeof(endpoint_t) + 1);
+                sizeof(stage_device_id_t) + sizeof(endpoint_t) + 1);
 
 udpsocket_t::udpsocket_t() : tx_bytes(0), rx_bytes(0)
 {
@@ -223,10 +223,12 @@ void ovbox_udpsocket_t::send_ping(const endpoint_t& ep,
   char buffer[pingbufsize];
   std::chrono::high_resolution_clock::time_point t1(
       std::chrono::high_resolution_clock::now());
-  size_t n =
-      packmsg(buffer, pingbufsize, proto, (const char*)(&t1), sizeof(t1));
+  size_t n(0);
+  n = packmsg(buffer, pingbufsize, proto, "", 0);
+  if(proto == PORT_PING_SRV)
+    n = addmsg(buffer, pingbufsize, n, (char*)(&destid), sizeof(destid));
+  n = addmsg(buffer, pingbufsize, n, (const char*)(&t1), sizeof(t1));
   n = addmsg(buffer, pingbufsize, n, (char*)(&ep), sizeof(ep));
-  n = addmsg(buffer, pingbufsize, n, (char*)(&destid), sizeof(destid));
   send(buffer, n, ep);
 }
 
