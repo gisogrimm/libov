@@ -36,7 +36,7 @@
 const size_t
     pingbufsize(HEADERLEN +
                 sizeof(std::chrono::high_resolution_clock::time_point) +
-                sizeof(stage_device_id_t) + sizeof(endpoint_t) + 1);
+                sizeof(stage_device_id_t) + sizeof(endpoint_t) + 100);
 
 udpsocket_t::udpsocket_t() : tx_bytes(0), rx_bytes(0)
 {
@@ -433,6 +433,7 @@ msgbuf_t::msgbuf_t()
       rawbuffer(new char[BUFSIZE]), msg(rawbuffer)
 {
   memset(rawbuffer, 0, BUFSIZE);
+  DEBUG(sizeof(stage_device_id_t));
 }
 
 void msgbuf_t::copy(const msgbuf_t& src)
