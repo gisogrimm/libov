@@ -158,39 +158,18 @@ void ovboxclient_t::announce_latency(stage_device_id_t cid, double lmin,
 {
   if(cid == callerid)
     return;
-  message_stat_t stat(sorter.get_stat(cid));
-  message_stat_t ostat(stats[cid]);
-  stats[cid] = stat;
-  stat -= ostat;
-  if(stat.lost == -1u)
-    stat.lost = 0;
-  char ctmp[1024];
-  sprintf(ctmp,
-          "packages from %d received=%lu lost=%lu (%1.2f%%) seqerr=%lu "
-          "recovered=%lu",
-          cid, stat.received, stat.lost,
-          100.0 * (double)stat.lost /
-              (double)(std::max((size_t)1, stat.received + stat.lost)),
-          stat.seqerr_in, stat.seqerr_in - stat.seqerr_out);
-  log(recport, ctmp);
-  std::vector<double> lat(pingstats_p2p[cid].get_min_med_99_mean_lost());
-  sprintf(ctmp,
-          "lat-p2p %d min=%1.2fms, median=%1.2fms, p99=%1.2fms mean=%1.2fms "
-          "sent=%g received=%g",
-          cid, lat[0], lat[1], lat[2], lat[3], lat[4], lat[5]);
-  log(recport, ctmp);
-  lat = pingstats_local[cid].get_min_med_99_mean_lost();
-  sprintf(ctmp,
-          "lat-loc %d min=%1.2fms, median=%1.2fms, p99=%1.2fms mean=%1.2fms "
-          "sent=%g received=%g",
-          cid, lat[0], lat[1], lat[2], lat[3], lat[4], lat[5]);
-  log(recport, ctmp);
-  lat = pingstats_srv[cid].get_min_med_99_mean_lost();
-  sprintf(ctmp,
-          "lat-srv %d min=%1.2fms, median=%1.2fms, p99=%1.2fms mean=%1.2fms "
-          "sent=%g received=%g",
-          cid, lat[0], lat[1], lat[2], lat[3], lat[4], lat[5]);
-  log(recport, ctmp);
+  update_client_stats(cid, client_stats_announce[cid]);
+  log(recport, "packages " + std::to_string(cid) + " " +
+                   to_string(client_stats_announce[cid].packages));
+  if(client_stats_announce[cid].ping_p2p.received)
+    log(recport, "lat-p2p " + std::to_string(cid) + " " +
+                     to_string(client_stats_announce[cid].ping_p2p));
+  if(client_stats_announce[cid].ping_srv.received)
+    log(recport, "lat-srv " + std::to_string(cid) + " " +
+                     to_string(client_stats_announce[cid].ping_srv));
+  if(client_stats_announce[cid].ping_loc.received)
+    log(recport, "lat-loc " + std::to_string(cid) + " " +
+                     to_string(client_stats_announce[cid].ping_loc));
   double data[6];
   data[0] = cid;
   data[1] = lmin;
@@ -200,6 +179,20 @@ void ovboxclient_t::announce_latency(stage_device_id_t cid, double lmin,
   data[5] = lost;
   remote_server.pack_and_send(PORT_PEERLATREP, (const char*)data,
                               6 * sizeof(double));
+}
+
+void ovboxclient_t::update_client_stats(stage_device_id_t cid,
+                                        client_stats_t& stats)
+{
+  stats.packages = sorter.get_stat(cid);
+  message_stat_t ostat(stats.state_packages);
+  stats.state_packages = stats.packages;
+  stats.packages -= ostat;
+  if(stats.packages.lost > (1 << 30))
+    stats.packages.lost = 0;
+  ping_stat_collecors_p2p[cid].update_ping_stat(stats.ping_p2p);
+  ping_stat_collecors_srv[cid].update_ping_stat(stats.ping_srv);
+  ping_stat_collecors_local[cid].update_ping_stat(stats.ping_loc);
 }
 
 void ovboxclient_t::handle_endpoint_list_update(stage_device_id_t cid,
@@ -221,15 +214,15 @@ void ovboxclient_t::pingservice()
     for(auto ep : endpoints) {
       if(ep.timeout && (ocid != callerid)) {
         remote_server.send_ping(ep.ep, ocid);
-        ++pingstats_p2p[ocid].sent;
+        ++ping_stat_collecors_p2p[ocid].sent;
         remote_server.send_ping(remote_server.get_destination(), ocid,
                                 PORT_PING_SRV);
-        ++pingstats_srv[ocid].sent;
+        ++ping_stat_collecors_srv[ocid].sent;
         // test if peer is in same network:
         if((endpoints[callerid].ep.sin_addr.s_addr == ep.ep.sin_addr.s_addr) &&
            (ep.localep.sin_addr.s_addr != 0)) {
           remote_server.send_ping(ep.localep, ocid, PORT_PING_LOCAL);
-          ++pingstats_local[ocid].sent;
+          ++ping_stat_collecors_local[ocid].sent;
         }
       }
       ++ocid;
@@ -297,15 +290,15 @@ void ovboxclient_t::process_pong_msg(msgbuf_t& msg)
       cb_ping(msg.cid, tms, msg.sender, cb_ping_data);
     switch(msg.destport) {
     case PORT_PONG:
-      pingstats_p2p[msg.cid].add_value(tms);
+      ping_stat_collecors_p2p[msg.cid].add_value(tms);
       break;
     case PORT_PONG_SRV:
       tbuf += sizeof(stage_device_id_t);
       tsize -= sizeof(stage_device_id_t);
-      pingstats_srv[msg.cid].add_value(tms);
+      ping_stat_collecors_srv[msg.cid].add_value(tms);
       break;
     case PORT_PONG_LOCAL:
-      pingstats_local[msg.cid].add_value(tms);
+      ping_stat_collecors_local[msg.cid].add_value(tms);
       break;
     }
   }
@@ -555,12 +548,12 @@ message_stat_t message_sorter_t::get_stat(stage_device_id_t id)
   return stat[id];
 }
 
-ping_stat_t::ping_stat_t(size_t N)
+ping_stat_collecor_t::ping_stat_collecor_t(size_t N)
     : sent(0), received(0), data(N, 0.0), idx(0), filled(0), sum(0.0)
 {
 }
 
-void ping_stat_t::add_value(double pt)
+void ping_stat_collecor_t::add_value(double pt)
 {
   ++received;
   sum -= data[idx];
@@ -573,25 +566,64 @@ void ping_stat_t::add_value(double pt)
     ++filled;
 }
 
-std::vector<double> ping_stat_t::get_min_med_99_mean_lost() const
+ping_stat_t::ping_stat_t()
+    : t_min(0), t_med(0), t_p99(0), t_mean(0), received(0), lost(0),
+      state_sent(0), state_received(0)
 {
+}
+
+void ping_stat_collecor_t::update_ping_stat(ping_stat_t& ps) const
+{
+  ps.t_min = -1.0;
+  ps.t_med = -1.0;
+  ps.t_p99 = -1.0;
+  ps.t_mean = -1.0;
+  ps.received = received - ps.state_received;
+  ps.lost = sent - ps.state_sent;
+  ps.lost -= std::min(ps.received, ps.lost);
+  ps.state_sent = sent;
+  ps.state_received = received;
   if(!filled)
-    return {0.0, 0.0, 0.0, 0.0, (double)sent, (double)received};
+    return;
   std::vector<double> sb(data);
   sb.resize(filled);
   std::sort(sb.begin(), sb.end());
   size_t idx_med(std::round(0.5 * (filled - 1)));
   size_t idx_99(std::round(0.99 * (filled - 1)));
-  double med(sb[idx_med]);
+  ps.t_med = sb[idx_med];
   if((filled & 1) == 0) {
     // even number of samples, median is mean of two neighbours
     if(idx_med)
-      med += sb[idx_med - 1];
+      ps.t_med += sb[idx_med - 1];
     else
-      med += sb[idx_med + 1];
-    med *= 0.5;
+      ps.t_med += sb[idx_med + 1];
+    ps.t_med *= 0.5;
   }
-  return {sb[0], med, sb[idx_99], sum / filled, (double)sent, (double)received};
+  ps.t_min = sb[0];
+  ps.t_p99 = sb[idx_99];
+  ps.t_mean = sum / filled;
+  return;
+}
+
+std::string to_string(const ping_stat_t& ps)
+{
+  char ctmp[1024];
+  sprintf(ctmp, "min=%1.2fms median=%1.2fms p99=%1.2fms mean=%1.2fms received=",
+          ps.t_min, ps.t_med, ps.t_p99, ps.t_mean);
+  return ctmp + std::to_string(ps.received) +
+         " lost=" + std::to_string(ps.lost);
+}
+
+std::string to_string(const message_stat_t& ms)
+{
+  char ctmp[1024];
+  sprintf(ctmp, " (%1.2f%%) seqerr=",
+          100.0 * (double)ms.lost /
+              (double)(std::max((size_t)1, ms.received + ms.lost)));
+  return "received=" + std::to_string(ms.received) +
+         " lost=" + std::to_string(ms.lost) + ctmp +
+         std::to_string(ms.seqerr_in) +
+         " recovered=" + std::to_string(ms.seqerr_in - ms.seqerr_out);
 }
 
 /*

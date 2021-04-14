@@ -18,9 +18,35 @@ public:
 
 class ping_stat_t {
 public:
-  ping_stat_t(size_t N = 2048);
+  ping_stat_t();
+  double t_min;
+  double t_med;
+  double t_p99;
+  double t_mean;
+  size_t received;
+  size_t lost;
+  size_t state_sent;
+  size_t state_received;
+};
+
+class client_stats_t {
+public:
+  ping_stat_t ping_p2p;
+  ping_stat_t ping_srv;
+  ping_stat_t ping_loc;
+  message_stat_t packages;
+  message_stat_t state_packages;
+};
+
+std::string to_string(const ping_stat_t& ps);
+std::string to_string(const message_stat_t& ms);
+
+class ping_stat_collecor_t {
+public:
+  ping_stat_collecor_t(size_t N = 2048);
   void add_value(double pt);
-  std::vector<double> get_min_med_99_mean_lost() const;
+  // std::vector<double> get_min_med_99_mean_lost() const;
+  void update_ping_stat(ping_stat_t& ps) const;
   size_t sent;
   size_t received;
 
@@ -119,6 +145,7 @@ public:
                                               sequence_t, port_t, void*)>
                                cb,
                            void* data);
+  void update_client_stats(stage_device_id_t cid, client_stats_t& stats);
 
 private:
   void sendsrv();
@@ -171,10 +198,11 @@ private:
   void* cb_seqerr_data;
   msgbuf_t* msgbuffers;
   message_sorter_t sorter;
-  std::map<stage_device_id_t, message_stat_t> stats;
-  std::map<stage_device_id_t, ping_stat_t> pingstats_p2p;
-  std::map<stage_device_id_t, ping_stat_t> pingstats_srv;
-  std::map<stage_device_id_t, ping_stat_t> pingstats_local;
+  // std::map<stage_device_id_t, message_stat_t> stats;
+  std::map<stage_device_id_t, ping_stat_collecor_t> ping_stat_collecors_p2p;
+  std::map<stage_device_id_t, ping_stat_collecor_t> ping_stat_collecors_srv;
+  std::map<stage_device_id_t, ping_stat_collecor_t> ping_stat_collecors_local;
+  std::map<stage_device_id_t, client_stats_t> client_stats_announce;
 };
 
 #endif
