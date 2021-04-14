@@ -197,6 +197,39 @@ struct stage_t {
 bool operator!=(const std::map<stage_device_id_t, stage_device_t>& a,
                 const std::map<stage_device_id_t, stage_device_t>& b);
 
+class message_stat_t {
+public:
+  message_stat_t();
+  void operator+=(const message_stat_t&);
+  void operator-=(const message_stat_t&);
+  size_t received;
+  size_t lost;
+  size_t seqerr_in;
+  size_t seqerr_out;
+};
+
+class ping_stat_t {
+public:
+  ping_stat_t();
+  double t_min;
+  double t_med;
+  double t_p99;
+  double t_mean;
+  size_t received;
+  size_t lost;
+  size_t state_sent;
+  size_t state_received;
+};
+
+class client_stats_t {
+public:
+  ping_stat_t ping_p2p;
+  ping_stat_t ping_srv;
+  ping_stat_t ping_loc;
+  message_stat_t packages;
+  message_stat_t state_packages;
+};
+
 class ov_render_base_t {
 public:
   /**
@@ -358,6 +391,7 @@ public:
    * session. Otherwise do nothing.
    */
   void restart_session_if_needed();
+  virtual std::string get_client_stats() { return ""; };
 
 protected:
   audio_device_t audiodevice;

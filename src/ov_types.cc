@@ -364,6 +364,32 @@ void ov_render_base_t::set_stage_device_channel_position(
   DEBUG(channeldeviceid);
 }
 
+ping_stat_t::ping_stat_t()
+    : t_min(0), t_med(0), t_p99(0), t_mean(0), received(0), lost(0),
+      state_sent(0), state_received(0)
+{
+}
+message_stat_t::message_stat_t()
+    : received(0u), lost(0u), seqerr_in(0u), seqerr_out(0u)
+{
+}
+
+void message_stat_t::operator+=(const message_stat_t& src)
+{
+  received += src.received;
+  lost += src.lost;
+  seqerr_in += src.seqerr_in;
+  seqerr_out += src.seqerr_out;
+}
+
+void message_stat_t::operator-=(const message_stat_t& src)
+{
+  received -= src.received;
+  lost -= src.lost;
+  seqerr_in -= src.seqerr_in;
+  seqerr_out -= src.seqerr_out;
+}
+
 /*
  * Local Variables:
  * compile-command: "make -C .."

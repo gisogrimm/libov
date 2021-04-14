@@ -38,6 +38,7 @@ public:
                                               sequence_t, port_t, void*)>
                                cb,
                            void* data);
+  std::string get_client_stats();
   class metronome_t {
   public:
     metronome_t();
@@ -103,6 +104,7 @@ private:
                      sequence_t received, port_t destport, void* data)>
       cb_seqerr;
   void* cb_seqerr_data;
+  std::map<stage_device_id_t, client_stats_t> client_stats;
 };
 
 #endif

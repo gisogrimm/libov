@@ -146,36 +146,35 @@ std::string ov_client_orlandoviols_t::device_update(std::string url,
   std::string hostname;
   if(0 == gethostname(chost, 1023))
     hostname = chost;
-  std::string jsinchannels("{");
-  uint32_t nch(0);
+  nlohmann::json jsinchannels;
+  // std::string jsinchannels("{");
+  // uint32_t nch(0);
   for(auto ch : backend.get_input_channel_ids()) {
-    jsinchannels += "\"" + std::to_string(nch) + "\":\"" + ch + "\",";
-    ++nch;
+    jsinchannels.push_back(ch);
+    // jsinchannels += "\"" + std::to_string(nch) + "\":\"" + ch + "\",";
+    //++nch;
   }
-  if(jsinchannels.size())
-    jsinchannels.erase(jsinchannels.size() - 1, 1);
-  jsinchannels += "}";
+  // if(jsinchannels.size())
+  //  jsinchannels.erase(jsinchannels.size() - 1, 1);
+  // jsinchannels += "}";
   std::vector<snddevname_t> alsadevs(list_sound_devices());
-  std::string jsdevs("{");
+  nlohmann::json jsalsadevs;
   for(auto d : alsadevs)
-    jsdevs += "\"" + d.dev + "\":\"" + d.desc + "\",";
-  if((jsdevs.size() > 0) && (alsadevs.size() > 0))
-    jsdevs.erase(jsdevs.size() - 1, 1);
-  jsdevs += "}";
-  // std::cout << jsdevs << std::endl;
+    jsalsadevs[d.dev] = d.desc;
   double txrate(0);
   double rxrate(0);
   backend.getbitrate(txrate, rxrate);
-  std::string jsmsg("{");
-  jsmsg += "\"alsadevs\":" + jsdevs + ",";
-  jsmsg += "\"hwinputchannels\":" + jsinchannels + ",";
-  jsmsg += "\"cpuload\":" + std::to_string(backend.get_load()) + ",";
-  jsmsg += "\"bandwidth\":{\"tx\":\"" + std::to_string(txrate) +
-           "\",\"rx\":\"" + std::to_string(rxrate) + "\"},";
-  jsmsg += "\"localip\":\"" + ep2ipstr(getipaddr()) + "\",";
-  jsmsg += "\"version\":\"ovclient-" + std::string(OVBOXVERSION) + "\",";
-  jsmsg += "\"isovbox\":" + std::string(isovbox ? "true" : "false");
-  jsmsg += "}";
+  nlohmann::json jsdevice;
+  jsdevice["alsadevs"] = jsalsadevs;
+  jsdevice["hwinputchannels"] = jsinchannels;
+  jsdevice["cpuload"] = backend.get_load();
+  jsdevice["bandwidth"]["tx"] = txrate;
+  jsdevice["bandwidth"]["rx"] = rxrate;
+  jsdevice["localip"] = ep2ipstr(getipaddr());
+  jsdevice["version"] = "ovclient-" + std::string(OVBOXVERSION);
+  jsdevice["isovbox"] = isovbox;
+  jsdevice["pingstats"] = nlohmann::json::parse(backend.get_client_stats());
+  std::string curlstrdevice(jsdevice.dump());
   CURLcode res;
   std::string retv;
   struct webCURL::MemoryStruct chunk;
@@ -192,7 +191,7 @@ std::string ov_client_orlandoviols_t::device_update(std::string url,
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&chunk);
   curl_easy_setopt(curl, CURLOPT_USERAGENT, "libcurl-agent/1.0");
   curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
-  curl_easy_setopt(curl, CURLOPT_POSTFIELDS, jsmsg.c_str());
+  curl_easy_setopt(curl, CURLOPT_POSTFIELDS, curlstrdevice.c_str());
   res = curl_easy_perform(curl);
   if(res == CURLE_OK)
     retv.insert(0, chunk.memory, chunk.size);

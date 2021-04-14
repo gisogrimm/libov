@@ -1104,6 +1104,52 @@ void ov_render_tascar_t::set_seqerr_callback(
   cb_seqerr_data = d;
 }
 
+nlohmann::json to_json(const ping_stat_t& ps)
+{
+  nlohmann::json p;
+  p["min"] = ps.t_min;
+  p["median"] = ps.t_med;
+  p["p99"] = ps.t_p99;
+  p["mean"] = ps.t_mean;
+  p["received"] = ps.received;
+  p["lost"] = ps.lost;
+  return p;
+}
+
+nlohmann::json to_json(const message_stat_t& ms)
+{
+  nlohmann::json p;
+  p["received"] = ms.received;
+  p["lost"] = ms.lost;
+  p["seqerr"] = ms.seqerr_in;
+  p["seqrecovered"] = ms.seqerr_in - ms.seqerr_out;
+  return p;
+}
+
+nlohmann::json to_json(const client_stats_t& ms)
+{
+  nlohmann::json p;
+  p["p2p"] = to_json(ms.ping_p2p);
+  p["srv"] = to_json(ms.ping_srv);
+  p["loc"] = to_json(ms.ping_loc);
+  p["packages"] = to_json(ms.packages);
+  return p;
+}
+
+std::string ov_render_tascar_t::get_client_stats()
+{
+  if(ovboxclient)
+    for(auto dev : stage.stage)
+      ovboxclient->update_client_stats(dev.first, client_stats[dev.first]);
+  else
+    client_stats.clear();
+  nlohmann::json jsstat;
+  for(auto stat : client_stats)
+    if(stat.first != stage.thisstagedeviceid)
+      jsstat[stat.first] = to_json(stat.second);
+  return jsstat.dump();
+}
+
 /*
  * Local Variables:
  * compile-command: "make -C .."
