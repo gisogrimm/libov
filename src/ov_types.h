@@ -146,6 +146,8 @@ struct render_settings_t {
   std::string rectype;
   /// self monitor gain:
   double egogain;
+  /// master gain:
+  double mastergain;
   /// peer-to-peer mode:
   bool peer2peer;
   /// output ports of device master (names may depend on audio backend):

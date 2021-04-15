@@ -25,7 +25,8 @@ ovboxclient_t::ovboxclient_t(const std::string& desthost, port_t destport,
                              port_t recport, port_t portoffset, int prio,
                              secret_t secret, stage_device_id_t callerid,
                              bool peer2peer_, bool donotsend_,
-                             bool downmixonly_, bool sendlocal_)
+                             bool downmixonly_, bool sendlocal_,
+                             double deadline)
     : prio(prio), secret(secret), remote_server(secret, callerid),
       toport(destport), recport(recport), portoffset(portoffset),
       callerid(callerid), runsession(true), mode(0), cb_ping(nullptr),
@@ -43,7 +44,8 @@ ovboxclient_t::ovboxclient_t(const std::string& desthost, port_t destport,
   local_server.set_destination("localhost");
   local_server.bind(recport, true);
   remote_server.set_destination(desthost.c_str());
-  remote_server.set_timeout_usec(5000);
+  if(deadline > 0)
+    remote_server.set_timeout_usec(1000 * deadline);
   remote_server.bind(0, false);
   localep = getipaddr();
   localep.sin_port = remote_server.getsockep().sin_port;
@@ -61,6 +63,14 @@ ovboxclient_t::~ovboxclient_t()
   for(auto th = xrecthread.begin(); th != xrecthread.end(); ++th)
     th->join();
   delete[] msgbuffers;
+}
+
+void ovboxclient_t::set_reorder_deadline(double t_ms)
+{
+  if(t_ms > 0) {
+    remote_server.set_timeout_usec(1000 * t_ms);
+    DEBUG(t_ms);
+  }
 }
 
 void ovboxclient_t::getbitrate(double& txrate, double& rxrate)

@@ -83,7 +83,7 @@ public:
   ovboxclient_t(const std::string& desthost, port_t destport, port_t recport,
                 port_t portoffset, int prio, secret_t secret,
                 stage_device_id_t callerid, bool peer2peer, bool donotsend,
-                bool downmixonly, bool sendlocal);
+                bool downmixonly, bool sendlocal, double deadline);
   virtual ~ovboxclient_t();
   void announce_new_connection(stage_device_id_t cid, const ep_desc_t& ep);
   void announce_connection_lost(stage_device_id_t cid);
@@ -112,6 +112,11 @@ public:
                                cb,
                            void* data);
   void update_client_stats(stage_device_id_t cid, client_stats_t& stats);
+  /**
+   * Set the deadline to wait for packages in case reordering is
+   * required.
+   */
+  void set_reorder_deadline(double t_ms);
 
 private:
   void sendsrv();

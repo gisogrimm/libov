@@ -400,6 +400,8 @@ void ov_client_orlandoviols_t::service()
                   my_js_value(js_rendersettings, "secrec", 0.0);
               rendersettings.egogain =
                   my_js_value(js_rendersettings, "egogain", 1.0);
+              rendersettings.mastergain =
+                  my_js_value(js_rendersettings, "mastergain", 1.0);
               rendersettings.peer2peer =
                   my_js_value(js_rendersettings, "peer2peer", true);
               // ambient sound:
