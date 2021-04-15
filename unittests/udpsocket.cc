@@ -6,9 +6,9 @@ TEST(msgbuf, age)
 {
   msgbuf_t msg;
   msg.set_tick();
-  usleep(1000.0);
+  usleep(10000.0);
   double age(msg.get_age());
-  ASSERT_NEAR(1.0, age, 0.5);
+  ASSERT_NEAR(10.0, age, 5.0);
 }
 
 TEST(msgbuf, pack)
