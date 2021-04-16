@@ -78,7 +78,7 @@ ds::ds_auth_service_t::signIn(const std::string& email,
 }
 
 std::string ds::ds_auth_service_t::signInSync(const std::string& email,
-                                          const std::string& password)
+                                              const std::string& password)
 {
   auto postJson = this->signIn(email, password);
   try {

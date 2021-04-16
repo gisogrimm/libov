@@ -672,8 +672,7 @@ std::optional<const ds::stage_t> ds::ds_store_t::getCurrentStage()
   return std::nullopt;
 }
 
-std::optional<const ds::stage_member_t>
-ds::ds_store_t::getCurrentStageMember()
+std::optional<const ds::stage_member_t> ds::ds_store_t::getCurrentStageMember()
 {
   if(!this->currentStageMemberId_.empty()) {
     return this->readStageMember(this->currentStageMemberId_);
@@ -691,9 +690,8 @@ ds::ds_store_t::getCustomStageMemberPositionByStageMemberId(
      0) {
     const std::string customStageMemberId =
         this->customStageMemberPositionIdByStageMemberId_[stageMemberId];
-    std::optional<const ds::custom_stage_member_position_t>
-        customStageMember =
-            this->readCustomStageMemberPosition(customStageMemberId);
+    std::optional<const ds::custom_stage_member_position_t> customStageMember =
+        this->readCustomStageMemberPosition(customStageMemberId);
     return customStageMember;
   }
   return std::nullopt;
@@ -794,8 +792,7 @@ void ds::ds_store_t::updateUser(const std::string& id,
   this->users_[id].merge_patch(update);
 }
 
-std::optional<const ds::user_t>
-ds::ds_store_t::readUser(const std::string& id)
+std::optional<const ds::user_t> ds::ds_store_t::readUser(const std::string& id)
 {
   std::lock_guard<std::recursive_mutex>(this->users_mutex_);
   if(this->users_.count(id) > 0)
