@@ -1,0 +1,13 @@
+#!/bin/bash
+VERSION=$(cat Makefile | sed -e '1 ! d' -e 's/.*=//1')
+MAJVER=$(echo $VERSION | sed -e 's/\..*//1')
+MINVER=$(echo $VERSION | sed -e 's/[^\.]*\.//1')
+let MINVER=$MINVER+1
+echo "new version: ${MAJVER}.${MINVER}.1"
+COMMIT=$(git rev-parse HEAD)
+sed -i -e "s/VERSION=${VERSION}/VERSION=${MAJVER}.${MINVER}/1" Makefile
+sed -i -e "s/MINORVERSION=.*/MINORVERSION=\$(git rev-list --count ${COMMIT}..HEAD)/1" get_version.sh
+sed -i -e "s/execute_process(COMMAND bash -c \"git rev-list --count .*/execute_process(COMMAND bash -c \"git rev-list --count ${COMMIT}..HEAD\"/" version.cmake
+
+#MINORVERSION=$(git rev-list --count 8f84f140fd0ac91f5d41eb0355f960b872be19ad..HEAD)
+#execute_process(COMMAND bash -c "git rev-list --count 8f84f140fd0ac91f5d41eb0355f960b872be19ad..HEAD"
