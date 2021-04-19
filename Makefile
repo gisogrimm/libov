@@ -92,23 +92,21 @@ else
 	ifeq ($(UNAME_S),Darwin)
 		OSFLAG += -D OSX
 		LDFLAGS += -framework IOKit -framework CoreFoundation
-#		LDLIBS += -lfftw3f -lsamplerate -lc++ -lcpprest -lcrypto -lssl
-#		CXXFLAGS += -I$(OPENSSL_ROOT)/include/openssl -I/opt/homebrew/opt
-#		LDFLAGS += -L$(OPENSSL_ROOT)/lib -L$(CPPREST_ROOT)/lib
 		CXXFLAGS += -I`brew --prefix libsoundio`/include
 		LDLIBS += `brew --prefix libsoundio`
 		LDLIBS += `pkg-config --libs nlohmann_json`
 		CXXFLAGS += `pkg-config --cflags nlohmann_json`
-#		LDLIBS += `pkg-config --libs ${ADDITIONAL_EXTERNALS}`
-#		CXXFLAGS += `pkg-config --cflags $(ADDITIONAL_EXTERNALS)`
+		ifeq ($(ARCH),arm64)
+			CXXFLAGS += "--target=arm64-apple-darwin"
+		endif
 	endif
 		UNAME_P := $(shell uname -p)
 	ifeq ($(UNAME_P),x86_64)
 		OSFLAG += -D AMD64
 	endif
-		ifneq ($(filter %86,$(UNAME_P)),)
-	OSFLAG += -D IA32
-		endif
+	ifneq ($(filter %86,$(UNAME_P)),)
+		OSFLAG += -D IA32
+	endif
 	ifneq ($(filter arm%,$(UNAME_P)),)
 		OSFLAG += -D ARM
 	endif

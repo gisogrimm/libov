@@ -1,21 +1,26 @@
 cmake_minimum_required(VERSION 3.16.0)
 
 ### GLOBAL CONFIGURATION
-project(ov
+project(Ov
         LANGUAGES CXX
         VERSION 0.5
         DESCRIPTION "common header files and library code for ov-client and ov-server"
         )
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(POSITION_INDEPENDENT_CODE ON)
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
-if (APPLE)
-    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/FixAppleArchitecture.cmake)
-endif (APPLE)
 
+### ADDONS
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake/modules)
+if (APPLE)
+    include(${CMAKE_CURRENT_LIST_DIR}/cmake/FixAppleArchitecture.cmake)
+    include(cmake/BrewResolver.cmake)
+endif (APPLE)
+include(${CMAKE_CURRENT_LIST_DIR}/cmake/CppRestHotfix.cmake)
 
 ### ADDITIONAL FLAGS
+add_compile_definitions(PLUGINPREFIX="ovclient")
+set(PLUGINPREFIX "ovclient")
 include("${CMAKE_CURRENT_LIST_DIR}/version.cmake")
 if (UNIX)
     execute_process(
@@ -33,8 +38,6 @@ if (UNIX)
     endif ()
 endif ()
 message("Building version ${PROJECT_VERSION}")
-set(PLUGINPREFIX "ovclient")
-add_compile_definitions(PLUGINPREFIX="ovclient")
 option(DEBUG_EVENTS "Debug events to console" ON)
 if (DEBUG_EVENTS)
     add_compile_definitions(DEBUG_EVENTS)
@@ -53,8 +56,8 @@ elseif (CMAKE_SYSTEM_PROCESSOR MATCHES x86_64)
 elseif (CMAKE_SYSTEM_PROCESSOR MATCHES *86)
     add_compile_definitions(IA32)
 endif ()
-add_compile_definitions(OVBOXVERSION="${PROJECT_VERSION}")
 add_compile_definitions(${CMAKE_SYSTEM_PROCESSOR})
+add_compile_definitions(OVBOXVERSION="${PROJECT_VERSION}")
 
 
 ### SOURCE MANAGEMENT
@@ -69,26 +72,6 @@ file(GLOB
 
 
 ### DEPENDENCIES
-if (UNIX AND NOT APPLE)
-    if (EXISTS "/usr/lib/x86_64-linux-gnu/cmake")
-        message("FIX: Resolving a bug produced by malformed cpprestsdk packages, see: https://bugs.launchpad.net/ubuntu/+source/cpprest/+bug/1838826")
-        set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};/usr/lib/x86_64-linux-gnu/cmake")
-    endif ()
-    if (EXISTS "/usr/lib/arm-linux-gnueabihf/cmake")
-        message("FIX: Resolving a bug produced by malformed cpprestsdk packages, see: https://bugs.launchpad.net/ubuntu/+source/cpprest/+bug/1838826")
-        set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};/usr/lib/arm-linux-gnueabihf/cmake")
-    endif ()
-endif ()
-if (APPLE)
-    include(cmake/BrewResolver.cmake)
-endif (APPLE)
-add_subdirectory(tascar/libtascar libtascar EXCLUDE_FROM_ALL)
-if (TARGET tascar)
-    add_library(tascar::tascar ALIAS tascar)
-    set(TASCAR_INCLUDE_DIRECTORIES ${PROJECT_SOURCE_DIR}/tascar/libtascar/include)
-else ()
-    find_package(tascar REQUIRED)
-endif ()
 find_package(Jack REQUIRED)
 find_package(CURL REQUIRED)
 find_package(nlohmann_json 3.2.0 REQUIRED)
@@ -98,42 +81,67 @@ find_package(XercesC REQUIRED)
 if (UNIX AND NOT APPLE)
     find_package(ALSA REQUIRED)
 endif ()
-
+# Tascar
+add_subdirectory(tascar/libtascar EXCLUDE_FROM_ALL)
+list(APPEND RECEIVERS
+        ortf
+        hrtf
+        simplefdn
+        omni
+        )
+list(APPEND TASCARMODS
+        system
+        touchosc
+        waitforjackport
+        route
+        jackrec
+        )
+list(APPEND SOURCEMODS
+        omni
+        cardioidmod
+        )
+list(APPEND AUDIOPLUGINS
+        sndfile
+        delay
+        metronome
+        )
+add_subdirectory(tascar/plugins)
+get_property(TASCAR_PLUGIN_LIBRARIES GLOBAL PROPERTY TASCAR_PLUGIN_LIBRARIES)
+foreach (TASCAR_PLUGIN_LIBRARY IN LISTS TASCAR_PLUGIN_LIBRARIES)
+    add_library(Ov::Plugins::${TASCAR_PLUGIN_LIBRARY} ALIAS ${TASCAR_PLUGIN_LIBRARY})
+    list(APPEND OV_PLUGIN_LIBRARIES
+        Ov::Plugins::${TASCAR_PLUGIN_LIBRARY})
+endforeach()
+set_property(GLOBAL PROPERTY OV_PLUGIN_LIBRARIES)
 
 
 ### TARGETS
 # libov
-add_library(ov STATIC ${SOURCES})
-set_target_properties(tascar PROPERTIES PUBLIC_HEADER "${HEADER}")
-target_include_directories(ov
+add_library(Ov STATIC ${SOURCES})
+add_library(Ov::Ov ALIAS Ov)
+set_target_properties(Tascar PROPERTIES PUBLIC_HEADER "${HEADER}")
+target_link_libraries(Ov
         PRIVATE
-        #${SOUNDIO_INCLUDE_DIR}
-        #${JACK_INCLUDE_DIRS}
-        )
-target_link_libraries(ov
-        PRIVATE
-        tascar::tascar
+        Tascar::Tascar
         ${CURL_LIBRARIES}
         nlohmann_json::nlohmann_json
         OpenSSL::Crypto
         cpprestsdk::cpprest
         ${SOUNDIO_LIBRARY}
-        #XercesC::XercesC
-        #${JACK_LIBRARIES}
         )
-set_target_properties(ov PROPERTIES
+set_target_properties(Ov PROPERTIES
         VERSION ${PROJECT_VERSION}
         SOVERSION 1
         )
 if (APPLE)
-    target_link_libraries(ov
+    target_link_libraries(Ov
             PUBLIC
             "-framework IOKit"
             "-framework CoreFoundation"
             )
 endif ()
 if (UNIX AND NOT APPLE)
-    target_link_libraries(ov
+    target_link_libraries(Ov
             PRIVATE
             ALSA::ALSA
             )
@@ -155,7 +163,7 @@ write_basic_package_version_file(
         "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake" COMPATIBILITY SameMajorVersion
 )
 install(
-        TARGETS ov
+        TARGETS Ov
         EXPORT "${TARGETS_EXPORT_NAME}"
         LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
         ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
@@ -169,6 +177,6 @@ install(
 )
 install(
         EXPORT "${TARGETS_EXPORT_NAME}"
-        NAMESPACE "ov::"
+        NAMESPACE "Ov::"
         DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
 )
