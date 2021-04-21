@@ -7,6 +7,10 @@
 #include "spawn_process.h"
 #include <lo/lo.h>
 
+#ifndef ZITAPATH
+#define ZITAPATH ""
+#endif
+
 class ov_render_tascar_t : public ov_render_base_t {
 public:
   ov_render_tascar_t(const std::string& deviceid, port_t pinglogport_);
@@ -39,6 +43,8 @@ public:
                                cb,
                            void* data);
   std::string get_client_stats();
+  std::string get_zita_path();
+  void set_zita_path(const std::string& path);
   class metronome_t {
   public:
     metronome_t();
@@ -81,7 +87,7 @@ private:
   double selfmonitor_delay;
   // metronome settings:
   metronome_t metronome;
-  const std::string zita_path;
+  std::string zitapath;
   std::map<stage_device_id_t, std::string> proxyclients;
   /**
      \brief serve as proxy

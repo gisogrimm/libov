@@ -4,10 +4,6 @@
 #include <iostream>
 #include <jack/jack.h>
 
-#ifndef ZITAPATH
-#define ZITAPATH ""
-#endif
-
 bool ov_render_tascar_t::metronome_t::operator!=(const metronome_t& a)
 {
   return (a.bpb != bpb) || (a.bpm != bpm) || (a.bypass != bypass) ||
@@ -85,23 +81,6 @@ bool file_exists(const std::string& fname)
   }
 }
 
-std::string get_zita_path()
-{
-  std::string zitapath(ZITAPATH);
-#ifdef __APPLE__
-  // Running on mac will result in either having zita-n2j besides the executable
-  // or inside an app bundle
-  if(file_exists("./zita-n2j")) {
-    zitapath = "./";
-    std::cout << "Found zita beside executable" << std::endl;
-  } else if(file_exists("./DigitalStage.app/Contents/MacOS/zita-n2j")) {
-    zitapath = "./DigitalStage.app/Contents/MacOS/";
-    std::cout << "Found zita inside app bundle" << std::endl;
-  }
-#endif
-  return zitapath;
-}
-
 TASCAR::pos_t to_tascar(const pos_t& src)
 {
   return TASCAR::pos_t(src.x, src.y, src.z);
@@ -127,9 +106,9 @@ ov_render_tascar_t::ov_render_tascar_t(const std::string& deviceid,
     : ov_render_base_t(deviceid), h_jack(NULL), h_webmixer(NULL), tascar(NULL),
       ovboxclient(NULL), pinglogport(pinglogport_), pinglogaddr(nullptr),
       inputports({"system:capture_1", "system:capture_2"}),
-      headtrack_tauref(33.315), selfmonitor_delay(0.0),
-      zita_path(get_zita_path()), is_proxy(false), use_proxy(false),
-      cb_seqerr(nullptr), cb_seqerr_data(nullptr), sorter_deadline(5.0)
+      headtrack_tauref(33.315), selfmonitor_delay(0.0), zitapath(ZITAPATH),
+      is_proxy(false), use_proxy(false), cb_seqerr(nullptr),
+      cb_seqerr_data(nullptr), sorter_deadline(5.0)
 {
 #ifdef SHOWDEBUG
   std::cout << "ov_render_tascar_t::ov_render_tascar_t" << std::endl;
@@ -354,7 +333,6 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
   // create zita-n2j receivers:
   // this variable holds the path to zita
   // binaries, or empty (default) for system installed:
-  const std::string zitapath(get_zita_path());
   for(auto stagemember : stage.stage) {
     // only create a network receiver when the stage member is sending audio:
     if(stagemember.second.channels.size()) {
@@ -524,7 +502,6 @@ void ov_render_tascar_t::create_raw_dev(tsccfg::node_t e_session)
   }
   //
   uint32_t chcnt(0);
-  const std::string zitapath = get_zita_path();
   for(auto stagemember : stage.stage) {
     std::string chanlist;
     for(uint32_t k = 0; k < stagemember.second.channels.size(); ++k) {
@@ -835,30 +812,11 @@ void ov_render_tascar_t::start_audiobackend()
         devname = std::string("plug") + devs.rbegin()->dev;
     }
     char cmd[1024];
-#ifdef __APPLE__
-    // Check if jack is already running
-    // const char *client_name = "run_test";
-    jack_options_t options = JackNoStartServer;
-    jack_status_t status;
-    jack_client_t* jackClient = jack_client_open("run_test", options, &status);
-    if(jackClient != nullptr) {
-      std::cout << "[ov_render_tascar] Jack is already running" << std::endl;
-      jack_client_close(jackClient);
-      return;
-    }
-    sprintf(cmd,
-            "JACK_NO_AUDIO_RESERVATION=1 jackd --sync -P 40 -d coreaudio -d %s "
-            "-r %g -p %d -n %d",
-            devname.c_str(), audiodevice.srate, audiodevice.periodsize,
-            audiodevice.numperiods);
-    std::cout << "[ov_render_tascar] Starting jack server" << std::endl;
-#else
     sprintf(cmd,
             "JACK_NO_AUDIO_RESERVATION=1 jackd --sync -P 40 -d alsa -d %s "
             "-r %g -p %d -n %d",
             devname.c_str(), audiodevice.srate, audiodevice.periodsize,
             audiodevice.numperiods);
-#endif
     h_jack = new spawn_process_t(cmd);
     // replace sleep by testing for jack presence with timeout:
     sleep(7);
@@ -1036,6 +994,16 @@ double ov_render_tascar_t::get_load() const
     return 0.01 * tascar->get_cpu_load();
   }
   return 0;
+}
+
+std::string ov_render_tascar_t::get_zita_path()
+{
+  return zitapath;
+}
+
+void ov_render_tascar_t::set_zita_path(const std::string& path)
+{
+  zitapath = path;
 }
 
 void ov_render_tascar_t::set_extra_config(const std::string& js)
