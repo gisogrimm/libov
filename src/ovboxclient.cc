@@ -162,9 +162,8 @@ void ovboxclient_t::announce_connection_lost(stage_device_id_t cid)
   log(recport, "connection for " + std::to_string(cid) + " lost.");
 }
 
-void ovboxclient_t::announce_latency(stage_device_id_t cid, double,
-                                     double, double,
-                                     uint32_t, uint32_t)
+void ovboxclient_t::announce_latency(stage_device_id_t cid, double, double,
+                                     double, uint32_t, uint32_t)
 {
   if(cid == callerid)
     return;
@@ -188,7 +187,7 @@ void ovboxclient_t::announce_latency(stage_device_id_t cid, double,
   data[4] = client_stats_announce[cid].ping_p2p.received;
   data[5] = client_stats_announce[cid].ping_p2p.lost;
   remote_server.pack_and_send(PORT_PEERLATREP, (const char*)data,
-                              6 * sizeof(double));
+                              6 * sizeof(double), toport);
 }
 
 void ovboxclient_t::update_client_stats(stage_device_id_t cid,

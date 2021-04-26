@@ -202,8 +202,14 @@ public:
                  size_t msglen);
   /**
    * Pack and send message
+   *
+   * @param destport Packed destination port
+   * @param msg Start of message buffer
+   * @param msglen Length of message in bytes
+   * @param remoteport Remote server port
    */
-  bool pack_and_send(port_t destport, const char* msg, size_t msglen);
+  bool pack_and_send(port_t destport, const char* msg, size_t msglen,
+                     port_t remoteport);
 
 protected:
   secret_t secret;
