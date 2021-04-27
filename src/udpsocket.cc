@@ -268,13 +268,13 @@ size_t ovbox_udpsocket_t::packmsg(char* destbuf, size_t maxlen, port_t destport,
 }
 
 bool ovbox_udpsocket_t::pack_and_send(port_t destport, const char* msg,
-                                      size_t msglen)
+                                      size_t msglen, port_t remoteport)
 {
   char buffer[BUFSIZE];
   size_t len(packmsg(buffer, BUFSIZE, destport, msg, msglen));
   if(len == 0)
     return false;
-  ssize_t sendlen(send(buffer, len, destport));
+  ssize_t sendlen(send(buffer, len, remoteport));
   if(sendlen == -1)
     return false;
   return true;
