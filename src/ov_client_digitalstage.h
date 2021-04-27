@@ -73,7 +73,9 @@ private:
   std::string api_url_;
   std::string token_;
 
+#ifndef LINUX
   sound_card_tools_t* sound_card_tools_;
+#endif
   ds::ds_store_t* store_;
 
   std::atomic<bool> ready_;

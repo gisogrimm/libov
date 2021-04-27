@@ -22,13 +22,17 @@ ov_client_digitalstage_t::ov_client_digitalstage_t(ov_render_base_t& backend,
     : ov_client_base_t(backend), backend_(backend),
       api_url_(std::move(api_url)), ready_(false), quitrequest_(false)
 {
+#ifndef LINUX
   this->sound_card_tools_ = new sound_card_tools_t();
+#endif
   this->store_ = new ds::ds_store_t();
 }
 
 ov_client_digitalstage_t::~ov_client_digitalstage_t()
 {
+#ifndef LINUX
   delete this->sound_card_tools_;
+#endif
   delete this->store_;
 }
 
@@ -102,6 +106,7 @@ void ov_client_digitalstage_t::service()
           this->store_->setLocalDevice(payload);
           const auto localDevice = this->store_->getLocalDevice();
           // UPDATE SOUND CARDS
+#ifndef LINUX
           const std::vector<sound_card_t> sound_devices =
               this->sound_card_tools_->get_sound_devices();
           if(!sound_devices.empty()) {
@@ -133,6 +138,7 @@ void ov_client_digitalstage_t::service()
           } else {
             std::cerr << "[WARNING] No soundcards available!" << std::endl;
           }
+#endif
         } else if(event == ds::events::DEVICE_CHANGED) {
           std::optional<const ds::device_t> localDevice =
               this->store_->getLocalDevice();
@@ -736,6 +742,7 @@ void ov_client_digitalstage_t::service()
   receive_task.wait();
 }
 
+#ifndef LINUX
 void ov_client_digitalstage_t::on_sound_devices_change()
 {
   ucout << "SOUNDCARD CHANGED" << std::endl;
@@ -743,6 +750,7 @@ void ov_client_digitalstage_t::on_sound_devices_change()
         << this->sound_card_tools_->get_input_sound_devices().size()
         << " input soundcards" << std::endl;
 }
+#endif
 
 void ov_client_digitalstage_t::send(const std::string& event,
                                     const std::string& message)
