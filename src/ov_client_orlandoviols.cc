@@ -443,6 +443,19 @@ void ov_client_orlandoviols_t::service()
                                      rendersettings.ambientsound);
                   }
                 }
+                // test if file can be read and has four channels:
+                try {
+                  TASCAR::sndfile_handle_t sf(hashname);
+                  if(sf.get_channels() != 4) {
+                    throw ErrMsg("Not in B-Format (" +
+                                 std::to_string(sf.get_channels()) +
+                                 " channels)");
+                  }
+                }
+                catch(const std::exception& e) {
+                  throw ErrMsg("Unable to open ambient sound file from " +
+                               rendersettings.ambientsound + ": " + e.what());
+                }
               }
               //
               rendersettings.xports.clear();

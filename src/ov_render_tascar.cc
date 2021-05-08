@@ -648,137 +648,140 @@ void ov_render_tascar_t::start_session()
   // do whatever needs to be done in base class:
   ov_render_base_t::start_session();
   // create a short link to this device:
-  try {
-    // xml code for TASCAR configuration:
-    TASCAR::xml_doc_t tsc;
-    // default TASCAR session settings:
-    tsccfg::node_set_name(tsc.root(), "session");
-    tsccfg::node_t e_session(tsc.root());
-    tsccfg::node_set_attribute(e_session, "srv_port", "9871");
-    tsccfg::node_set_attribute(e_session, "duration", "36000");
-    tsccfg::node_set_attribute(e_session, "name", stage.thisdeviceid);
-    tsccfg::node_set_attribute(e_session, "license", "CC0");
-    tsccfg::node_set_attribute(e_session, "levelmeter_tc", "0.5");
-    // create a virtual acoustics "scene":
-    tsccfg::node_t e_scene(tsccfg::node_add_child(e_session, "scene"));
-    tsccfg::node_set_attribute(e_scene, "name", stage.thisdeviceid);
-    // create virtual acoustics only when not in raw mode:
-    if(!stage.rendersettings.rawmode) {
-      // add a main receiver for which the scene is rendered:
-      tsccfg::node_t e_rec = tsccfg::node_add_child(e_scene, "receiver");
-      // receiver can be "hrtf" or "ortf" (more receivers are possible in
-      // ->add_child_text(TASCAR, but only these two can produce audio which is
-      // headphone-compatible):
-      tsccfg::node_set_attribute(e_rec, "type", stage.rendersettings.rectype);
-      if(stage.rendersettings.rectype == "ortf") {
-        tsccfg::node_set_attribute(e_rec, "angle", "140");
-        tsccfg::node_set_attribute(e_rec, "f6db", "12000");
-        tsccfg::node_set_attribute(e_rec, "fmin", "3000");
-      }
-      tsccfg::node_set_attribute(e_rec, "name", "master");
-      tsccfg::node_set_attribute(
-          e_rec, "gain",
-          TASCAR::to_string(20 * log10(stage.rendersettings.mastergain)));
-      // do not add delay (usually used for dynamic scene rendering):
-      tsccfg::node_set_attribute(e_rec, "delaycomp", "0.05");
-      // connect output ports:
-      if(!stage.rendersettings.outputport1.empty()) {
-        std::string srcport("master_l");
-        if(stage.rendersettings.rectype == "itu51")
-          srcport = "master.0L";
-        if(stage.rendersettings.rectype == "omni")
-          srcport = "master.0";
-        session_add_connect(e_session,
-                            "render." + stage.thisdeviceid + ":" + srcport,
-                            stage.rendersettings.outputport1);
-      }
-      if(!stage.rendersettings.outputport2.empty()) {
-        std::string srcport("master_r");
-        if(stage.rendersettings.rectype == "itu51")
-          srcport = "master.1R";
-        if(stage.rendersettings.rectype == "omni")
-          srcport = "master.0";
-        session_add_connect(e_session,
-                            "render." + stage.thisdeviceid + ":" + srcport,
-                            stage.rendersettings.outputport2);
-      }
-      // the host is not empty when this device is on a stage:
-      if(!stage.host.empty()) {
-        create_virtual_acoustics(e_session, e_rec, e_scene);
-      } else {
-        // the stage is empty, which means we play an announcement only.
-        tsccfg::node_t e_src(tsccfg::node_add_child(e_scene, "source"));
-        tsccfg::node_set_attribute(e_src, "name", "announce");
-        tsccfg::node_t e_snd(tsccfg::node_add_child(e_src, "sound"));
-        tsccfg::node_set_attribute(e_snd, "maxdist", "50");
-        tsccfg::node_set_attribute(e_snd, "gainmodel", "1");
-        tsccfg::node_set_attribute(e_snd, "delayline", "false");
-        tsccfg::node_set_attribute(e_snd, "x", "4");
-        tsccfg::node_t e_plugs(tsccfg::node_add_child(e_snd, "plugins"));
-        tsccfg::node_t e_sndfile(tsccfg::node_add_child(e_plugs, "sndfile"));
-        tsccfg::node_set_attribute(e_sndfile, "name", folder + "announce.flac");
-        tsccfg::node_set_attribute(e_sndfile, "level", "57");
-        tsccfg::node_set_attribute(e_sndfile, "transport", "false");
-        tsccfg::node_set_attribute(e_sndfile, "resample", "true");
-        tsccfg::node_set_attribute(e_sndfile, "loop", "0");
-        tsccfg::node_t e_mods(tsccfg::node_add_child(e_session, "modules"));
-        tsccfg::node_t e_jackrec = tsccfg::node_add_child(e_mods, "jackrec");
-        tsccfg::node_set_attribute(e_jackrec, "url",
-                                   "osc.udp://localhost:9000/");
-        tsccfg::node_add_child(e_mods, "touchosc");
-      }
-    } else {
-      if(!stage.host.empty()) {
-        create_raw_dev(e_session);
-      }
+  // xml code for TASCAR configuration:
+  TASCAR::xml_doc_t tsc;
+  // default TASCAR session settings:
+  tsccfg::node_set_name(tsc.root(), "session");
+  tsccfg::node_t e_session(tsc.root());
+  tsccfg::node_set_attribute(e_session, "srv_port", "9871");
+  tsccfg::node_set_attribute(e_session, "duration", "36000");
+  tsccfg::node_set_attribute(e_session, "name", stage.thisdeviceid);
+  tsccfg::node_set_attribute(e_session, "license", "CC0");
+  tsccfg::node_set_attribute(e_session, "levelmeter_tc", "0.5");
+  // create a virtual acoustics "scene":
+  tsccfg::node_t e_scene(tsccfg::node_add_child(e_session, "scene"));
+  tsccfg::node_set_attribute(e_scene, "name", stage.thisdeviceid);
+  // create virtual acoustics only when not in raw mode:
+  if(!stage.rendersettings.rawmode) {
+    // add a main receiver for which the scene is rendered:
+    tsccfg::node_t e_rec = tsccfg::node_add_child(e_scene, "receiver");
+    // receiver can be "hrtf" or "ortf" (more receivers are possible in
+    // ->add_child_text(TASCAR, but only these two can produce audio which is
+    // headphone-compatible):
+    tsccfg::node_set_attribute(e_rec, "type", stage.rendersettings.rectype);
+    if(stage.rendersettings.rectype == "ortf") {
+      tsccfg::node_set_attribute(e_rec, "angle", "140");
+      tsccfg::node_set_attribute(e_rec, "f6db", "12000");
+      tsccfg::node_set_attribute(e_rec, "fmin", "3000");
     }
-    for(auto xport : stage.rendersettings.xports)
-      session_add_connect(e_session, xport.first, xport.second);
+    tsccfg::node_set_attribute(e_rec, "name", "master");
+    tsccfg::node_set_attribute(
+        e_rec, "gain",
+        TASCAR::to_string(20 * log10(stage.rendersettings.mastergain)));
+    // do not add delay (usually used for dynamic scene rendering):
+    tsccfg::node_set_attribute(e_rec, "delaycomp", "0.05");
+    // connect output ports:
+    if(!stage.rendersettings.outputport1.empty()) {
+      std::string srcport("master_l");
+      if(stage.rendersettings.rectype == "itu51")
+        srcport = "master.0L";
+      if(stage.rendersettings.rectype == "omni")
+        srcport = "master.0";
+      session_add_connect(e_session,
+                          "render." + stage.thisdeviceid + ":" + srcport,
+                          stage.rendersettings.outputport1);
+    }
+    if(!stage.rendersettings.outputport2.empty()) {
+      std::string srcport("master_r");
+      if(stage.rendersettings.rectype == "itu51")
+        srcport = "master.1R";
+      if(stage.rendersettings.rectype == "omni")
+        srcport = "master.0";
+      session_add_connect(e_session,
+                          "render." + stage.thisdeviceid + ":" + srcport,
+                          stage.rendersettings.outputport2);
+    }
+    // the host is not empty when this device is on a stage:
     if(!stage.host.empty()) {
-      ovboxclient = new ovboxclient_t(
-          stage.host, stage.port, 4464 + 2 * stage.thisstagedeviceid, 0, 30,
-          stage.pin, stage.thisstagedeviceid, stage.rendersettings.peer2peer,
-          use_proxy, false, stage.stage[stage.thisstagedeviceid].sendlocal,
-          sorter_deadline);
-      if(cb_seqerr)
-        ovboxclient->set_seqerr_callback(cb_seqerr, cb_seqerr_data);
-      if(stage.rendersettings.secrec > 0)
-        ovboxclient->add_extraport(100);
-      for(auto p : stage.rendersettings.xrecport)
-        ovboxclient->add_receiverport(p, p);
-      ovboxclient->add_receiverport(9870, 9871);
-      if(pinglogaddr)
-        ovboxclient->set_ping_callback(sendpinglog, pinglogaddr);
-      for(auto proxyclient : proxyclients) {
-        ovboxclient->add_proxy_client(proxyclient.first, proxyclient.second);
-      }
+      create_virtual_acoustics(e_session, e_rec, e_scene);
+    } else {
+      // the stage is empty, which means we play an announcement only.
+      tsccfg::node_t e_src(tsccfg::node_add_child(e_scene, "source"));
+      tsccfg::node_set_attribute(e_src, "name", "announce");
+      tsccfg::node_t e_snd(tsccfg::node_add_child(e_src, "sound"));
+      tsccfg::node_set_attribute(e_snd, "maxdist", "50");
+      tsccfg::node_set_attribute(e_snd, "gainmodel", "1");
+      tsccfg::node_set_attribute(e_snd, "delayline", "false");
+      tsccfg::node_set_attribute(e_snd, "x", "4");
+      tsccfg::node_t e_plugs(tsccfg::node_add_child(e_snd, "plugins"));
+      tsccfg::node_t e_sndfile(tsccfg::node_add_child(e_plugs, "sndfile"));
+      tsccfg::node_set_attribute(e_sndfile, "name", folder + "announce.flac");
+      tsccfg::node_set_attribute(e_sndfile, "level", "57");
+      tsccfg::node_set_attribute(e_sndfile, "transport", "false");
+      tsccfg::node_set_attribute(e_sndfile, "resample", "true");
+      tsccfg::node_set_attribute(e_sndfile, "loop", "0");
+      tsccfg::node_t e_mods(tsccfg::node_add_child(e_session, "modules"));
+      tsccfg::node_t e_jackrec = tsccfg::node_add_child(e_mods, "jackrec");
+      tsccfg::node_set_attribute(e_jackrec, "url", "osc.udp://localhost:9000/");
+      tsccfg::node_add_child(e_mods, "touchosc");
     }
-    tsc.save(folder + "ovbox_debugsession.tsc");
-    tascar = new TASCAR::session_t(tsc.save_to_string(),
-                                   TASCAR::session_t::LOAD_STRING, "");
-    tascar->start();
-    // add web mixer tools (node-js server and touchosc interface):
-    std::string command;
-    std::string ipaddr(ep2ipstr(getipaddr()));
-    ipaddr += " '";
-    ipaddr += stage.thisdeviceid + " (" + stage.thisdevice.label + ")'";
-#ifndef GUI
-    if(file_exists("/usr/share/ovclient/webmixer.js")) {
-      command = "(cd /usr/share/ovclient/ && node webmixer.js " + ipaddr + ")";
+  } else {
+    if(!stage.host.empty()) {
+      create_raw_dev(e_session);
     }
-    if(file_exists("webmixer.js")) {
-      command = "node webmixer.js " + ipaddr;
-    }
-    if(!command.empty())
-      h_webmixer = new spawn_process_t(command);
-#endif
   }
-  catch(...) {
+  for(auto xport : stage.rendersettings.xports)
+    session_add_connect(e_session, xport.first, xport.second);
+  if(!stage.host.empty()) {
+    ovboxclient = new ovboxclient_t(
+        stage.host, stage.port, 4464 + 2 * stage.thisstagedeviceid, 0, 30,
+        stage.pin, stage.thisstagedeviceid, stage.rendersettings.peer2peer,
+        use_proxy, false, stage.stage[stage.thisstagedeviceid].sendlocal,
+        sorter_deadline);
+    if(cb_seqerr)
+      ovboxclient->set_seqerr_callback(cb_seqerr, cb_seqerr_data);
+    if(stage.rendersettings.secrec > 0)
+      ovboxclient->add_extraport(100);
+    for(auto p : stage.rendersettings.xrecport)
+      ovboxclient->add_receiverport(p, p);
+    ovboxclient->add_receiverport(9870, 9871);
+    if(pinglogaddr)
+      ovboxclient->set_ping_callback(sendpinglog, pinglogaddr);
+    for(auto proxyclient : proxyclients) {
+      ovboxclient->add_proxy_client(proxyclient.first, proxyclient.second);
+    }
+  }
+  tsc.save(folder + "ovbox_debugsession.tsc");
+  tascar = new TASCAR::session_t(tsc.save_to_string(),
+                                 TASCAR::session_t::LOAD_STRING, "");
+  try {
+    tascar->start();
+  }
+  catch(const std::exception& e) {
+    DEBUG(e.what());
+    std::string err(e.what());
     delete tascar;
     tascar = NULL;
-    end_session();
-    throw;
+    if( ovboxclient )
+      delete ovboxclient;
+    //end_session();
+    throw ErrMsg(err);
   }
+#ifndef GUI
+  // add web mixer tools (node-js server and touchosc interface):
+  std::string command;
+  std::string ipaddr(ep2ipstr(getipaddr()));
+  ipaddr += " '";
+  ipaddr += stage.thisdeviceid + " (" + stage.thisdevice.label + ")'";
+  if(file_exists("/usr/share/ovclient/webmixer.js")) {
+    command = "(cd /usr/share/ovclient/ && node webmixer.js " + ipaddr + ")";
+  }
+  if(file_exists("webmixer.js")) {
+    command = "node webmixer.js " + ipaddr;
+  }
+  if(!command.empty())
+    h_webmixer = new spawn_process_t(command);
+#endif
 }
 
 void ov_render_tascar_t::end_session()
@@ -887,7 +890,6 @@ void ov_render_tascar_t::add_stage_device(const stage_device_t& stagedevice)
   // compare with current stage:
   auto p_stage(stage.stage);
   ov_render_base_t::add_stage_device(stagedevice);
-  DEBUG(1);
   if((p_stage != stage.stage) && is_session_active()) {
     require_session_restart();
   }
@@ -902,7 +904,6 @@ void ov_render_tascar_t::rm_stage_device(stage_device_id_t stagedeviceid)
   // compare with current stage:
   auto p_stage(stage.stage);
   ov_render_base_t::rm_stage_device(stagedeviceid);
-  DEBUG(1);
   if((p_stage != stage.stage) && is_session_active()) {
     require_session_restart();
   }
