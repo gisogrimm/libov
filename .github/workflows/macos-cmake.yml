@@ -16,7 +16,7 @@ jobs:
     - name: Fetch git tags
       run: git fetch --unshallow --tags
     - name: Install submodules
-      run: git submodule init && git submodule update
+      run: git submodule update --init --recursive
     - name: Install Dependencies
       run: brew install pkgconfig glibmm xerces-c jack liblo libsndfile gtkmm3 eigen boost gsl fftw libsamplerate cpprestsdk nlohmann-json openssl coreutils libsoundio
     - name: Configure & Make
