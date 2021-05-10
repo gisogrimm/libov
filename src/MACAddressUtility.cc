@@ -118,7 +118,7 @@ static kern_return_t GetMACAddress(io_iterator_t intfIterator,
 
   bzero(MACAddress, bufferSize);
 
-  while(intfService = IOIteratorNext(intfIterator)) {
+  while((intfService = IOIteratorNext(intfIterator))) {
     CFTypeRef MACAddressAsCFData;
 
     // IONetworkControllers can't be found directly by the

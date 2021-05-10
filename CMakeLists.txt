@@ -1,24 +1,25 @@
 cmake_minimum_required(VERSION 3.16.0)
 
-### GLOBAL CONFIGURATION
 project(Ov
         LANGUAGES CXX
         VERSION 0.5
         DESCRIPTION "common header files and library code for ov-client and ov-server"
         )
+
+
+##
+## CONFIGURATION
+##
+include(GNUInstallDirs)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(POSITION_INDEPENDENT_CODE ON)
 
-### ADDONS
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake/modules)
-if (APPLE)
-    include(${CMAKE_CURRENT_LIST_DIR}/cmake/FixAppleArchitecture.cmake)
-    include(cmake/BrewResolver.cmake)
-endif (APPLE)
-include(${CMAKE_CURRENT_LIST_DIR}/cmake/CppRestHotfix.cmake)
+set(TARGET_NAME ${PROJECT_NAME})
+set(TARGETS_EXPORT_NAME "${PROJECT_NAME}Targets")
+set(INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR} CACHE PATH "Install path for include files")
+set(LIB_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR} CACHE PATH "Install path for library files")
 
-### ADDITIONAL FLAGS
 add_compile_definitions(PLUGINPREFIX="ovclient")
 set(PLUGINPREFIX "ovclient")
 include("${CMAKE_CURRENT_LIST_DIR}/version.cmake")
@@ -60,18 +61,17 @@ add_compile_definitions(${CMAKE_SYSTEM_PROCESSOR})
 add_compile_definitions(OVBOXVERSION="${PROJECT_VERSION}")
 
 
-### SOURCE MANAGEMENT
-file(GLOB
-        HEADER
-        src/*.h
-        )
-file(GLOB
-        SOURCES
-        src/*.cc
-        )
-
-
-### DEPENDENCIES
+##
+## DEPENDENCIES
+##
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake/modules)
+if (APPLE)
+    include(${CMAKE_CURRENT_LIST_DIR}/cmake/FixAppleArchitecture.cmake)
+    include(cmake/BrewResolver.cmake)
+endif (APPLE)
+if (UNIX AND NOT APPLE)
+    include(${CMAKE_CURRENT_LIST_DIR}/cmake/CppRestHotfix.cmake)
+endif (UNIX AND NOT APPLE)
 find_package(Jack REQUIRED)
 find_package(CURL REQUIRED)
 find_package(nlohmann_json 3.2.0 REQUIRED)
@@ -83,6 +83,7 @@ if (UNIX AND NOT APPLE)
 endif ()
 # Tascar
 add_subdirectory(tascar/libtascar EXCLUDE_FROM_ALL)
+target_compile_options(Tascar PRIVATE -Wno-error)
 list(APPEND RECEIVERS
         ortf
         hrtf
@@ -109,22 +110,37 @@ add_subdirectory(tascar/plugins)
 get_property(TASCAR_PLUGIN_LIBRARIES GLOBAL PROPERTY TASCAR_PLUGIN_LIBRARIES)
 foreach (TASCAR_PLUGIN_LIBRARY IN LISTS TASCAR_PLUGIN_LIBRARIES)
     add_library(Ov::Plugins::${TASCAR_PLUGIN_LIBRARY} ALIAS ${TASCAR_PLUGIN_LIBRARY})
+    target_compile_options(${TASCAR_PLUGIN_LIBRARY} PRIVATE -Wno-error)
     list(APPEND OV_PLUGIN_LIBRARIES
-        Ov::Plugins::${TASCAR_PLUGIN_LIBRARY})
-endforeach()
+            ${TASCAR_PLUGIN_LIBRARY})
+    list(APPEND OV_PUBLIC_PLUGIN_LIBRARIES
+            ${TASCAR_PLUGIN_LIBRARY})
+endforeach ()
 set_property(GLOBAL PROPERTY OV_PLUGIN_LIBRARIES)
-add_subdirectory(libds)
+set_property(GLOBAL PROPERTY OV_PUBLIC_PLUGIN_LIBRARIES)
+add_subdirectory(libds EXCLUDE_FROM_ALL)
 
 
-### TARGETS
-# libov
-add_library(Ov STATIC ${SOURCES})
-add_library(Ov::Ov ALIAS Ov)
-set_target_properties(Tascar PROPERTIES PUBLIC_HEADER "${HEADER}")
+##
+## TARGET
+## create target and add include path
+##
+file(GLOB
+        HEADER
+        src/*.h
+        )
+file(GLOB
+        SOURCES
+        src/*.cc
+        )
+add_library(Ov ${SOURCES})
+add_library(${PROJECT_NAME}::Ov ALIAS Ov)
+target_compile_options(Ov PRIVATE -Wno-error)
 target_link_libraries(Ov
-        PRIVATE
+        PUBLIC
         Tascar::Tascar
-        libds
+        DigitalStage::Api
+        DigitalStage::Auth
         ${CURL_LIBRARIES}
         nlohmann_json::nlohmann_json
         OpenSSL::Crypto
@@ -144,41 +160,30 @@ if (APPLE)
 endif ()
 if (UNIX AND NOT APPLE)
     target_link_libraries(Ov
-            PRIVATE
+            PUBLIC
             ALSA::ALSA
             )
 endif ()
 
 
-# CMake package config
-include(GNUInstallDirs)
-include(CMakePackageConfigHelpers)
-set(TARGETS_EXPORT_NAME "${PROJECT_NAME}Target")
-set(INCLUDE_INSTALL_DIR "include/${PROJECT_NAME}" CACHE PATH "Install path for include files")
-configure_package_config_file(
-        "cmake/Config.cmake.in"
-        "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
-        INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
-        PATH_VARS INCLUDE_INSTALL_DIR
-)
-write_basic_package_version_file(
-        "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake" COMPATIBILITY SameMajorVersion
-)
+##
+## INSTALL
+## install header files, generate and install cmake config files for find_package()
+##
 install(
-        TARGETS Ov
-        EXPORT "${TARGETS_EXPORT_NAME}"
-        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
-        INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
-        PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}"
+        FILES ${HEADER}
+        DESTINATION "${INCLUDE_INSTALL_DIR}/libov"
 )
+export(
+        TARGETS Ov Tascar ${OV_PLUGIN_LIBRARIES}
+        NAMESPACE ${PROJECT_NAME}::
+        FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake")
 install(
-        FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake" "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
-        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
-)
+        TARGETS Ov ${OV_PLUGIN_LIBRARIES}
+        EXPORT ${TARGETS_EXPORT_NAME}
+        PRIVATE_HEADER DESTINATION ${LIB_INSTALL_DIR}/libov
+        INCLUDES DESTINATION ${INCLUDE_INSTALL_DIR}/libov)
 install(
-        EXPORT "${TARGETS_EXPORT_NAME}"
-        NAMESPACE "Ov::"
-        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
-)
+        EXPORT ${TARGETS_EXPORT_NAME}
+        NAMESPACE ${PROJECT_NAME}::
+        DESTINATION ${INCLUDE_INSTALL_DIR}/libov)
