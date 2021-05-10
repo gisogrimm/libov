@@ -5,3 +5,4 @@
 [submodule "libds"]
 	path = libds
 	url = https://github.com/digital-stage/libds.git
+	branch = main
