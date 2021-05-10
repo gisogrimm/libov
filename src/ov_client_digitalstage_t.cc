@@ -19,18 +19,21 @@
  */
 #include "ov_client_digitalstage_t.h"
 
+#include <utility>
+
 using namespace DigitalStage::Api;
 using namespace DigitalStage::Types;
 
 ov_client_digitalstage_t::ov_client_digitalstage_t(ov_render_base_t& backend,
-                                                   std::string apiKey_)
-    : ov_client_base_t(backend), apiKey(std::move(apiKey_)), shouldQuit(false)
+                                                   std::string  apiUrl_,
+                                                   std::string  apiKey_)
+    : ov_client_base_t(backend), apiKey(std::move(apiKey_)), apiUrl(std::move(apiUrl_)), shouldQuit(false)
 {
 }
 
 void ov_client_digitalstage_t::start_service()
 {
-  client = std::make_unique<DigitalStage::Api::Client>(API_URL);
+  client = std::make_unique<DigitalStage::Api::Client>(apiUrl);
   controller = std::make_unique<ov_ds_sockethandler_t>(&backend, client.get());
   controller->enable();
 

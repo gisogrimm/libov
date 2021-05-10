@@ -127,9 +127,11 @@ protected:
   // methods to simply update TASCAR instead of replacing the whole stage
   // member)
   void
-  onAudioTrackPositionChanged(const DigitalStage::Types::ID_TYPE& id) noexcept;
+  onCustomAudioTrackPositionChanged(const std::string&, const nlohmann::json&,
+                                    const DigitalStage::Api::Store*) noexcept;
   void
-  onAudioTrackVolumeChanged(const DigitalStage::Types::ID_TYPE& id) noexcept;
+  onCustomAudioTrackVolumeChanged(const std::string&, const nlohmann::json&,
+                                  const DigitalStage::Api::Store*) noexcept;
 
   /*
   void handleGroupChanged(const DigitalStage::Types::ID_TYPE& id,
@@ -199,7 +201,6 @@ private:
 
   ov_render_base_t* renderer;
   DigitalStage::Api::Client* client;
-  std::mutex changeOvMutex;
   bool insideOvStage;
   bool enabled;
 };

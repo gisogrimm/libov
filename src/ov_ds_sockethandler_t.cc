@@ -523,11 +523,17 @@ void ov_ds_sockethandler_t::listen() noexcept
                                   this);
   client->audioTrackRemoved.connect(&ov_ds_sockethandler_t::onAudioTrackRemoved,
                                     this);
+  client->customAudioTrackPositionChanged.connect(
+      &ov_ds_sockethandler_t::onCustomAudioTrackPositionChanged, this);
+  client->customAudioTrackVolumeChanged.connect(
+      &ov_ds_sockethandler_t::onCustomAudioTrackVolumeChanged, this);
 }
 
 void ov_ds_sockethandler_t::unlisten() noexcept
 {
+#ifdef SHOWDEBUG
   std::cout << "ov_ds_sockethandler_t::unlisten" << std::endl;
+#endif
   // Remove handler
   client->ready.disconnect(&ov_ds_sockethandler_t::onReady, this);
   client->deviceChanged.disconnect(&ov_ds_sockethandler_t::onDeviceChanged,
@@ -547,5 +553,29 @@ void ov_ds_sockethandler_t::unlisten() noexcept
   if(renderer) {
     renderer->clear_stage();
     renderer->stop_audiobackend();
+  }
+}
+void ov_ds_sockethandler_t::onCustomAudioTrackPositionChanged(
+    const std::string&, const nlohmann::json&,
+    const DigitalStage::Api::Store*) noexcept
+{
+  if(insideOvStage) {
+#ifdef SHOWDEBUG
+    std::cout << "ov_ds_sockethandler_t::onAudioTrackPositionChanged"
+              << std::endl;
+#endif
+    // TODO: Implement
+  }
+}
+void ov_ds_sockethandler_t::onCustomAudioTrackVolumeChanged(
+    const std::string&, const nlohmann::json&,
+    const DigitalStage::Api::Store*) noexcept
+{
+  if(insideOvStage) {
+#ifdef SHOWDEBUG
+    std::cout << "ov_ds_sockethandler_t::onAudioTrackVolumeChanged"
+              << std::endl;
+#endif
+    // TODO: Implement
   }
 }

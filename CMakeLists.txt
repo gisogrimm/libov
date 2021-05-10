@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16.0)
 
-project(Ov
+project(libov
         LANGUAGES CXX
         VERSION 0.5
         DESCRIPTION "common header files and library code for ov-client and ov-server"
@@ -127,15 +127,19 @@ add_subdirectory(libds EXCLUDE_FROM_ALL)
 ##
 file(GLOB
         HEADER
-        src/*.h
+        ${PROJECT_SOURCE_DIR}/src/*.h
         )
 file(GLOB
         SOURCES
-        src/*.cc
+        ${PROJECT_SOURCE_DIR}/src/*.cc
         )
-add_library(Ov ${SOURCES})
+add_library(Ov STATIC ${SOURCES})
 add_library(${PROJECT_NAME}::Ov ALIAS Ov)
 target_compile_options(Ov PRIVATE -Wno-error)
+set_target_properties(Ov PROPERTIES PUBLIC_HEADER "${HEADER}")
+target_include_directories(Ov PUBLIC
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
+        $<INSTALL_INTERFACE:include/libov>)
 target_link_libraries(Ov
         PUBLIC
         Tascar::Tascar
@@ -181,10 +185,6 @@ write_basic_package_version_file(
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
         DESTINATION ${LIB_INSTALL_DIR}/cmake/${PROJECT_NAME})
-install(
-        FILES ${HEADER}
-        DESTINATION "${INCLUDE_INSTALL_DIR}/libov"
-)
 export(
         TARGETS Ov Tascar ${OV_PLUGIN_LIBRARIES}
         NAMESPACE ${PROJECT_NAME}::
@@ -192,9 +192,9 @@ export(
 install(
         TARGETS Ov ${OV_PLUGIN_LIBRARIES}
         EXPORT ${TARGETS_EXPORT_NAME}
-        PRIVATE_HEADER DESTINATION ${LIB_INSTALL_DIR}/libov
+        PUBLIC_HEADER DESTINATION ${INCLUDE_INSTALL_DIR}/libov
         INCLUDES DESTINATION ${INCLUDE_INSTALL_DIR}/libov)
 install(
         EXPORT ${TARGETS_EXPORT_NAME}
         NAMESPACE ${PROJECT_NAME}::
-        DESTINATION ${INCLUDE_INSTALL_DIR}/libov)
+        DESTINATION ${LIB_INSTALL_DIR}/cmake/${PROJECT_NAME})

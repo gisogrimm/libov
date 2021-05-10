@@ -29,7 +29,7 @@
 
 class ov_client_digitalstage_t : public ov_client_base_t {
 public:
-  ov_client_digitalstage_t(ov_render_base_t& backend, std::string apiKey_);
+  ov_client_digitalstage_t(ov_render_base_t& backend, std::string  apiUrl, std::string  apiKey);
 
   bool is_going_to_stop() const override;
 
@@ -40,6 +40,7 @@ protected:
   void onReady(const DigitalStage::Api::Store* store) noexcept;
 
 private:
+  const std::string apiUrl;
   const std::string apiKey;
   std::atomic<bool> shouldQuit;
   std::unique_ptr<DigitalStage::Api::Client> client;
