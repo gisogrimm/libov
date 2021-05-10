@@ -2,3 +2,6 @@
 	path = tascar
 	url = https://github.com/gisogrimm/tascar.git
 	branch = development
+[submodule "libds"]
+	path = libds
+	url = https://github.com/digital-stage/libds.git

@@ -113,6 +113,7 @@ foreach (TASCAR_PLUGIN_LIBRARY IN LISTS TASCAR_PLUGIN_LIBRARIES)
         Ov::Plugins::${TASCAR_PLUGIN_LIBRARY})
 endforeach()
 set_property(GLOBAL PROPERTY OV_PLUGIN_LIBRARIES)
+add_subdirectory(libds)
 
 
 ### TARGETS
@@ -123,6 +124,7 @@ set_target_properties(Tascar PROPERTIES PUBLIC_HEADER "${HEADER}")
 target_link_libraries(Ov
         PRIVATE
         Tascar::Tascar
+        libds
         ${CURL_LIBRARIES}
         nlohmann_json::nlohmann_json
         OpenSSL::Crypto
