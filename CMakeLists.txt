@@ -134,7 +134,7 @@ file(GLOB
         ${PROJECT_SOURCE_DIR}/src/*.cc
         )
 add_library(Ov STATIC ${SOURCES})
-add_library(${PROJECT_NAME}::Ov ALIAS Ov)
+add_library(Ov::Ov ALIAS Ov)
 target_compile_options(Ov PRIVATE -Wno-error)
 set_target_properties(Ov PROPERTIES PUBLIC_HEADER "${HEADER}")
 target_include_directories(Ov PUBLIC
@@ -187,7 +187,7 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
         DESTINATION ${LIB_INSTALL_DIR}/cmake/${PROJECT_NAME})
 export(
         TARGETS Ov Tascar ${OV_PLUGIN_LIBRARIES}
-        NAMESPACE ${PROJECT_NAME}::
+        NAMESPACE Ov::
         FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake")
 install(
         TARGETS Ov ${OV_PLUGIN_LIBRARIES}
@@ -196,5 +196,5 @@ install(
         INCLUDES DESTINATION ${INCLUDE_INSTALL_DIR}/libov)
 install(
         EXPORT ${TARGETS_EXPORT_NAME}
-        NAMESPACE ${PROJECT_NAME}::
+        NAMESPACE Ov::
         DESTINATION ${LIB_INSTALL_DIR}/cmake/${PROJECT_NAME})
