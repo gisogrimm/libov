@@ -39,8 +39,8 @@ std::string url2localfilename(const std::string& url);
 struct sound_card_t {
   std::string id;
   std::string name;
-  int num_input_channels;
-  int num_output_channels;
+  unsigned int num_input_channels;
+  unsigned int num_output_channels;
   int sample_rate;
   std::vector<int> sample_rates;
   double software_latency;

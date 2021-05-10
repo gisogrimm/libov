@@ -78,7 +78,12 @@ std::vector<snddevname_t> list_sound_devices()
     }
   }
 #else
-
+  auto* soundCardUtil = new sound_card_tools_t();
+  auto soundDevices = soundCardUtil->get_sound_devices();
+  retv.reserve(soundDevices.size());
+  for(auto& soundDevice : soundDevices) {
+    retv.push_back({soundDevice.id, soundDevice.name});
+  }
 #endif
   return retv;
 }
@@ -124,6 +129,16 @@ std::vector<sound_card_t> sound_card_tools_t::get_sound_devices()
   const std::vector<struct SoundIoDevice*> output_sound_devices =
       this->get_output_sound_devices();
   int default_input = soundio_default_input_device_index(this->soundio);
+  int default_output = soundio_default_output_device_index(this->soundio);
+
+  for(size_t i = 0; i < input_sound_devices.size(); i++) {
+    struct SoundIoDevice* input_sound_device = input_sound_devices[i];
+    std::cout << "INPUT: "<< input_sound_device->id << std::endl;
+  }
+  for(size_t i = 0; i < output_sound_devices.size(); i++) {
+    struct SoundIoDevice* output_sound_device = output_sound_devices[i];
+    std::cout << "OUTPUT: "<< output_sound_device->id << std::endl;
+  }
 
   // JACK can only use one soundcard at a time (except on linux), so reduce the
   // sound devices
@@ -137,24 +152,24 @@ std::vector<sound_card_t> sound_card_tools_t::get_sound_devices()
       }
     }
     if(output_sound_device != nullptr) {
-      sound_card_t soundcard;
-      soundcard.id = std::string(input_sound_device->id);
-      soundcard.name = std::string(input_sound_device->name);
-      soundcard.num_input_channels =
-          input_sound_device->current_layout.channel_count;
-      soundcard.num_output_channels =
-          output_sound_device->current_layout.channel_count;
-      soundcard.sample_rate = input_sound_device->sample_rate_current;
+    sound_card_t soundcard;
+    soundcard.id = std::string(input_sound_device->id);
+    soundcard.name = std::string(input_sound_device->name);
+    soundcard.num_input_channels =
+        input_sound_device->current_layout.channel_count;
+    soundcard.num_output_channels = output_sound_device ?
+        output_sound_device->current_layout.channel_count : 0;
+    soundcard.sample_rate = input_sound_device->sample_rate_current;
 
-      for(int j = 0; j < output_sound_device->sample_rate_count; j += 1) {
-        struct SoundIoSampleRateRange* range =
-            &output_sound_device->sample_rates[j];
-        soundcard.sample_rates.push_back(range->min);
-      }
-      soundcard.is_default = (size_t)default_input == i;
-      soundcard.software_latency =
-          input_sound_devices[i]->software_latency_current;
-      soundcards.push_back(soundcard);
+    for(int j = 0; j < output_sound_device->sample_rate_count; j += 1) {
+      struct SoundIoSampleRateRange* range =
+          &output_sound_device->sample_rates[j];
+      soundcard.sample_rates.push_back(range->min);
+    }
+    soundcard.is_default = (size_t)default_input == i;
+    soundcard.software_latency =
+        input_sound_devices[i]->software_latency_current;
+    soundcards.push_back(soundcard);
     }
   }
   return soundcards;
