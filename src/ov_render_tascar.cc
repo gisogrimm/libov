@@ -762,9 +762,9 @@ void ov_render_tascar_t::start_session()
     std::string err(e.what());
     delete tascar;
     tascar = NULL;
-    if( ovboxclient )
+    if(ovboxclient)
       delete ovboxclient;
-    //end_session();
+    // end_session();
     throw ErrMsg(err);
   }
 #ifndef GUI

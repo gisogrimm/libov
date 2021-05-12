@@ -52,25 +52,54 @@ endpoint_t getipaddr();
  */
 class udpsocket_t {
 public:
+  /**
+   * Default constructor.
+   *
+   * This call will open a socket of AF_INET domain and of type
+   * SOCK_DGRAM, i.e., a UDP socket. If the socket creation failed, an
+   * exception of type ErrMsg with an appropriate error message is
+   * thrown.
+   *
+   * On Linux and Windows the type of service (IPTOS) is set to CS6
+   * and socket priority is set to 5.
+   */
   udpsocket_t();
+  /**
+   * Deconstructor. This will close the socket.
+   */
   ~udpsocket_t();
   /**
-   * Set the receive timeout
-   * @param usec Timeout in Microseconds, or zero to set to blocking mode
-   * (default)
+   * Set the receive timeout.
+   *
+   * @param usec Timeout in Microseconds, or zero to set to blocking
+   * mode (default)
    */
   void set_timeout_usec(int usec);
+  /**
+   * Bind the socket to a port.
+   *
+   * @param port Port number to bind the port to.
+   * @param loopback Use loopback device (otherwise use 0.0.0.0)
+   * @return The actual port used.
+   *
+   * Upon error (the underlying system call returned -1), an exception
+   * of type ErrMsg with an appropriate error message is thrown.
+   */
   port_t bind(port_t port, bool loopback = false);
   /**
    * Set destination host or IP address.
    * @param host Host name or IP address of destination.
    *
    * This function resolves the hostname and sets the resulting IP
-   * address as a destination.
+   * address as a destination. Upon error, an exception of type ErrMsg
+   * with an appropriate error message is thrown.
    */
   void set_destination(const char* host);
   /**
    * Send a message to a port at the previously configured destination
+   *
+   * Upon success, the tx_bytes counter is increased by the number of
+   * bytes sent.
    *
    * @param buf Start of memory area containing the message
    * @param len Length of message in bytes
@@ -78,11 +107,47 @@ public:
    * @return The number of bytes sent, or -1 in case of failure
    */
   ssize_t send(const char* buf, size_t len, int portno);
+  /**
+   * Send a message to a destination.
+   *
+   * Upon success, the tx_bytes counter is increased by the number of
+   * bytes sent.
+   *
+   * @param buf Start of memory area containing the message
+   * @param len Length of message in bytes
+   * @param ep Destination address and port
+   * @return The number of bytes sent, or -1 in case of failure
+   */
   ssize_t send(const char* buf, size_t len, const endpoint_t& ep);
+  /**
+   * Receive a message.
+   *
+   * Upon success, the rx_bytes counter is increased by the number of
+   * bytes received.
+   *
+   * @param buf Start of memory area where the message should be stored
+   * @param len Lnegth of provided memory area in bytes
+   * @param addr Reference to an IP address, will be filled with sender address
+   * @return Number of bytes received, or -1 in case of failure
+   */
   ssize_t recvfrom(char* buf, size_t len, endpoint_t& addr);
+  /**
+   * Return the address where the socket is currently bound to.
+   *
+   * @return Address
+   */
   endpoint_t getsockep();
+  /**
+   * Close the socket.
+   */
   void close();
+  /**
+   * Return name of default destination.
+   */
   const std::string addrname() const { return ep2str(serv_addr); };
+  /**
+   * Return address of default destination.
+   */
   const endpoint_t& get_destination() const { return serv_addr; };
 
 private:
@@ -91,7 +156,13 @@ private:
   bool isopen;
 
 public:
+  /**
+   * Number of bytes sent through this socket.
+   */
   std::atomic_size_t tx_bytes;
+  /**
+   * Number of bytes received through this socket.
+   */
   std::atomic_size_t rx_bytes;
 };
 
