@@ -423,6 +423,11 @@ void ov_client_orlandoviols_t::service()
                   my_js_value(js_rendersettings, "mastergain", 1.0);
               rendersettings.peer2peer =
                   my_js_value(js_rendersettings, "peer2peer", true);
+              // level metering:
+              rendersettings.levelmeter_tc =
+                  my_js_value(js_rendersettings, "lmetertc", 0.5);
+              rendersettings.levelmeter_weight =
+                  my_js_value(js_rendersettings, "lmeterfw", std::string("Z"));
               // ambient sound:
               rendersettings.ambientsound =
                   my_js_value(js_stage, "ambientsound", std::string(""));

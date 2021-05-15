@@ -189,10 +189,14 @@ struct render_settings_t {
   bool headtrackingrotsrc;
   /// data logging port:
   port_t headtrackingport;
-  // ambient sound file url:
+  /// ambient sound file url:
   std::string ambientsound;
-  // ambient sound file level in dB:
+  /// ambient sound file level in dB:
   double ambientlevel;
+  /// Level meter time constant:
+  double levelmeter_tc;
+  /// Level meter frequency weighting:
+  std::string levelmeter_weight;
 };
 
 bool operator!=(const render_settings_t& a, const render_settings_t& b);

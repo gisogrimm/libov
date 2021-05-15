@@ -91,6 +91,8 @@ render_settings_t default_rendersettings = {
     0,                                 // port_t headtrackingport;
     "",                                // std::string ambientsound;
     50,                                // double ambientlevel;
+    0.5,                               // double levelmeter_tc;
+    "Z",                               // std::string levelmeter_weight;
 };
 
 stage_t default_stage = {
@@ -176,7 +178,9 @@ bool operator!=(const render_settings_t& a, const render_settings_t& b)
          (a.headtrackingrotsrc != b.headtrackingrotsrc) ||
          (a.headtrackingport != b.headtrackingport) ||
          (a.ambientsound != b.ambientsound) ||
-         (a.ambientlevel != b.ambientlevel);
+         (a.ambientlevel != b.ambientlevel) ||
+         (a.levelmeter_tc != b.levelmeter_tc) ||
+         (a.levelmeter_weight != b.levelmeter_weight);
 }
 
 ov_render_base_t::ov_render_base_t(const std::string& deviceid)

@@ -657,7 +657,11 @@ void ov_render_tascar_t::start_session()
   tsccfg::node_set_attribute(e_session, "duration", "36000");
   tsccfg::node_set_attribute(e_session, "name", stage.thisdeviceid);
   tsccfg::node_set_attribute(e_session, "license", "CC0");
-  tsccfg::node_set_attribute(e_session, "levelmeter_tc", "0.5");
+  tsccfg::node_set_attribute(
+      e_session, "levelmeter_tc",
+      TASCAR::to_string(stage.rendersettings.levelmeter_tc));
+  tsccfg::node_set_attribute(e_session, "levelmeter_weight",
+                             stage.rendersettings.levelmeter_weight);
   // create a virtual acoustics "scene":
   tsccfg::node_t e_scene(tsccfg::node_add_child(e_session, "scene"));
   tsccfg::node_set_attribute(e_scene, "name", stage.thisdeviceid);
