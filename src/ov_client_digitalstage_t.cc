@@ -43,6 +43,7 @@ void ov_client_digitalstage_t::start_service()
   nlohmann::json initialDevice;
   initialDevice["uuid"] = backend.get_deviceid();
   initialDevice["type"] = "ov";
+  initialDevice["canOv"] = true;
   initialDevice["canAudio"] = true;
   initialDevice["canVideo"] = false;
   initialDevice["sendAudio"] = true;
