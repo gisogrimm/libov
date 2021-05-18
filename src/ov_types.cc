@@ -182,7 +182,7 @@ render_settings_t::render_settings_t()
       ambientlevel(50),                // double ambientlevel;
       lmetertc(0.5),                   // double levelmeter_tc;
       lmeterfw("Z"),                   // std::string lmeterfw;
-      delaycomp(17.0)                  // double delaycomp;
+      delaycomp(2.4)                   // double delaycomp;
 {
 }
 
