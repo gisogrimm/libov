@@ -146,7 +146,9 @@ bool operator!=(const stage_device_t& a, const stage_device_t& b);
    These settings do not need to be shared with other devices, or are
    dstributed via the relay server protocol.
  */
-struct render_settings_t {
+class render_settings_t {
+public:
+  render_settings_t();
   stage_device_id_t id;
   /// room dimensions:
   pos_t roomsize;
@@ -160,6 +162,8 @@ struct render_settings_t {
   bool renderreverb;
   /// flag wether rendering of image source model (ISM) or not:
   bool renderism;
+  /// apply distance law:
+  bool distancelaw;
   /// flag wether rendering of virtual acoustics is required:
   bool rawmode;
   /// Receiver type, either ortf or hrtf:
@@ -194,9 +198,11 @@ struct render_settings_t {
   /// ambient sound file level in dB:
   double ambientlevel;
   /// Level meter time constant:
-  double levelmeter_tc;
+  double lmetertc;
   /// Level meter frequency weighting:
-  std::string levelmeter_weight;
+  std::string lmeterfw;
+  /// delay compensation in meter:
+  double delaycomp;
 };
 
 bool operator!=(const render_settings_t& a, const render_settings_t& b);

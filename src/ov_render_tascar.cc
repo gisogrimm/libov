@@ -256,7 +256,8 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
           ++kch;
           tsccfg::node_t e_snd(tsccfg::node_add_child(e_src, "sound"));
           tsccfg::node_set_attribute(e_snd, "maxdist", "50");
-          tsccfg::node_set_attribute(e_snd, "gainmodel", "1");
+          if(!stage.rendersettings.distancelaw)
+            tsccfg::node_set_attribute(e_snd, "gainmodel", "1");
           tsccfg::node_set_attribute(e_snd, "delayline", "false");
           tsccfg::node_set_attribute(e_snd, "id", ch.id);
           double gain(ch.gain * stagemember.second.gain);
@@ -265,8 +266,9 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
             tsccfg::node_set_attribute(e_snd, "connect", ch.sourceport);
             gain *= stage.rendersettings.egogain;
           } else {
-            // if not self-monitor then decrease gain:
-            gain *= 0.6;
+            if(!stage.rendersettings.distancelaw)
+              // if not self-monitor then decrease gain:
+              gain *= 0.6;
           }
           tsccfg::node_set_attribute(e_snd, "gain",
                                      TASCAR::to_string(20.0 * log10(gain)));
@@ -657,11 +659,10 @@ void ov_render_tascar_t::start_session()
   tsccfg::node_set_attribute(e_session, "duration", "36000");
   tsccfg::node_set_attribute(e_session, "name", stage.thisdeviceid);
   tsccfg::node_set_attribute(e_session, "license", "CC0");
-  tsccfg::node_set_attribute(
-      e_session, "levelmeter_tc",
-      TASCAR::to_string(stage.rendersettings.levelmeter_tc));
+  tsccfg::node_set_attribute(e_session, "levelmeter_tc",
+                             TASCAR::to_string(stage.rendersettings.lmetertc));
   tsccfg::node_set_attribute(e_session, "levelmeter_weight",
-                             stage.rendersettings.levelmeter_weight);
+                             stage.rendersettings.lmeterfw);
   // create a virtual acoustics "scene":
   tsccfg::node_t e_scene(tsccfg::node_add_child(e_session, "scene"));
   tsccfg::node_set_attribute(e_scene, "name", stage.thisdeviceid);
@@ -683,7 +684,9 @@ void ov_render_tascar_t::start_session()
         e_rec, "gain",
         TASCAR::to_string(20 * log10(stage.rendersettings.mastergain)));
     // do not add delay (usually used for dynamic scene rendering):
-    tsccfg::node_set_attribute(e_rec, "delaycomp", "0.05");
+    tsccfg::node_set_attribute(
+        e_rec, "delaycomp",
+        TASCAR::to_string(stage.rendersettings.delaycomp / 340.0));
     // connect output ports:
     if(!stage.rendersettings.outputport1.empty()) {
       std::string srcport("master_l");

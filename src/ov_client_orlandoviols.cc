@@ -313,6 +313,9 @@ stage_device_t get_stage_dev(nlohmann::json& dev)
   }
 }
 
+#define GETJS(structname, field)                                               \
+  structname.field = my_js_value(js_##structname, #field, structname.field)
+
 // main frontend interface function:
 void ov_client_orlandoviols_t::service()
 {
@@ -395,7 +398,7 @@ void ov_client_orlandoviols_t::service()
               nlohmann::json js_roomsize(js_stage["size"]);
               nlohmann::json js_reverb(js_stage["reverb"]);
               render_settings_t rendersettings;
-              rendersettings.id = my_js_value(js_rendersettings, "id", -1);
+              GETJS(rendersettings, id);
               rendersettings.roomsize.x = my_js_value(js_roomsize, "x", 25.0);
               rendersettings.roomsize.y = my_js_value(js_roomsize, "y", 13.0);
               rendersettings.roomsize.z = my_js_value(js_roomsize, "z", 7.5);
@@ -403,31 +406,22 @@ void ov_client_orlandoviols_t::service()
                   my_js_value(js_reverb, "absorption", 0.6);
               rendersettings.damping = my_js_value(js_reverb, "damping", 0.7);
               rendersettings.reverbgain = my_js_value(js_reverb, "gain", 0.4);
-              rendersettings.renderreverb =
-                  my_js_value(js_rendersettings, "renderreverb", true);
-              rendersettings.renderism =
-                  my_js_value(js_rendersettings, "renderism", false);
-              rendersettings.outputport1 = my_js_value(
-                  js_rendersettings, "outputport1", std::string(""));
-              rendersettings.outputport2 = my_js_value(
-                  js_rendersettings, "outputport2", std::string(""));
-              rendersettings.rawmode =
-                  my_js_value(js_rendersettings, "rawmode", false);
-              rendersettings.rectype = my_js_value(js_rendersettings, "rectype",
-                                                   std::string("ortf"));
-              rendersettings.secrec =
-                  my_js_value(js_rendersettings, "secrec", 0.0);
-              rendersettings.egogain =
-                  my_js_value(js_rendersettings, "egogain", 1.0);
-              rendersettings.mastergain =
-                  my_js_value(js_rendersettings, "mastergain", 1.0);
-              rendersettings.peer2peer =
-                  my_js_value(js_rendersettings, "peer2peer", true);
+              GETJS(rendersettings, renderreverb);
+              GETJS(rendersettings, renderism);
+              GETJS(rendersettings, distancelaw);
+              GETJS(rendersettings, delaycomp);
+              // gains, ports and network:
+              GETJS(rendersettings, outputport1);
+              GETJS(rendersettings, outputport2);
+              GETJS(rendersettings, rawmode);
+              GETJS(rendersettings, rectype);
+              GETJS(rendersettings, secrec);
+              GETJS(rendersettings, egogain);
+              GETJS(rendersettings, mastergain);
+              GETJS(rendersettings, peer2peer);
               // level metering:
-              rendersettings.levelmeter_tc =
-                  my_js_value(js_rendersettings, "lmetertc", 0.5);
-              rendersettings.levelmeter_weight =
-                  my_js_value(js_rendersettings, "lmeterfw", std::string("Z"));
+              GETJS(rendersettings, lmetertc);
+              GETJS(rendersettings, lmeterfw);
               // ambient sound:
               rendersettings.ambientsound =
                   my_js_value(js_stage, "ambientsound", std::string(""));

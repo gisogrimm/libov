@@ -65,43 +65,13 @@ stage_device_t default_device = {
     true,        // bool sendlocal;
 };
 
-render_settings_t default_rendersettings = {
-    0,                // stage_device_id_t id;
-    default_roomsize, // pos_t roomsize;
-    0.6,              // double absorption;
-    0.7,              // double damping;
-    1.0,              // double reverbgain;
-    true,             // bool renderreverb;
-    false,            // bool renderism;
-    false,            // bool rawmode;
-    "hrtf",           // std::string rectype;
-    1.0,              // double egogain;
-    1.0,              // double mastergain;
-    true,             // bool peer2peer;
-    "",               // std::string outputport1;
-    "",               // std::string outputport2;
-    std::unordered_map<std::string,
-                       std::string>(), // std::unordered_map<std::string,
-                                       // std::string> xports;
-    std::vector<port_t>(),             // std::vector<port_t> xrecport;
-    0,                                 // double secrec;
-    false,                             // bool headtracking;
-    true,                              // bool headtrackingrotrec;
-    true,                              // bool headtrackingrotsrc;
-    0,                                 // port_t headtrackingport;
-    "",                                // std::string ambientsound;
-    50,                                // double ambientlevel;
-    0.5,                               // double levelmeter_tc;
-    "Z",                               // std::string levelmeter_weight;
-};
-
 stage_t default_stage = {
-    "",                     // std::string host;
-    0,                      // port_t port;
-    0,                      // secret_t pin;
-    default_rendersettings, // render_settings_t rendersettings;
-    "",                     // std::string thisdeviceid;
-    0,                      // stage_device_id_t thisstagedeviceid;
+    "",                  // std::string host;
+    0,                   // port_t port;
+    0,                   // secret_t pin;
+    render_settings_t(), // render_settings_t rendersettings;
+    "",                  // std::string thisdeviceid;
+    0,                   // stage_device_id_t thisstagedeviceid;
     std::map<stage_device_id_t,
              stage_device_t>(), // std::map<stage_device_id_t,
                                 // stage_device_t> stage;
@@ -168,19 +138,52 @@ bool operator!=(const render_settings_t& a, const render_settings_t& b)
   return (a.id != b.id) || (a.roomsize != b.roomsize) ||
          (a.absorption != b.absorption) || (a.damping != b.damping) ||
          (a.reverbgain != b.reverbgain) || (a.renderreverb != b.renderreverb) ||
-         (a.renderism != b.renderism) || (a.rawmode != b.rawmode) ||
-         (a.rectype != b.rectype) || (a.egogain != b.egogain) ||
-         (a.mastergain != b.mastergain) || (a.peer2peer != b.peer2peer) ||
-         (a.outputport1 != b.outputport1) || (a.outputport2 != b.outputport2) ||
-         (a.secrec != b.secrec) || (a.xports != b.xports) ||
-         (a.xrecport != b.xrecport) || (a.headtracking != b.headtracking) ||
+         (a.renderism != b.renderism) || (a.distancelaw != b.distancelaw) ||
+         (a.rawmode != b.rawmode) || (a.rectype != b.rectype) ||
+         (a.egogain != b.egogain) || (a.mastergain != b.mastergain) ||
+         (a.peer2peer != b.peer2peer) || (a.outputport1 != b.outputport1) ||
+         (a.outputport2 != b.outputport2) || (a.secrec != b.secrec) ||
+         (a.xports != b.xports) || (a.xrecport != b.xrecport) ||
+         (a.headtracking != b.headtracking) ||
          (a.headtrackingrotrec != b.headtrackingrotrec) ||
          (a.headtrackingrotsrc != b.headtrackingrotsrc) ||
          (a.headtrackingport != b.headtrackingport) ||
          (a.ambientsound != b.ambientsound) ||
-         (a.ambientlevel != b.ambientlevel) ||
-         (a.levelmeter_tc != b.levelmeter_tc) ||
-         (a.levelmeter_weight != b.levelmeter_weight);
+         (a.ambientlevel != b.ambientlevel) || (a.lmetertc != b.lmetertc) ||
+         (a.lmeterfw != b.lmeterfw) || (a.delaycomp != b.delaycomp);
+}
+
+render_settings_t::render_settings_t()
+    : id(0),                              // stage_device_id_t id;
+      roomsize(default_roomsize),         // pos_t roomsize;
+      absorption(0.6),                    // double absorption;
+      damping(0.7),                       // double damping;
+      reverbgain(1.0),                    // double reverbgain;
+      renderreverb(true),                 // bool renderreverb;
+      renderism(false),                   // bool renderism;
+      distancelaw(false), rawmode(false), // bool rawmode;
+      rectype("hrtf"),                    // std::string rectype;
+      egogain(1.0),                       // double egogain;
+      mastergain(1.0),                    // double mastergain;
+      peer2peer(true),                    // bool peer2peer;
+      outputport1(""),                    // std::string outputport1;
+      outputport2(""),                    // std::string outputport2;
+      xports(
+          std::unordered_map<std::string,
+                             std::string>()), // std::unordered_map<std::string,
+      // std::string> xports;
+      xrecport(std::vector<port_t>()), // std::vector<port_t> xrecport;
+      secrec(0),                       // double secrec;
+      headtracking(false),             // bool headtracking;
+      headtrackingrotrec(true),        // bool headtrackingrotrec;
+      headtrackingrotsrc(true),        // bool headtrackingrotsrc;
+      headtrackingport(0),             // port_t headtrackingport;
+      ambientsound(""),                // std::string ambientsound;
+      ambientlevel(50),                // double ambientlevel;
+      lmetertc(0.5),                   // double levelmeter_tc;
+      lmeterfw("Z"),                   // std::string lmeterfw;
+      delaycomp(17.0)                  // double delaycomp;
+{
 }
 
 ov_render_base_t::ov_render_base_t(const std::string& deviceid)
