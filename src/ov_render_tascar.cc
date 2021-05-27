@@ -127,7 +127,7 @@ ov_render_tascar_t::ov_render_tascar_t(const std::string& deviceid,
       inputports({"system:capture_1", "system:capture_2"}),
       headtrack_tauref(33.315), selfmonitor_delay(0.0), zitapath(ZITAPATH),
       is_proxy(false), use_proxy(false), cb_seqerr(nullptr),
-      cb_seqerr_data(nullptr), sorter_deadline(5.0)
+      cb_seqerr_data(nullptr), sorter_deadline(5.0), render_soundscape(true)
 {
 #ifdef SHOWDEBUG
   std::cout << "ov_render_tascar_t::ov_render_tascar_t" << std::endl;
@@ -325,7 +325,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
         TASCAR::to_string(20 * log10(stage.rendersettings.reverbgain)));
   }
   // ambient sounds:
-  if(stage.rendersettings.ambientsound.size()) {
+  if(stage.rendersettings.ambientsound.size() && render_soundscape ) {
     std::string hashname(url2localfilename(stage.rendersettings.ambientsound));
     // test if file exists:
     std::ifstream ambif(hashname);
@@ -1053,6 +1053,12 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
         headtrack_tauref = my_js_value(xcfg["headtrack"], "tauref", 33.315);
       if(xcfg["monitor"].is_object())
         selfmonitor_delay = my_js_value(xcfg["monitor"], "delay", 0.0);
+      if(xcfg["render"].is_object()) {
+        bool prev(render_soundscape);
+        render_soundscape = my_js_value(xcfg["render"], "soundscape", true );
+        if( prev != render_soundscape )
+          restart_session = true;
+      }
       if(xcfg["metronome"].is_object()) {
         metronome_t newmetro(xcfg["metronome"]);
         if(newmetro != metronome) {

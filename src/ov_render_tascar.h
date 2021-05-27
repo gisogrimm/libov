@@ -131,6 +131,7 @@ private:
   void* cb_seqerr_data;
   std::map<stage_device_id_t, client_stats_t> client_stats;
   double sorter_deadline;
+  bool render_soundscape;
 };
 
 #endif
