@@ -76,6 +76,17 @@ public:
    */
   void set_timeout_usec(int usec);
   /**
+   * Set priority for all packets (SO_PRIORITY)
+   *
+   * @param priority Priority value, 0 to 6.
+   */
+  void set_netpriority(int priority);
+  /**
+   * Set flags for low loss, low latency, low jitter, assured
+   * bandwidth, end-to-end service according to RFC2598
+   */
+  void set_expedited_forwarding_PHB();
+  /**
    * Bind the socket to a port.
    *
    * @param port Port number to bind the port to.

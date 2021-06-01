@@ -137,6 +137,12 @@ public:
    * required.
    */
   void set_reorder_deadline(double t_ms);
+  /**
+   * Set flags for low loss, low latency, low jitter, assured
+   * bandwidth, end-to-end service according to RFC2598 on outgoing
+   * socket
+   */
+  void set_expedited_forwarding_PHB();
 
 private:
   void sendsrv();

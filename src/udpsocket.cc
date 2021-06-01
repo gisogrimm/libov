@@ -68,28 +68,45 @@ udpsocket_t::udpsocket_t() : tx_bytes(0), rx_bytes(0)
   if(sockfd < 0)
     throw ErrMsg("Opening socket failed: ", errno);
 #ifndef __APPLE__
-  int priority = 5;
-  // IPTOS_CLASS_CS6 defined in netinet/ip.h 0xc0
   // int iptos = IPTOS_CLASS_CS6;
   int iptos = 0xc0;
-
-  // gnu SO_PRIORITY
-  // IP_TOS defined in ws2tcpip.h
 #if defined(WIN32) || defined(UNDER_CE)
   // setsockopt defined in winsock2.h 3rd parameter const char*
   // windows (cast):
   setsockopt(sockfd, IPPROTO_IP, IP_TOS, reinterpret_cast<const char*>(&iptos),
              sizeof(iptos));
+#else
+  // on linux:
+  setsockopt(sockfd, IPPROTO_IP, IP_TOS, &iptos, sizeof(iptos));
+#endif
+#endif
+  set_netpriority(6);
+  isopen = true;
+}
+
+void udpsocket_t::set_netpriority(int priority)
+{
+#ifndef __APPLE__
+  // gnu SO_PRIORITY
+  // IP_TOS defined in ws2tcpip.h
+#if defined(WIN32) || defined(UNDER_CE)
   // no documentation on what SO_PRIORITY does, optname, level in GNU socket
   setsockopt(sockfd, SOL_SOCKET, SO_GROUP_PRIORITY,
              reinterpret_cast<const char*>(&priority), sizeof(priority));
 #else
   // on linux:
-  setsockopt(sockfd, IPPROTO_IP, IP_TOS, &iptos, sizeof(iptos));
   setsockopt(sockfd, SOL_SOCKET, SO_PRIORITY, &priority, sizeof(priority));
 #endif
 #endif
-  isopen = true;
+}
+
+void udpsocket_t::set_expedited_forwarding_PHB()
+{
+#ifndef __APPLE__
+  int iptos = IPTOS_DSCP_EF;
+  setsockopt(sockfd, IPPROTO_IP, IP_TOS, &iptos, sizeof(iptos));
+#endif
+  set_netpriority(6);
 }
 
 udpsocket_t::~udpsocket_t()

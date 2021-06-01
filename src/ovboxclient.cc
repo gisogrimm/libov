@@ -85,6 +85,11 @@ ovboxclient_t::~ovboxclient_t()
   delete[] msgbuffers;
 }
 
+void ovboxclient_t::set_expedited_forwarding_PHB()
+{
+  remote_server.set_expedited_forwarding_PHB();
+}
+
 void ovboxclient_t::set_reorder_deadline(double t_ms)
 {
   if(t_ms > 0) {
