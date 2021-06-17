@@ -68,8 +68,6 @@ TASCARMODULS = system touchosc waitforjackport route jackrec sleep
 
 TASCARAUDIOPLUGS = sndfile delay metronome
 
-#viewport.o sampler.o cli.o irrender.o async_file.o vbap3d.o hoa.o
-
 OSFLAG :=
 ifeq ($(OS),Windows_NT)
 	OSFLAG += -D WIN32
