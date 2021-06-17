@@ -463,6 +463,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
     tsccfg::node_t e_p = tsccfg::node_add_child(e_wait, "port");
     tsccfg::node_set_text(e_p, port);
   }
+  tsccfg::node_add_child(e_mods, "sleep");
   // head tracking:
   if(stage.rendersettings.headtracking) {
     tsccfg::node_t e_head = tsccfg::node_add_child(e_mods, "ovheadtracker");
@@ -630,6 +631,7 @@ void ov_render_tascar_t::create_raw_dev(tsccfg::node_t e_session)
     tsccfg::node_t e_p = tsccfg::node_add_child(e_wait, "port");
     tsccfg::node_set_text(e_p, port);
   }
+  tsccfg::node_add_child(e_mods, "sleep");
 }
 
 void ov_render_tascar_t::clear_stage()

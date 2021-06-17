@@ -64,7 +64,7 @@ TASCARRECEIVERS = ortf hrtf simplefdn omni
 
 TASCARSOURCE = omni cardioidmod
 
-TASCARMODULS = system touchosc waitforjackport route jackrec
+TASCARMODULS = system touchosc waitforjackport route jackrec sleep
 
 TASCARAUDIOPLUGS = sndfile delay metronome
 
