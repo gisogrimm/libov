@@ -410,6 +410,7 @@ void ov_client_orlandoviols_t::service()
               GETJS(rendersettings, renderism);
               GETJS(rendersettings, distancelaw);
               GETJS(rendersettings, delaycomp);
+              GETJS(rendersettings, decorr);
               // gains, ports and network:
               GETJS(rendersettings, outputport1);
               GETJS(rendersettings, outputport2);

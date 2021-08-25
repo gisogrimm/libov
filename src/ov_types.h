@@ -203,6 +203,8 @@ public:
   std::string lmeterfw;
   /// delay compensation in meter:
   double delaycomp;
+  /// decorrelation length in milliseconds:
+  double decorr;
 };
 
 bool operator!=(const render_settings_t& a, const render_settings_t& b);

@@ -150,7 +150,8 @@ bool operator!=(const render_settings_t& a, const render_settings_t& b)
          (a.headtrackingport != b.headtrackingport) ||
          (a.ambientsound != b.ambientsound) ||
          (a.ambientlevel != b.ambientlevel) || (a.lmetertc != b.lmetertc) ||
-         (a.lmeterfw != b.lmeterfw) || (a.delaycomp != b.delaycomp);
+         (a.lmeterfw != b.lmeterfw) || (a.delaycomp != b.delaycomp) ||
+         (a.decorr != b.decorr);
 }
 
 render_settings_t::render_settings_t()
@@ -182,7 +183,8 @@ render_settings_t::render_settings_t()
       ambientlevel(50),                // double ambientlevel;
       lmetertc(0.5),                   // double levelmeter_tc;
       lmeterfw("Z"),                   // std::string lmeterfw;
-      delaycomp(2.4)                   // double delaycomp;
+      delaycomp(2.4),                  // double delaycomp;
+      decorr(0.0)                      // double decorr;
 {
 }
 

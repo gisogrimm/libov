@@ -302,7 +302,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
         TASCAR::to_string(to_tascar(stage.rendersettings.roomsize)));
     tsccfg::node_set_attribute(
         e_rvb, "reflectivity",
-        TASCAR::to_string(1.0 - stage.rendersettings.absorption));
+        TASCAR::to_string(sqrt(1.0 - stage.rendersettings.absorption)));
     tsccfg::node_set_attribute(e_rvb, "damping",
                                TASCAR::to_string(stage.rendersettings.damping));
   }
@@ -681,6 +681,12 @@ void ov_render_tascar_t::start_session()
       tsccfg::node_set_attribute(e_rec, "angle", "140");
       tsccfg::node_set_attribute(e_rec, "f6db", "12000");
       tsccfg::node_set_attribute(e_rec, "fmin", "3000");
+    }
+    if(stage.rendersettings.decorr > 0) {
+      tsccfg::node_set_attribute(e_rec, "decorr", "true");
+      tsccfg::node_set_attribute(
+          e_rec, "decorr_length",
+          TASCAR::to_string(0.001 * stage.rendersettings.decorr));
     }
     tsccfg::node_set_attribute(e_rec, "name", "master");
     tsccfg::node_set_attribute(
