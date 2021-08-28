@@ -205,6 +205,10 @@ public:
   double delaycomp;
   /// decorrelation length in milliseconds:
   double decorr;
+  /// receive only downmixed signal:
+  bool onlydownmix;
+  /// send session mix:
+  bool sessionmixer;
 };
 
 bool operator!=(const render_settings_t& a, const render_settings_t& b);

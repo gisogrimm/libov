@@ -110,6 +110,11 @@ typedef uint8_t epmode_t;
  * Using a proxy, do not send audio to this client.
  */
 #define B_DONOTSEND 4
+/**
+ * @ingroup operationmodes
+ * This device is sending a session mix, do not send to normal clients.
+ */
+#define B_SESSIONMIXER 8
 
 // the message header is a byte array with:
 // - secret

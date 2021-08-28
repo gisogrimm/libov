@@ -752,8 +752,9 @@ void ov_render_tascar_t::start_session()
     ovboxclient = new ovboxclient_t(
         stage.host, stage.port, 4464 + 2 * stage.thisstagedeviceid, 0, 30,
         stage.pin, stage.thisstagedeviceid, stage.rendersettings.peer2peer,
-        use_proxy, false, stage.stage[stage.thisstagedeviceid].sendlocal,
-        sorter_deadline);
+        use_proxy, stage.rendersettings.onlydownmix,
+        stage.stage[stage.thisstagedeviceid].sendlocal, sorter_deadline,
+        stage.rendersettings.sessionmixer);
     if(cb_seqerr)
       ovboxclient->set_seqerr_callback(cb_seqerr, cb_seqerr_data);
     if(stage.rendersettings.secrec > 0)

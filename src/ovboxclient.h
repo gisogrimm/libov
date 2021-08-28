@@ -103,7 +103,8 @@ public:
   ovboxclient_t(const std::string& desthost, port_t destport, port_t recport,
                 port_t portoffset, int prio, secret_t secret,
                 stage_device_id_t callerid, bool peer2peer, bool donotsend,
-                bool downmixonly, bool sendlocal, double deadline);
+                bool downmixonly, bool sendlocal, double deadline,
+                bool sessionmixer);
   virtual ~ovboxclient_t();
   void announce_new_connection(stage_device_id_t cid, const ep_desc_t& ep);
   void announce_connection_lost(stage_device_id_t cid);

@@ -46,7 +46,7 @@ ovboxclient_t::ovboxclient_t(const std::string& desthost, port_t destport,
                              secret_t secret, stage_device_id_t callerid,
                              bool peer2peer_, bool donotsend_,
                              bool downmixonly_, bool sendlocal_,
-                             double deadline)
+                             double deadline, bool sessionmixer)
     : prio(prio), secret(secret), remote_server(secret, callerid),
       toport(destport), recport(recport), portoffset(portoffset),
       callerid(callerid), runsession(true), mode(0), cb_ping(nullptr),
@@ -60,6 +60,8 @@ ovboxclient_t::ovboxclient_t(const std::string& desthost, port_t destport,
     mode |= B_DOWNMIXONLY;
   if(donotsend_)
     mode |= B_DONOTSEND;
+  if(sessionmixer)
+    mode |= B_SESSIONMIXER;
   local_server.set_timeout_usec(10000);
   local_server.set_destination("localhost");
   local_server.bind(recport, true);
@@ -411,17 +413,20 @@ void ovboxclient_t::recsrv()
                   // other end is in peer-to-peer mode.
                   if(!(ep.mode & B_DONOTSEND)) {
                     // sending is not deactivated.
-                    if(sendlocal &&
-                       (endpoints[callerid].ep.sin_addr.s_addr ==
-                        ep.ep.sin_addr.s_addr) &&
-                       (ep.localep.sin_addr.s_addr != 0))
-                      // same network.
-                      remote_server.send(msg, un, ep.localep);
-                    else
-                      remote_server.send(msg, un, ep.ep);
+                    if(!(ep.mode & B_DOWNMIXONLY) || (mode & B_SESSIONMIXER)) {
+                      // remote is receiving downmix and this is downmixer
+                      if(sendlocal &&
+                         (endpoints[callerid].ep.sin_addr.s_addr ==
+                          ep.ep.sin_addr.s_addr) &&
+                         (ep.localep.sin_addr.s_addr != 0))
+                        // same network.
+                        remote_server.send(msg, un, ep.localep);
+                      else
+                        remote_server.send(msg, un, ep.ep);
+                    }
+                  } else {
+                    sendtoserver = true;
                   }
-                } else {
-                  sendtoserver = true;
                 }
               }
             }
