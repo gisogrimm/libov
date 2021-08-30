@@ -202,6 +202,8 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
   // device is not sending audio, then the stage layout will
   // differ.
   bool b_sender(!thisdev.channels.empty());
+  if( stage.rendersettings.senddownmix )
+    b_sender = false;
   if(b_sender) {
     // set position and orientation of receiver:
     tsccfg::node_t e_pos(tsccfg::node_add_child(e_rec, "position"));
@@ -422,7 +424,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
       ++chn;
     }
   }
-  if(thisdev.channels.size() > 0) {
+  if((thisdev.channels.size() > 0) && (!stage.rendersettings.senddownmix) ) {
     // create metronome:
     tsccfg::node_t e_routemetro(tsccfg::node_add_child(e_mods, "route"));
     tsccfg::node_set_attribute(e_routemetro, "name",
@@ -455,6 +457,21 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
       waitports.push_back(stage.thisdeviceid + "_sender:in_" +
                           std::to_string(chn));
     }
+  }
+  if(stage.rendersettings.senddownmix ) {
+    // create network sender:
+    tsccfg::node_t e_sys(tsccfg::node_add_child(e_mods, "system"));
+    tsccfg::node_set_attribute(
+        e_sys, "command",
+        zitapath + "zita-j2n --chan " +
+            std::to_string(2) + " --jname " +
+            stage.thisdeviceid + "_sender --16bit 127.0.0.1 " +
+            std::to_string(4464 + 2 * stage.thisstagedeviceid));
+    tsccfg::node_set_attribute(e_sys, "onunload", "killall zita-j2n");
+    session_add_connect(e_session, "render."+stage.thisdeviceid+":master_l",
+                        stage.thisdeviceid + "_sender:in_1");
+    session_add_connect(e_session, "render."+stage.thisdeviceid+":master_r",
+                        stage.thisdeviceid + "_sender:in_2");
   }
   tsccfg::node_t e_wait = tsccfg::node_add_child(e_mods, "waitforjackport");
   tsccfg::node_set_attribute(e_wait, "name",
@@ -697,6 +714,7 @@ void ov_render_tascar_t::start_session()
         e_rec, "delaycomp",
         TASCAR::to_string(stage.rendersettings.delaycomp / 340.0));
     // connect output ports:
+    if( !stage.rendersettings.senddownmix ){
     if(!stage.rendersettings.outputport1.empty()) {
       std::string srcport("master_l");
       if(stage.rendersettings.rectype == "itu51")
@@ -716,6 +734,7 @@ void ov_render_tascar_t::start_session()
       session_add_connect(e_session,
                           "render." + stage.thisdeviceid + ":" + srcport,
                           stage.rendersettings.outputport2);
+    }
     }
     // the host is not empty when this device is on a stage:
     if(!stage.host.empty()) {
