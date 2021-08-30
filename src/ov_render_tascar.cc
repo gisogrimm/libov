@@ -689,7 +689,7 @@ void ov_render_tascar_t::start_session()
   tsccfg::node_t e_scene(tsccfg::node_add_child(e_session, "scene"));
   tsccfg::node_set_attribute(e_scene, "name", stage.thisdeviceid);
   // create virtual acoustics only when not in raw mode:
-  if(!stage.rendersettings.rawmode) {
+  if(!(stage.rendersettings.rawmode || stage.rendersettings.receivedownmix)) {
     // add a main receiver for which the scene is rendered:
     tsccfg::node_t e_rec = tsccfg::node_add_child(e_scene, "receiver");
     // receiver can be "hrtf" or "ortf" (more receivers are possible in
