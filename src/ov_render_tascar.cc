@@ -202,7 +202,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
   // device is not sending audio, then the stage layout will
   // differ.
   bool b_sender(!thisdev.channels.empty());
-  if( stage.rendersettings.senddownmix )
+  if(stage.rendersettings.senddownmix)
     b_sender = false;
   if(b_sender) {
     // set position and orientation of receiver:
@@ -424,7 +424,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
       ++chn;
     }
   }
-  if((thisdev.channels.size() > 0) && (!stage.rendersettings.senddownmix) ) {
+  if((thisdev.channels.size() > 0) && (!stage.rendersettings.senddownmix)) {
     // create metronome:
     tsccfg::node_t e_routemetro(tsccfg::node_add_child(e_mods, "route"));
     tsccfg::node_set_attribute(e_routemetro, "name",
@@ -458,19 +458,18 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
                           std::to_string(chn));
     }
   }
-  if(stage.rendersettings.senddownmix ) {
+  if(stage.rendersettings.senddownmix) {
     // create network sender:
     tsccfg::node_t e_sys(tsccfg::node_add_child(e_mods, "system"));
     tsccfg::node_set_attribute(
         e_sys, "command",
-        zitapath + "zita-j2n --chan " +
-            std::to_string(2) + " --jname " +
+        zitapath + "zita-j2n --chan " + std::to_string(2) + " --jname " +
             stage.thisdeviceid + "_sender --16bit 127.0.0.1 " +
             std::to_string(4464 + 2 * stage.thisstagedeviceid));
     tsccfg::node_set_attribute(e_sys, "onunload", "killall zita-j2n");
-    session_add_connect(e_session, "render."+stage.thisdeviceid+":master_l",
+    session_add_connect(e_session, "render." + stage.thisdeviceid + ":master_l",
                         stage.thisdeviceid + "_sender:in_1");
-    session_add_connect(e_session, "render."+stage.thisdeviceid+":master_r",
+    session_add_connect(e_session, "render." + stage.thisdeviceid + ":master_r",
                         stage.thisdeviceid + "_sender:in_2");
   }
   tsccfg::node_t e_wait = tsccfg::node_add_child(e_mods, "waitforjackport");
@@ -714,27 +713,27 @@ void ov_render_tascar_t::start_session()
         e_rec, "delaycomp",
         TASCAR::to_string(stage.rendersettings.delaycomp / 340.0));
     // connect output ports:
-    if( !stage.rendersettings.senddownmix ){
-    if(!stage.rendersettings.outputport1.empty()) {
-      std::string srcport("master_l");
-      if(stage.rendersettings.rectype == "itu51")
-        srcport = "master.0L";
-      if(stage.rendersettings.rectype == "omni")
-        srcport = "master.0";
-      session_add_connect(e_session,
-                          "render." + stage.thisdeviceid + ":" + srcport,
-                          stage.rendersettings.outputport1);
-    }
-    if(!stage.rendersettings.outputport2.empty()) {
-      std::string srcport("master_r");
-      if(stage.rendersettings.rectype == "itu51")
-        srcport = "master.1R";
-      if(stage.rendersettings.rectype == "omni")
-        srcport = "master.0";
-      session_add_connect(e_session,
-                          "render." + stage.thisdeviceid + ":" + srcport,
-                          stage.rendersettings.outputport2);
-    }
+    if(!stage.rendersettings.senddownmix) {
+      if(!stage.rendersettings.outputport1.empty()) {
+        std::string srcport("master_l");
+        if(stage.rendersettings.rectype == "itu51")
+          srcport = "master.0L";
+        if(stage.rendersettings.rectype == "omni")
+          srcport = "master.0";
+        session_add_connect(e_session,
+                            "render." + stage.thisdeviceid + ":" + srcport,
+                            stage.rendersettings.outputport1);
+      }
+      if(!stage.rendersettings.outputport2.empty()) {
+        std::string srcport("master_r");
+        if(stage.rendersettings.rectype == "itu51")
+          srcport = "master.1R";
+        if(stage.rendersettings.rectype == "omni")
+          srcport = "master.0";
+        session_add_connect(e_session,
+                            "render." + stage.thisdeviceid + ":" + srcport,
+                            stage.rendersettings.outputport2);
+      }
     }
     // the host is not empty when this device is on a stage:
     if(!stage.host.empty()) {
@@ -852,29 +851,37 @@ void ov_render_tascar_t::start_audiobackend()
      (audiodevice.devicename != "manual")) {
     if(h_jack)
       delete h_jack;
-    std::string devname(audiodevice.devicename);
-    if(audiodevice.devicename == "highest") {
-      // the device name is not set, use the last one of available
-      // devices because this is most likely the one to use (e.g.,
-      // external sound card):
-      auto devs(list_sound_devices());
-      if(!devs.empty())
-        devname = devs.rbegin()->dev;
-    }
-    if(audiodevice.devicename == "plughighest") {
-      // the device name is not set, use the last one of available
-      // devices because this is most likely the one to use (e.g.,
-      // external sound card):
-      auto devs(list_sound_devices());
-      if(!devs.empty())
-        devname = std::string("plug") + devs.rbegin()->dev;
-    }
     char cmd[1024];
-    sprintf(cmd,
-            "JACK_NO_AUDIO_RESERVATION=1 jackd --sync -P 40 -d alsa -d %s "
-            "-r %g -p %d -n %d",
-            devname.c_str(), audiodevice.srate, audiodevice.periodsize,
-            audiodevice.numperiods);
+    if((audiodevice.devicename != "dummy") &&
+       (audiodevice.devicename != "plugdummy")) {
+      std::string devname(audiodevice.devicename);
+      if(audiodevice.devicename == "highest") {
+        // the device name is not set, use the last one of available
+        // devices because this is most likely the one to use (e.g.,
+        // external sound card):
+        auto devs(list_sound_devices());
+        if(!devs.empty())
+          devname = devs.rbegin()->dev;
+      }
+      if(audiodevice.devicename == "plughighest") {
+        // the device name is not set, use the last one of available
+        // devices because this is most likely the one to use (e.g.,
+        // external sound card):
+        auto devs(list_sound_devices());
+        if(!devs.empty())
+          devname = std::string("plug") + devs.rbegin()->dev;
+      }
+      sprintf(cmd,
+              "JACK_NO_AUDIO_RESERVATION=1 jackd --sync -P 40 -d alsa -d %s "
+              "-r %g -p %d -n %d",
+              devname.c_str(), audiodevice.srate, audiodevice.periodsize,
+              audiodevice.numperiods);
+    } else {
+      sprintf(cmd,
+              "JACK_NO_AUDIO_RESERVATION=1 jackd --sync -P 40 -d dummy "
+              "-r %g -p %d",
+              audiodevice.srate, audiodevice.periodsize);
+    }
     h_jack = new spawn_process_t(cmd);
     // replace sleep by testing for jack presence with timeout:
     sleep(7);

@@ -413,7 +413,8 @@ void ovboxclient_t::recsrv()
                   // other end is in peer-to-peer mode.
                   if(!(ep.mode & B_DONOTSEND)) {
                     // sending is not deactivated.
-                    if((ep.mode & B_RECEIVEDOWNMIX) == (mode & B_SENDDOWNMIX)) {
+                    if((bool)(ep.mode & B_RECEIVEDOWNMIX) ==
+                       (bool)(mode & B_SENDDOWNMIX)) {
                       // remote is receiving downmix and this is downmixer
                       if(sendlocal &&
                          (endpoints[callerid].ep.sin_addr.s_addr ==
