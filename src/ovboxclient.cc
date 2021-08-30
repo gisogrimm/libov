@@ -45,8 +45,8 @@ ovboxclient_t::ovboxclient_t(const std::string& desthost, port_t destport,
                              port_t recport, port_t portoffset, int prio,
                              secret_t secret, stage_device_id_t callerid,
                              bool peer2peer_, bool donotsend_,
-                             bool downmixonly_, bool sendlocal_,
-                             double deadline, bool sessionmixer)
+                             bool receivedownmix_, bool sendlocal_,
+                             double deadline, bool senddownmix)
     : prio(prio), secret(secret), remote_server(secret, callerid),
       toport(destport), recport(recport), portoffset(portoffset),
       callerid(callerid), runsession(true), mode(0), cb_ping(nullptr),
@@ -56,12 +56,12 @@ ovboxclient_t::ovboxclient_t(const std::string& desthost, port_t destport,
 {
   if(peer2peer_)
     mode |= B_PEER2PEER;
-  if(downmixonly_)
-    mode |= B_DOWNMIXONLY;
+  if(receivedownmix_)
+    mode |= B_RECEIVEDOWNMIX;
   if(donotsend_)
     mode |= B_DONOTSEND;
-  if(sessionmixer)
-    mode |= B_SESSIONMIXER;
+  if(senddownmix)
+    mode |= B_SENDDOWNMIX;
   local_server.set_timeout_usec(10000);
   local_server.set_destination("localhost");
   local_server.bind(recport, true);
@@ -178,7 +178,7 @@ void ovboxclient_t::announce_new_connection(stage_device_id_t cid,
   log(recport,
       "new connection for " + std::to_string(cid) + " from " + ep2str(ep.ep) +
           " in " + ((ep.mode & B_PEER2PEER) ? "peer-to-peer" : "server") +
-          "-mode" + ((ep.mode & B_DOWNMIXONLY) ? " downmixonly" : "") +
+          "-mode" + ((ep.mode & B_RECEIVEDOWNMIX) ? " receivedownmix" : "") +
           ((ep.mode & B_DONOTSEND) ? " donotsend" : "") + " v" + ep.version);
 }
 
@@ -413,7 +413,7 @@ void ovboxclient_t::recsrv()
                   // other end is in peer-to-peer mode.
                   if(!(ep.mode & B_DONOTSEND)) {
                     // sending is not deactivated.
-                    if((ep.mode & B_DOWNMIXONLY) == (mode & B_SESSIONMIXER)) {
+                    if((ep.mode & B_RECEIVEDOWNMIX) == (mode & B_SENDDOWNMIX)) {
                       // remote is receiving downmix and this is downmixer
                       if(sendlocal &&
                          (endpoints[callerid].ep.sin_addr.s_addr ==

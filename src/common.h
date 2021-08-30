@@ -104,7 +104,7 @@ typedef uint8_t epmode_t;
  * @ingroup operationmodes
  * Can receive only downmixed signals
  */
-#define B_DOWNMIXONLY 2
+#define B_RECEIVEDOWNMIX 2
 /**
  * @ingroup operationmodes
  * Using a proxy, do not send audio to this client.
@@ -114,7 +114,7 @@ typedef uint8_t epmode_t;
  * @ingroup operationmodes
  * This device is sending a session mix, do not send to normal clients.
  */
-#define B_SESSIONMIXER 8
+#define B_SENDDOWNMIX 8
 
 // the message header is a byte array with:
 // - secret

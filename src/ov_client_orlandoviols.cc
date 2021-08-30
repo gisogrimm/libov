@@ -420,8 +420,8 @@ void ov_client_orlandoviols_t::service()
               GETJS(rendersettings, egogain);
               GETJS(rendersettings, mastergain);
               GETJS(rendersettings, peer2peer);
-              GETJS(rendersettings, onlydownmix);
-              GETJS(rendersettings, sessionmixer);
+              GETJS(rendersettings, receivedownmix);
+              GETJS(rendersettings, senddownmix);
               // level metering:
               GETJS(rendersettings, lmetertc);
               GETJS(rendersettings, lmeterfw);

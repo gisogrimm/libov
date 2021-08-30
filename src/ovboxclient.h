@@ -96,15 +96,17 @@ public:
      \param callerid ID of caller (unique number of device in stage, max 30)
      \param peer2peer use peer-to-peer mode for this client
      \param donotsend do not request data messages from server or peers (e.g.,
-     in proxy mode) \param downmixonly send downmix only, not individual tracks
-     (not yet fully implemented) \param sendlocal allow sending to local IP
-     address if in same network
+     in proxy mode)
+     \param receivedownmix receive downmix only, not individual tracks
+     (not yet fully implemented)
+     \param sendlocal allow sending to local IP address if in same network
+     \param senddownmix send downmix to downmix layer, no physical inputs
    */
   ovboxclient_t(const std::string& desthost, port_t destport, port_t recport,
                 port_t portoffset, int prio, secret_t secret,
                 stage_device_id_t callerid, bool peer2peer, bool donotsend,
-                bool downmixonly, bool sendlocal, double deadline,
-                bool sessionmixer);
+                bool receivedownmix, bool sendlocal, double deadline,
+                bool senddownmix);
   virtual ~ovboxclient_t();
   void announce_new_connection(stage_device_id_t cid, const ep_desc_t& ep);
   void announce_connection_lost(stage_device_id_t cid);

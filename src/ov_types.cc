@@ -151,8 +151,8 @@ bool operator!=(const render_settings_t& a, const render_settings_t& b)
          (a.ambientsound != b.ambientsound) ||
          (a.ambientlevel != b.ambientlevel) || (a.lmetertc != b.lmetertc) ||
          (a.lmeterfw != b.lmeterfw) || (a.delaycomp != b.delaycomp) ||
-         (a.decorr != b.decorr) || (a.onlydownmix != b.onlydownmix) ||
-         (a.sessionmixer != b.sessionmixer);
+         (a.decorr != b.decorr) || (a.receivedownmix != b.receivedownmix) ||
+         (a.senddownmix != b.senddownmix);
 }
 
 render_settings_t::render_settings_t()
@@ -186,7 +186,7 @@ render_settings_t::render_settings_t()
       lmeterfw("Z"),                   // std::string lmeterfw;
       delaycomp(2.4),                  // double delaycomp;
       decorr(0.0),                     // double decorr;
-      onlydownmix(false), sessionmixer(false)
+      receivedownmix(false), senddownmix(false)
 {
 }
 
