@@ -549,8 +549,11 @@ void ov_render_tascar_t::create_raw_dev(tsccfg::node_t e_session)
       chanlist += std::to_string(k + 1);
     }
     if(stage.thisstagedeviceid != stagemember.second.id) {
-      std::string clientname(get_stagedev_name(stagemember.second.id));
-      std::string n2jclientname(stage.thisdeviceid + "_receiver");
+      std::string clientname(get_stagedev_name(stagemember.second.id) + "." +
+                             stage.thisdeviceid);
+      std::string n2jclientname("n2j_" +
+                                get_stagedev_name(stagemember.second.id) + "." +
+                                stage.thisdeviceid);
       tsccfg::node_t e_sys = tsccfg::node_add_child(e_mods, "system");
       double buff(thisdev.receiverjitter + stagemember.second.senderjitter);
       tsccfg::node_set_attribute(
