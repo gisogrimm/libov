@@ -269,6 +269,8 @@ stage_device_t get_stage_dev(nlohmann::json& dev)
     stage_device_t stagedev;
     stagedev.id = my_js_value(dev, "id", -1);
     stagedev.label = my_js_value(dev, "label", std::string(""));
+    stagedev.receivedownmix = my_js_value(dev, "receivedownmix", false);
+    stagedev.senddownmix = my_js_value(dev, "senddownmix", false);
     nlohmann::json channels(dev["channels"]);
     size_t chcnt(0);
     if(channels.is_array())
@@ -420,8 +422,6 @@ void ov_client_orlandoviols_t::service()
               GETJS(rendersettings, egogain);
               GETJS(rendersettings, mastergain);
               GETJS(rendersettings, peer2peer);
-              GETJS(rendersettings, receivedownmix);
-              GETJS(rendersettings, senddownmix);
               // level metering:
               GETJS(rendersettings, lmetertc);
               GETJS(rendersettings, lmeterfw);

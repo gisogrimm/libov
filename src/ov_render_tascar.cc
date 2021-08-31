@@ -202,7 +202,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
   // device is not sending audio, then the stage layout will
   // differ.
   bool b_sender(!thisdev.channels.empty());
-  if(stage.rendersettings.senddownmix)
+  if(thisdev.senddownmix)
     b_sender = false;
   if(b_sender) {
     // set position and orientation of receiver:
@@ -424,7 +424,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
       ++chn;
     }
   }
-  if((thisdev.channels.size() > 0) && (!stage.rendersettings.senddownmix)) {
+  if((thisdev.channels.size() > 0) && (!stage.thisdevice.senddownmix)) {
     // create metronome:
     tsccfg::node_t e_routemetro(tsccfg::node_add_child(e_mods, "route"));
     tsccfg::node_set_attribute(e_routemetro, "name",
@@ -458,7 +458,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
                           std::to_string(chn));
     }
   }
-  if(stage.rendersettings.senddownmix) {
+  if(stage.thisdevice.senddownmix) {
     // create network sender:
     tsccfg::node_t e_sys(tsccfg::node_add_child(e_mods, "system"));
     tsccfg::node_set_attribute(
@@ -548,6 +548,8 @@ void ov_render_tascar_t::create_raw_dev(tsccfg::node_t e_session)
         chanlist += ",";
       chanlist += std::to_string(k + 1);
     }
+    if(stagemember.second.senddownmix)
+      chanlist = "1,2";
     if(stage.thisstagedeviceid != stagemember.second.id) {
       std::string clientname(get_stagedev_name(stagemember.second.id) + "." +
                              stage.thisdeviceid);
@@ -565,14 +567,16 @@ void ov_render_tascar_t::create_raw_dev(tsccfg::node_t e_session)
       tsccfg::node_set_attribute(e_sys, "onunload", "killall zita-n2j");
       tsccfg::node_t e_route = tsccfg::node_add_child(e_mods, "route");
       tsccfg::node_set_attribute(e_route, "name", clientname);
-      tsccfg::node_set_attribute(
-          e_route, "channels",
-          std::to_string(stagemember.second.channels.size()));
+      size_t memchannels(stagemember.second.channels.size());
+      if(stagemember.second.senddownmix)
+        memchannels = 2u;
+      tsccfg::node_set_attribute(e_route, "channels",
+                                 std::to_string(memchannels));
       tsccfg::node_set_attribute(
           e_route, "gain",
           TASCAR::to_string(20 * log10(stagemember.second.gain)));
       tsccfg::node_set_attribute(e_route, "connect", n2jclientname + ":out_.*");
-      for(size_t c = 0; c < stagemember.second.channels.size(); ++c) {
+      for(size_t c = 0; c < memchannels; ++c) {
         ++chcnt;
         if(stage.thisstagedeviceid != stagemember.second.id) {
           std::string srcport(clientname + ":out." + std::to_string(c));
@@ -689,7 +693,7 @@ void ov_render_tascar_t::start_session()
   tsccfg::node_t e_scene(tsccfg::node_add_child(e_session, "scene"));
   tsccfg::node_set_attribute(e_scene, "name", stage.thisdeviceid);
   // create virtual acoustics only when not in raw mode:
-  if(!(stage.rendersettings.rawmode || stage.rendersettings.receivedownmix)) {
+  if(!(stage.rendersettings.rawmode || stage.thisdevice.receivedownmix)) {
     // add a main receiver for which the scene is rendered:
     tsccfg::node_t e_rec = tsccfg::node_add_child(e_scene, "receiver");
     // receiver can be "hrtf" or "ortf" (more receivers are possible in
@@ -716,7 +720,7 @@ void ov_render_tascar_t::start_session()
         e_rec, "delaycomp",
         TASCAR::to_string(stage.rendersettings.delaycomp / 340.0));
     // connect output ports:
-    if(!stage.rendersettings.senddownmix) {
+    if(!stage.thisdevice.senddownmix) {
       if(!stage.rendersettings.outputport1.empty()) {
         std::string srcport("master_l");
         if(stage.rendersettings.rectype == "itu51")
@@ -773,9 +777,9 @@ void ov_render_tascar_t::start_session()
     ovboxclient = new ovboxclient_t(
         stage.host, stage.port, 4464 + 2 * stage.thisstagedeviceid, 0, 30,
         stage.pin, stage.thisstagedeviceid, stage.rendersettings.peer2peer,
-        use_proxy, stage.rendersettings.receivedownmix,
+        use_proxy, stage.thisdevice.receivedownmix,
         stage.stage[stage.thisstagedeviceid].sendlocal, sorter_deadline,
-        stage.rendersettings.senddownmix);
+        stage.thisdevice.senddownmix);
     if(cb_seqerr)
       ovboxclient->set_seqerr_callback(cb_seqerr, cb_seqerr_data);
     if(stage.rendersettings.secrec > 0)

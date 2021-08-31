@@ -63,6 +63,8 @@ stage_device_t default_device = {
     5.0,         // double senderjitter;
     5.0,         // double receiverjitter;
     true,        // bool sendlocal;
+    false,       // bool receivedownmix;
+    false,       // bool senddownmix;
 };
 
 stage_t default_stage = {
@@ -130,7 +132,10 @@ bool operator!=(const stage_device_t& a, const stage_device_t& b)
          (a.position != b.position) || (a.orientation != b.orientation) ||
          (a.gain != b.gain) || (a.mute != b.mute) ||
          (a.senderjitter != b.senderjitter) ||
-         (a.receiverjitter != b.receiverjitter) || (a.sendlocal != b.sendlocal);
+         (a.receiverjitter != b.receiverjitter) ||
+         (a.sendlocal != b.sendlocal) ||
+         (a.receivedownmix != b.receivedownmix) ||
+         (a.senddownmix != b.senddownmix);
 }
 
 bool operator!=(const render_settings_t& a, const render_settings_t& b)
@@ -151,8 +156,7 @@ bool operator!=(const render_settings_t& a, const render_settings_t& b)
          (a.ambientsound != b.ambientsound) ||
          (a.ambientlevel != b.ambientlevel) || (a.lmetertc != b.lmetertc) ||
          (a.lmeterfw != b.lmeterfw) || (a.delaycomp != b.delaycomp) ||
-         (a.decorr != b.decorr) || (a.receivedownmix != b.receivedownmix) ||
-         (a.senddownmix != b.senddownmix);
+         (a.decorr != b.decorr);
 }
 
 render_settings_t::render_settings_t()
@@ -185,8 +189,7 @@ render_settings_t::render_settings_t()
       lmetertc(0.5),                   // double levelmeter_tc;
       lmeterfw("Z"),                   // std::string lmeterfw;
       delaycomp(2.4),                  // double delaycomp;
-      decorr(0.0),                     // double decorr;
-      receivedownmix(false), senddownmix(false)
+      decorr(0.0)                      // double decorr;
 {
 }
 

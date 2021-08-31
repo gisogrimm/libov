@@ -132,6 +132,10 @@ struct stage_device_t {
   double receiverjitter;
   /// send to local IP if same network:
   bool sendlocal;
+  /// receive only downmixed signal:
+  bool receivedownmix;
+  /// send session mix:
+  bool senddownmix;
 };
 
 bool operator!=(const std::vector<device_channel_t>& a,
@@ -205,10 +209,6 @@ public:
   double delaycomp;
   /// decorrelation length in milliseconds:
   double decorr;
-  /// receive only downmixed signal:
-  bool receivedownmix;
-  /// send session mix:
-  bool senddownmix;
 };
 
 bool operator!=(const render_settings_t& a, const render_settings_t& b);
