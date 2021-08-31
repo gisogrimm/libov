@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 VERSION=$(cat Makefile | sed -e '1 ! d' -e 's/.*=//1')
-MINORVERSION=$(git rev-list --count 3974bcb06ac1303bf1c9ebd5273e15ae841d94ca..HEAD)
+MINORVERSION=$(git rev-list --count b079905feeef734feb672c6f47e187aa0b9171e8..HEAD)
 COMMIT=$(git rev-parse --short HEAD)
 COMMITMOD=$(test -z "`git status --porcelain -uno`" || echo "-modified")
 FULLVERSION=${VERSION}.${MINORVERSION}-${COMMIT}${COMMITMOD}
