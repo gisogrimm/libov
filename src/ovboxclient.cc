@@ -425,9 +425,9 @@ void ovboxclient_t::recsrv()
                       else
                         remote_server.send(msg, un, ep.ep);
                     }
-                  } else {
-                    sendtoserver = true;
                   }
+                } else {
+                  sendtoserver = true;
                 }
               }
             }
