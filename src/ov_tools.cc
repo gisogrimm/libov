@@ -81,7 +81,9 @@ bool is_ovbox()
   // check if parent is the autorun script:
   pid_t ppid(get_process_parent_id(get_process_parent_id(getppid())));
   char name[BUFSIZ];
+  memset(name, 0, BUFSIZ);
   char arg[BUFSIZ];
+  memset(arg, 0, BUFSIZ);
   get_process_name(ppid, name, arg);
   return strcmp(arg, "/home/pi/autorun") == 0;
 #else
