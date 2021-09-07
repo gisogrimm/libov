@@ -227,7 +227,9 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
   for(auto stagemember : stage.stage) {
     if(stagemember.second.channels.size()) {
       // create sound source only for sending devices:
-      if(b_sender || (stagemember.second.id != thisdev.id)) {
+      if((b_sender || (stagemember.second.id != thisdev.id)) &&
+         ((!stagemember.second.senddownmix) ||
+          (stagemember.second.id == thisdev.id))) {
         TASCAR::pos_t pos(to_tascar(stagemember.second.position));
         TASCAR::zyx_euler_t rot(to_tascar(stagemember.second.orientation));
         if(!b_sender) {
@@ -367,7 +369,8 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
         chanlist += std::to_string(k + 1);
       }
       // do not create a network receiver for local device:
-      if(stage.thisstagedeviceid != stagemember.second.id) {
+      if((stage.thisstagedeviceid != stagemember.second.id) &&
+         (!stagemember.second.senddownmix)) {
         std::string clientname(get_stagedev_name(stagemember.second.id));
         tsccfg::node_t e_sys(tsccfg::node_add_child(e_mods, "system"));
         double buff(thisdev.receiverjitter + stagemember.second.senderjitter);
