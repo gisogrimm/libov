@@ -796,6 +796,12 @@ void ov_render_tascar_t::start_session()
       ovboxclient->add_proxy_client(proxyclient.first, proxyclient.second);
     }
   }
+  if(tscinclude.size()) {
+    tsccfg::node_t e_inc(tsccfg::node_add_child(e_session, "include"));
+    tsccfg::node_set_attribute(e_inc, "name", stage.thisdeviceid + ".itsc");
+    std::ofstream ofh(stage.thisdeviceid + ".itsc");
+    ofh << tscinclude;
+  }
   tsc.save(folder + "ovbox_debugsession.tsc");
   tascar = new TASCAR::session_t(tsc.save_to_string(),
                                  TASCAR::session_t::LOAD_STRING, "");
@@ -1086,6 +1092,10 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
       bool restart_session(false);
       // parse extra configuration:
       nlohmann::json xcfg(nlohmann::json::parse(js));
+      std::string prev_tscinclude(tscinclude);
+      tscinclude = my_js_value(xcfg, "tscinclude", tscinclude);
+      if(prev_tscinclude != tscinclude)
+        restart_session = true;
       if(xcfg["network"].is_object()) {
         double new_deadline =
             my_js_value(xcfg["network"], "deadline", sorter_deadline);

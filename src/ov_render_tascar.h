@@ -133,6 +133,8 @@ private:
   double sorter_deadline;
   bool expedited_forwarding_PHB;
   bool render_soundscape;
+  // user provided TASCAR include file content:
+  std::string tscinclude;
 };
 
 #endif
