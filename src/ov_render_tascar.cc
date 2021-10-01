@@ -212,8 +212,11 @@ void ov_render_tascar_t::add_network_receiver(
   if((stage.thisstagedeviceid != stagemember.id) &&
      (stagemember.senddownmix == thisdev.receivedownmix)) {
     std::string clientname(get_stagedev_name(stagemember.id));
-    std::string n2jclientname("n2j_" + get_stagedev_name(stagemember.id) + "." +
+    std::string n2jclientname(get_stagedev_name(stagemember.id) + "." +
                               stage.thisdeviceid);
+    if(stage.rendersettings.rawmode || stage.thisdevice.receivedownmix) {
+      n2jclientname = "n2j_" + n2jclientname;
+    }
     tsccfg::node_t e_sys(tsccfg::node_add_child(e_mods, "system"));
     double buff(thisdev.receiverjitter + stagemember.senderjitter);
     // provide access to path!
@@ -223,7 +226,7 @@ void ov_render_tascar_t::add_network_receiver(
             " --buf " + TASCAR::to_string(buff) + " 0.0.0.0 " +
             TASCAR::to_string(4464 + 2 * stagemember.id));
     tsccfg::node_set_attribute(e_sys, "onunload", "killall zita-n2j");
-    if(stage.rendersettings.rawmode) {
+    if(stage.rendersettings.rawmode || stage.thisdevice.receivedownmix) {
       // create additional route for gain control:
       tsccfg::node_t e_route = tsccfg::node_add_child(e_mods, "route");
       tsccfg::node_set_attribute(e_route, "name",
@@ -250,6 +253,7 @@ void ov_render_tascar_t::add_network_receiver(
             waitports.push_back(srcport);
             session_add_connect(e_session, srcport, destport);
           }
+          waitports.push_back(n2jclientname + ":out_" + std::to_string(c + 1));
         }
       }
     } else {
@@ -257,8 +261,7 @@ void ov_render_tascar_t::add_network_receiver(
       // create connections:
       for(size_t c = 0; c < stagemember.channels.size(); ++c) {
         if(stage.thisstagedeviceid != stagemember.id) {
-          std::string srcport(clientname + "." + stage.thisdeviceid + ":out_" +
-                              std::to_string(c + 1));
+          std::string srcport(n2jclientname + ":out_" + std::to_string(c + 1));
           std::string destport("render." + stage.thisdeviceid + ":" +
                                clientname + "." + std::to_string(c) + ".0");
           waitports.push_back(srcport);
@@ -289,151 +292,157 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
   bool b_sender(!thisdev.channels.empty());
   if(thisdev.senddownmix)
     b_sender = false;
-  if(b_sender) {
-    // set position and orientation of receiver:
-    tsccfg::node_t e_pos(tsccfg::node_add_child(e_rec, "position"));
-    tsccfg::node_set_text(
-        e_pos, "0 " + TASCAR::to_string(to_tascar(
-                          stage.stage[stage.rendersettings.id].position)));
-    tsccfg::node_t e_rot(tsccfg::node_add_child(e_rec, "orientation"));
-    tsccfg::node_set_text(
-        e_rot, "0 " + TASCAR::to_string(to_tascar(
-                          stage.stage[stage.rendersettings.id].orientation)));
-  }
-  // the stage is not empty, which means we are on a stage.  width of
-  // stage in degree, for listener-only devices (for sending devices
-  // we take positions transferred from database server):
-  double stagewidth(160);
-  double az(-0.5 * stagewidth);
-  double daz(stagewidth / (stage.stage.size() - (!b_sender)) * (M_PI / 180.0));
-  az = az * (M_PI / 180.0) - 0.5 * daz;
-  double radius(1.2);
-  // create sound sources:
-  for(auto stagemember : stage.stage) {
-    if(stagemember.second.channels.size()) {
-      // create sound source only for sending devices:
-      if((b_sender || (stagemember.second.id != thisdev.id)) &&
-         ((!stagemember.second.senddownmix) ||
-          (stagemember.second.id == thisdev.id))) {
-        TASCAR::pos_t pos(to_tascar(stagemember.second.position));
-        TASCAR::zyx_euler_t rot(to_tascar(stagemember.second.orientation));
-        if(!b_sender) {
-          // this device is not sending, overwrite stage layout:
-          az += daz;
-          pos.x = radius * cos(az);
-          pos.y = -radius * sin(az);
-          pos.z = 0;
-          rot.z = (180 / M_PI * (-az + M_PI));
-          rot.y = 0;
-          rot.x = 0;
-        }
-        // create a sound source for each device on stage:
-        tsccfg::node_t e_src(tsccfg::node_add_child(e_scene, "source"));
-        if(stagemember.second.id == thisdev.id) {
-          // in case of self-monitoring, this source is called "ego":
-          tsccfg::node_set_attribute(e_src, "name", "ego");
-        } else {
-          tsccfg::node_set_attribute(e_src, "name",
-                                     get_stagedev_name(stagemember.second.id));
-        }
-        tsccfg::node_set_attribute(e_src, "dlocation", to_string(pos));
-        tsccfg::node_t e_rot(tsccfg::node_add_child(e_src, "orientation"));
-        tsccfg::node_set_text(e_rot, "0 " + TASCAR::to_string(rot));
-        // e_src->set_attribute("dorientation", to_string(rot));
-        uint32_t kch(0);
-        for(auto ch : stagemember.second.channels) {
-          // create a sound for each channel:
-          ++kch;
-          tsccfg::node_t e_snd(tsccfg::node_add_child(e_src, "sound"));
-          tsccfg::node_set_attribute(e_snd, "maxdist", "50");
-          if(!stage.rendersettings.distancelaw)
-            tsccfg::node_set_attribute(e_snd, "gainmodel", "1");
-          tsccfg::node_set_attribute(e_snd, "delayline", "false");
-          tsccfg::node_set_attribute(e_snd, "id", ch.id);
-          double gain(ch.gain * stagemember.second.gain);
-          if(stagemember.second.id == thisdev.id) {
-            // connect self-monitoring source ports:
-            tsccfg::node_set_attribute(e_snd, "connect", ch.sourceport);
-            gain *= stage.rendersettings.egogain;
-          } else {
-            if(!stage.rendersettings.distancelaw)
-              // if not self-monitor then decrease gain:
-              gain *= 0.6;
+  if(stage.rendersettings.receive) {
+    if(b_sender) {
+      // set position and orientation of receiver:
+      tsccfg::node_t e_pos(tsccfg::node_add_child(e_rec, "position"));
+      tsccfg::node_set_text(
+          e_pos, "0 " + TASCAR::to_string(to_tascar(
+                            stage.stage[stage.rendersettings.id].position)));
+      tsccfg::node_t e_rot(tsccfg::node_add_child(e_rec, "orientation"));
+      tsccfg::node_set_text(
+          e_rot, "0 " + TASCAR::to_string(to_tascar(
+                            stage.stage[stage.rendersettings.id].orientation)));
+    }
+    // the stage is not empty, which means we are on a stage.  width of
+    // stage in degree, for listener-only devices (for sending devices
+    // we take positions transferred from database server):
+    double stagewidth(160);
+    double az(-0.5 * stagewidth);
+    double daz(stagewidth / (stage.stage.size() - (!b_sender)) *
+               (M_PI / 180.0));
+    az = az * (M_PI / 180.0) - 0.5 * daz;
+    double radius(1.2);
+    // create sound sources:
+    for(auto stagemember : stage.stage) {
+      if(stagemember.second.channels.size()) {
+        // create sound source only for sending devices:
+        if((b_sender || (stagemember.second.id != thisdev.id)) &&
+           ((!stagemember.second.senddownmix) ||
+            (stagemember.second.id == thisdev.id))) {
+          TASCAR::pos_t pos(to_tascar(stagemember.second.position));
+          TASCAR::zyx_euler_t rot(to_tascar(stagemember.second.orientation));
+          if(!b_sender) {
+            // this device is not sending, overwrite stage layout:
+            az += daz;
+            pos.x = radius * cos(az);
+            pos.y = -radius * sin(az);
+            pos.z = 0;
+            rot.z = (180 / M_PI * (-az + M_PI));
+            rot.y = 0;
+            rot.x = 0;
           }
-          tsccfg::node_set_attribute(e_snd, "gain",
-                                     TASCAR::to_string(20.0 * log10(gain)));
-          // set relative channel positions:
-          TASCAR::pos_t chpos(to_tascar(ch.position));
-          tsccfg::node_set_attribute(e_snd, "x", TASCAR::to_string(chpos.x));
-          tsccfg::node_set_attribute(e_snd, "y", TASCAR::to_string(chpos.y));
-          tsccfg::node_set_attribute(e_snd, "z", TASCAR::to_string(chpos.z));
-          if(ch.directivity == "omni")
-            tsccfg::node_set_attribute(e_snd, "type", "omni");
-          if(ch.directivity == "cardioid")
-            tsccfg::node_set_attribute(e_snd, "type", "cardioidmod");
-          if((stagemember.second.id == thisdev.id) &&
-             (selfmonitor_delay > 0.0)) {
-            tsccfg::node_t e_plugs(tsccfg::node_add_child(e_snd, "plugins"));
-            tsccfg::node_t e_delay(tsccfg::node_add_child(e_plugs, "delay"));
+          // create a sound source for each device on stage:
+          tsccfg::node_t e_src(tsccfg::node_add_child(e_scene, "source"));
+          if(stagemember.second.id == thisdev.id) {
+            // in case of self-monitoring, this source is called "ego":
+            tsccfg::node_set_attribute(e_src, "name", "ego");
+          } else {
             tsccfg::node_set_attribute(
-                e_delay, "delay", TASCAR::to_string(selfmonitor_delay * 0.001));
+                e_src, "name", get_stagedev_name(stagemember.second.id));
+          }
+          tsccfg::node_set_attribute(e_src, "dlocation", to_string(pos));
+          tsccfg::node_t e_rot(tsccfg::node_add_child(e_src, "orientation"));
+          tsccfg::node_set_text(e_rot, "0 " + TASCAR::to_string(rot));
+          // e_src->set_attribute("dorientation", to_string(rot));
+          uint32_t kch(0);
+          for(auto ch : stagemember.second.channels) {
+            // create a sound for each channel:
+            ++kch;
+            tsccfg::node_t e_snd(tsccfg::node_add_child(e_src, "sound"));
+            tsccfg::node_set_attribute(e_snd, "maxdist", "50");
+            if(!stage.rendersettings.distancelaw)
+              tsccfg::node_set_attribute(e_snd, "gainmodel", "1");
+            tsccfg::node_set_attribute(e_snd, "delayline", "false");
+            tsccfg::node_set_attribute(e_snd, "id", ch.id);
+            double gain(ch.gain * stagemember.second.gain);
+            if(stagemember.second.id == thisdev.id) {
+              // connect self-monitoring source ports:
+              tsccfg::node_set_attribute(e_snd, "connect", ch.sourceport);
+              gain *= stage.rendersettings.egogain;
+            } else {
+              if(!stage.rendersettings.distancelaw)
+                // if not self-monitor then decrease gain:
+                gain *= 0.6;
+            }
+            tsccfg::node_set_attribute(e_snd, "gain",
+                                       TASCAR::to_string(20.0 * log10(gain)));
+            // set relative channel positions:
+            TASCAR::pos_t chpos(to_tascar(ch.position));
+            tsccfg::node_set_attribute(e_snd, "x", TASCAR::to_string(chpos.x));
+            tsccfg::node_set_attribute(e_snd, "y", TASCAR::to_string(chpos.y));
+            tsccfg::node_set_attribute(e_snd, "z", TASCAR::to_string(chpos.z));
+            if(ch.directivity == "omni")
+              tsccfg::node_set_attribute(e_snd, "type", "omni");
+            if(ch.directivity == "cardioid")
+              tsccfg::node_set_attribute(e_snd, "type", "cardioidmod");
+            if((stagemember.second.id == thisdev.id) &&
+               (selfmonitor_delay > 0.0)) {
+              tsccfg::node_t e_plugs(tsccfg::node_add_child(e_snd, "plugins"));
+              tsccfg::node_t e_delay(tsccfg::node_add_child(e_plugs, "delay"));
+              tsccfg::node_set_attribute(
+                  e_delay, "delay",
+                  TASCAR::to_string(selfmonitor_delay * 0.001));
+            }
           }
         }
       }
     }
-  }
-  if(stage.rendersettings.renderism) {
-    // create shoebox room:
-    tsccfg::node_t e_rvb(tsccfg::node_add_child(e_scene, "facegroup"));
-    tsccfg::node_set_attribute(e_rvb, "name", "room");
-    tsccfg::node_set_attribute(
-        e_rvb, "shoebox",
-        TASCAR::to_string(to_tascar(stage.rendersettings.roomsize)));
-    tsccfg::node_set_attribute(
-        e_rvb, "reflectivity",
-        TASCAR::to_string(sqrt(1.0 - stage.rendersettings.absorption)));
-    tsccfg::node_set_attribute(e_rvb, "damping",
-                               TASCAR::to_string(stage.rendersettings.damping));
-  }
-  if(stage.rendersettings.renderreverb) {
-    // create reverb engine:
-    tsccfg::node_t e_rvb(tsccfg::node_add_child(e_scene, "reverb"));
-    tsccfg::node_set_attribute(e_rvb, "type", "simplefdn");
-    tsccfg::node_set_attribute(
-        e_rvb, "volumetric",
-        TASCAR::to_string(to_tascar(stage.rendersettings.roomsize)));
-    tsccfg::node_set_attribute(e_rvb, "image", "false");
-    tsccfg::node_set_attribute(e_rvb, "fdnorder", "5");
-    tsccfg::node_set_attribute(e_rvb, "dw", "60");
-    tsccfg::node_set_attribute(
-        e_rvb, "absorption",
-        TASCAR::to_string(stage.rendersettings.absorption));
-    tsccfg::node_set_attribute(e_rvb, "damping",
-                               TASCAR::to_string(stage.rendersettings.damping));
-    tsccfg::node_set_attribute(
-        e_rvb, "gain",
-        TASCAR::to_string(20 * log10(stage.rendersettings.reverbgain)));
-  }
-  // ambient sounds:
-  if(stage.rendersettings.ambientsound.size() && render_soundscape) {
-    std::string hashname(url2localfilename(stage.rendersettings.ambientsound));
-    // test if file exists:
-    std::ifstream ambif(hashname);
-    if(ambif.good()) {
-      tsccfg::node_t e_diff(tsccfg::node_add_child(e_scene, "diffuse"));
-      tsccfg::node_set_attribute(e_diff, "name", "ambient");
+    if(stage.rendersettings.renderism) {
+      // create shoebox room:
+      tsccfg::node_t e_rvb(tsccfg::node_add_child(e_scene, "facegroup"));
+      tsccfg::node_set_attribute(e_rvb, "name", "room");
       tsccfg::node_set_attribute(
-          e_diff, "size",
+          e_rvb, "shoebox",
           TASCAR::to_string(to_tascar(stage.rendersettings.roomsize)));
-      tsccfg::node_t e_plug(tsccfg::node_add_child(e_diff, "plugins"));
-      tsccfg::node_t e_snd(tsccfg::node_add_child(e_plug, "sndfile"));
-      tsccfg::node_set_attribute(e_snd, "name", hashname);
       tsccfg::node_set_attribute(
-          e_snd, "level", TASCAR::to_string(stage.rendersettings.ambientlevel));
-      tsccfg::node_set_attribute(e_snd, "loop", "0");
-      tsccfg::node_set_attribute(e_snd, "transport", "false");
-      tsccfg::node_set_attribute(e_snd, "license", "CC0");
-      tsccfg::node_set_attribute(e_snd, "resample", "true");
+          e_rvb, "reflectivity",
+          TASCAR::to_string(sqrt(1.0 - stage.rendersettings.absorption)));
+      tsccfg::node_set_attribute(
+          e_rvb, "damping", TASCAR::to_string(stage.rendersettings.damping));
+    }
+    if(stage.rendersettings.renderreverb) {
+      // create reverb engine:
+      tsccfg::node_t e_rvb(tsccfg::node_add_child(e_scene, "reverb"));
+      tsccfg::node_set_attribute(e_rvb, "type", "simplefdn");
+      tsccfg::node_set_attribute(
+          e_rvb, "volumetric",
+          TASCAR::to_string(to_tascar(stage.rendersettings.roomsize)));
+      tsccfg::node_set_attribute(e_rvb, "image", "false");
+      tsccfg::node_set_attribute(e_rvb, "fdnorder", "5");
+      tsccfg::node_set_attribute(e_rvb, "dw", "60");
+      tsccfg::node_set_attribute(
+          e_rvb, "absorption",
+          TASCAR::to_string(stage.rendersettings.absorption));
+      tsccfg::node_set_attribute(
+          e_rvb, "damping", TASCAR::to_string(stage.rendersettings.damping));
+      tsccfg::node_set_attribute(
+          e_rvb, "gain",
+          TASCAR::to_string(20 * log10(stage.rendersettings.reverbgain)));
+    }
+    // ambient sounds:
+    if(stage.rendersettings.ambientsound.size() && render_soundscape) {
+      std::string hashname(
+          url2localfilename(stage.rendersettings.ambientsound));
+      // test if file exists:
+      std::ifstream ambif(hashname);
+      if(ambif.good()) {
+        tsccfg::node_t e_diff(tsccfg::node_add_child(e_scene, "diffuse"));
+        tsccfg::node_set_attribute(e_diff, "name", "ambient");
+        tsccfg::node_set_attribute(
+            e_diff, "size",
+            TASCAR::to_string(to_tascar(stage.rendersettings.roomsize)));
+        tsccfg::node_t e_plug(tsccfg::node_add_child(e_diff, "plugins"));
+        tsccfg::node_t e_snd(tsccfg::node_add_child(e_plug, "sndfile"));
+        tsccfg::node_set_attribute(e_snd, "name", hashname);
+        tsccfg::node_set_attribute(
+            e_snd, "level",
+            TASCAR::to_string(stage.rendersettings.ambientlevel));
+        tsccfg::node_set_attribute(e_snd, "loop", "0");
+        tsccfg::node_set_attribute(e_snd, "transport", "false");
+        tsccfg::node_set_attribute(e_snd, "license", "CC0");
+        tsccfg::node_set_attribute(e_snd, "resample", "true");
+      }
     }
   }
   // configure extra modules:
@@ -502,14 +511,15 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
       session_add_connect(e_session, stage.thisdeviceid + ".metronome:out.0",
                           stage.thisdeviceid + "_sender:in_" +
                               std::to_string(chn));
-      session_add_connect(e_session, stage.thisdeviceid + ".metronome:out.1",
-                          "render." + stage.thisdeviceid + ":ego." +
-                              std::to_string(chn - 1) + ".0");
+      if(stage.rendersettings.receive)
+        session_add_connect(e_session, stage.thisdeviceid + ".metronome:out.1",
+                            "render." + stage.thisdeviceid + ":ego." +
+                                std::to_string(chn - 1) + ".0");
       waitports.push_back(stage.thisdeviceid + "_sender:in_" +
                           std::to_string(chn));
     }
   }
-  if(stage.thisdevice.senddownmix) {
+  if(stage.thisdevice.senddownmix && stage.rendersettings.receive) {
     // create network sender:
     tsccfg::node_t e_sys(tsccfg::node_add_child(e_mods, "system"));
     tsccfg::node_set_attribute(
@@ -524,6 +534,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
                         stage.thisdeviceid + "_sender:in_2");
   }
   tsccfg::node_t e_wait = tsccfg::node_add_child(e_mods, "waitforjackport");
+  tsccfg::node_set_attribute(e_wait, "timeout", "5");
   tsccfg::node_set_attribute(e_wait, "name",
                              stage.thisdeviceid + ".waitforports");
   for(auto port : waitports) {
@@ -532,7 +543,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
   }
   tsccfg::node_add_child(e_mods, "sleep");
   // head tracking:
-  if(stage.rendersettings.headtracking) {
+  if(stage.rendersettings.headtracking && stage.rendersettings.receive) {
     tsccfg::node_t e_head = tsccfg::node_add_child(e_mods, "ovheadtracker");
     if(stage.rendersettings.headtrackingport > 0)
       tsccfg::node_set_attribute(
@@ -575,7 +586,7 @@ void ov_render_tascar_t::create_raw_dev(tsccfg::node_t e_session)
   tsccfg::node_t e_jackrec = tsccfg::node_add_child(e_mods, "jackrec");
   tsccfg::node_set_attribute(e_jackrec, "url", "osc.udp://localhost:9000/");
   tsccfg::node_add_child(e_mods, "touchosc");
-  {
+  if(stage.rendersettings.receive) {
     tsccfg::node_t e_route = tsccfg::node_add_child(e_mods, "route");
     std::string clname("master." + stage.thisdeviceid);
     tsccfg::node_set_attribute(e_route, "name", clname);
@@ -690,73 +701,78 @@ void ov_render_tascar_t::start_session()
   tsccfg::node_set_attribute(e_scene, "name", stage.thisdeviceid);
   // create virtual acoustics only when not in raw mode:
   if(!(stage.rendersettings.rawmode || stage.thisdevice.receivedownmix)) {
-    // add a main receiver for which the scene is rendered:
-    tsccfg::node_t e_rec = tsccfg::node_add_child(e_scene, "receiver");
-    // receiver can be "hrtf" or "ortf" (more receivers are possible in
-    // ->add_child_text(TASCAR, but only these two can produce audio which is
-    // headphone-compatible):
-    tsccfg::node_set_attribute(e_rec, "type", stage.rendersettings.rectype);
-    if(stage.rendersettings.rectype == "ortf") {
-      tsccfg::node_set_attribute(e_rec, "angle", "140");
-      tsccfg::node_set_attribute(e_rec, "f6db", "12000");
-      tsccfg::node_set_attribute(e_rec, "fmin", "3000");
-    }
-    if(stage.rendersettings.decorr > 0) {
-      tsccfg::node_set_attribute(e_rec, "decorr", "true");
-      tsccfg::node_set_attribute(
-          e_rec, "decorr_length",
-          TASCAR::to_string(0.001 * stage.rendersettings.decorr));
-    }
-    tsccfg::node_set_attribute(e_rec, "name", "master");
-    tsccfg::node_set_attribute(
-        e_rec, "gain",
-        TASCAR::to_string(20 * log10(stage.rendersettings.mastergain)));
-    // do not add delay (usually used for dynamic scene rendering):
-    tsccfg::node_set_attribute(
-        e_rec, "delaycomp",
-        TASCAR::to_string(stage.rendersettings.delaycomp / 340.0));
-    // connect output ports:
-    if(!stage.thisdevice.senddownmix) {
-      if(!stage.rendersettings.outputport1.empty()) {
-        std::string srcport("master_l");
-        if(stage.rendersettings.rectype == "itu51")
-          srcport = "master.0L";
-        if(stage.rendersettings.rectype == "omni")
-          srcport = "master.0";
-        session_add_connect(e_session,
-                            "render." + stage.thisdeviceid + ":" + srcport,
-                            stage.rendersettings.outputport1);
+    tsccfg::node_t e_rec(NULL);
+    if(stage.rendersettings.receive) {
+      // add a main receiver for which the scene is rendered:
+      e_rec = tsccfg::node_add_child(e_scene, "receiver");
+      // receiver can be "hrtf" or "ortf" (more receivers are possible in
+      // ->add_child_text(TASCAR, but only these two can produce audio which is
+      // headphone-compatible):
+      tsccfg::node_set_attribute(e_rec, "type", stage.rendersettings.rectype);
+      if(stage.rendersettings.rectype == "ortf") {
+        tsccfg::node_set_attribute(e_rec, "angle", "140");
+        tsccfg::node_set_attribute(e_rec, "f6db", "12000");
+        tsccfg::node_set_attribute(e_rec, "fmin", "3000");
       }
-      if(!stage.rendersettings.outputport2.empty()) {
-        std::string srcport("master_r");
-        if(stage.rendersettings.rectype == "itu51")
-          srcport = "master.1R";
-        if(stage.rendersettings.rectype == "omni")
-          srcport = "master.0";
-        session_add_connect(e_session,
-                            "render." + stage.thisdeviceid + ":" + srcport,
-                            stage.rendersettings.outputport2);
+      if(stage.rendersettings.decorr > 0) {
+        tsccfg::node_set_attribute(e_rec, "decorr", "true");
+        tsccfg::node_set_attribute(
+            e_rec, "decorr_length",
+            TASCAR::to_string(0.001 * stage.rendersettings.decorr));
+      }
+      tsccfg::node_set_attribute(e_rec, "name", "master");
+      tsccfg::node_set_attribute(
+          e_rec, "gain",
+          TASCAR::to_string(20 * log10(stage.rendersettings.mastergain)));
+      // do not add delay (usually used for dynamic scene rendering):
+      tsccfg::node_set_attribute(
+          e_rec, "delaycomp",
+          TASCAR::to_string(stage.rendersettings.delaycomp / 340.0));
+      // connect output ports:
+      if(!stage.thisdevice.senddownmix) {
+        if(!stage.rendersettings.outputport1.empty()) {
+          std::string srcport("master_l");
+          if(stage.rendersettings.rectype == "itu51")
+            srcport = "master.0L";
+          if(stage.rendersettings.rectype == "omni")
+            srcport = "master.0";
+          session_add_connect(e_session,
+                              "render." + stage.thisdeviceid + ":" + srcport,
+                              stage.rendersettings.outputport1);
+        }
+        if(!stage.rendersettings.outputport2.empty()) {
+          std::string srcport("master_r");
+          if(stage.rendersettings.rectype == "itu51")
+            srcport = "master.1R";
+          if(stage.rendersettings.rectype == "omni")
+            srcport = "master.0";
+          session_add_connect(e_session,
+                              "render." + stage.thisdeviceid + ":" + srcport,
+                              stage.rendersettings.outputport2);
+        }
       }
     }
     // the host is not empty when this device is on a stage:
     if(!stage.host.empty()) {
       create_virtual_acoustics(e_session, e_rec, e_scene);
     } else {
-      // the stage is empty, which means we play an announcement only.
-      tsccfg::node_t e_src(tsccfg::node_add_child(e_scene, "source"));
-      tsccfg::node_set_attribute(e_src, "name", "announce");
-      tsccfg::node_t e_snd(tsccfg::node_add_child(e_src, "sound"));
-      tsccfg::node_set_attribute(e_snd, "maxdist", "50");
-      tsccfg::node_set_attribute(e_snd, "gainmodel", "1");
-      tsccfg::node_set_attribute(e_snd, "delayline", "false");
-      tsccfg::node_set_attribute(e_snd, "x", "4");
-      tsccfg::node_t e_plugs(tsccfg::node_add_child(e_snd, "plugins"));
-      tsccfg::node_t e_sndfile(tsccfg::node_add_child(e_plugs, "sndfile"));
-      tsccfg::node_set_attribute(e_sndfile, "name", folder + "announce.flac");
-      tsccfg::node_set_attribute(e_sndfile, "level", "57");
-      tsccfg::node_set_attribute(e_sndfile, "transport", "false");
-      tsccfg::node_set_attribute(e_sndfile, "resample", "true");
-      tsccfg::node_set_attribute(e_sndfile, "loop", "0");
+      if(stage.rendersettings.receive) {
+        // the stage is empty, which means we play an announcement only.
+        tsccfg::node_t e_src(tsccfg::node_add_child(e_scene, "source"));
+        tsccfg::node_set_attribute(e_src, "name", "announce");
+        tsccfg::node_t e_snd(tsccfg::node_add_child(e_src, "sound"));
+        tsccfg::node_set_attribute(e_snd, "maxdist", "50");
+        tsccfg::node_set_attribute(e_snd, "gainmodel", "1");
+        tsccfg::node_set_attribute(e_snd, "delayline", "false");
+        tsccfg::node_set_attribute(e_snd, "x", "4");
+        tsccfg::node_t e_plugs(tsccfg::node_add_child(e_snd, "plugins"));
+        tsccfg::node_t e_sndfile(tsccfg::node_add_child(e_plugs, "sndfile"));
+        tsccfg::node_set_attribute(e_sndfile, "name", folder + "announce.flac");
+        tsccfg::node_set_attribute(e_sndfile, "level", "57");
+        tsccfg::node_set_attribute(e_sndfile, "transport", "false");
+        tsccfg::node_set_attribute(e_sndfile, "resample", "true");
+        tsccfg::node_set_attribute(e_sndfile, "loop", "0");
+      }
       tsccfg::node_t e_mods(tsccfg::node_add_child(e_session, "modules"));
       tsccfg::node_t e_jackrec = tsccfg::node_add_child(e_mods, "jackrec");
       tsccfg::node_set_attribute(e_jackrec, "url", "osc.udp://localhost:9000/");
