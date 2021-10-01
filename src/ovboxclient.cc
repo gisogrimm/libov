@@ -349,9 +349,11 @@ void ovboxclient_t::process_msg(msgbuf_t& msg)
   // not a special port, thus we forward data to localhost and proxy
   // clients:
   if(msg.destport > MAXSPECIALPORT) {
-    local_server.send(msg.msg, msg.size, msg.destport + portoffset);
+    if( msg.destport + portoffset != recport )
+      local_server.send(msg.msg, msg.size, msg.destport + portoffset);
     for(auto xd : xdest)
-      local_server.send(msg.msg, msg.size, msg.destport + xd);
+      if( msg.destport + xd != recport )
+        local_server.send(msg.msg, msg.size, msg.destport + xd);
     // now send to proxy clients:
     for(auto client : proxyclients) {
       if(msg.cid != client.first) {
