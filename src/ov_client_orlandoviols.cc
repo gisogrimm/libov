@@ -417,6 +417,7 @@ void ov_client_orlandoviols_t::service()
               GETJS(rendersettings, outputport1);
               GETJS(rendersettings, outputport2);
               GETJS(rendersettings, rawmode);
+              GETJS(rendersettings, receive);
               GETJS(rendersettings, rectype);
               GETJS(rendersettings, secrec);
               GETJS(rendersettings, egogain);

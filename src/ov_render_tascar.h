@@ -88,6 +88,10 @@ private:
                          std::vector<std::string>& waitports,
                          const std::string& zitapath,
                          const std::string& chanlist);
+  void add_network_receiver(const stage_device_t& stagemember,
+                            tsccfg::node_t& e_mods, tsccfg::node_t& e_session,
+                            std::vector<std::string>& waitports,
+                            uint32_t& chcnt);
   // for the time being we (optionally if jack is chosen as an audio
   // backend) start the jack backend. This will be replaced by a more
   // generic audio backend interface:

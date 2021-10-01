@@ -191,6 +191,91 @@ void ov_render_tascar_t::add_secondary_bus(const stage_device_t& stagemember,
   }
 }
 
+void ov_render_tascar_t::add_network_receiver(
+    const stage_device_t& stagemember, tsccfg::node_t& e_mods,
+    tsccfg::node_t& e_session, std::vector<std::string>& waitports,
+    uint32_t& chcnt)
+{
+  if(!stage.rendersettings.receive)
+    return;
+  // only create a network receiver when the stage member is sending audio:
+  stage_device_t& thisdev(stage.stage[stage.thisstagedeviceid]);
+  std::string chanlist;
+  for(uint32_t k = 0; k < stagemember.channels.size(); ++k) {
+    if(k)
+      chanlist += ",";
+    chanlist += std::to_string(k + 1);
+  }
+  if(stagemember.senddownmix)
+    chanlist = "1,2";
+  // do not create a network receiver for local device:
+  if((stage.thisstagedeviceid != stagemember.id) &&
+     (stagemember.senddownmix == thisdev.receivedownmix)) {
+    std::string clientname(get_stagedev_name(stagemember.id));
+    std::string n2jclientname("n2j_" + get_stagedev_name(stagemember.id) + "." +
+                              stage.thisdeviceid);
+    tsccfg::node_t e_sys(tsccfg::node_add_child(e_mods, "system"));
+    double buff(thisdev.receiverjitter + stagemember.senderjitter);
+    // provide access to path!
+    tsccfg::node_set_attribute(
+        e_sys, "command",
+        zitapath + "zita-n2j --chan " + chanlist + " --jname " + n2jclientname +
+            " --buf " + TASCAR::to_string(buff) + " 0.0.0.0 " +
+            TASCAR::to_string(4464 + 2 * stagemember.id));
+    tsccfg::node_set_attribute(e_sys, "onunload", "killall zita-n2j");
+    if(stage.rendersettings.rawmode) {
+      // create additional route for gain control:
+      tsccfg::node_t e_route = tsccfg::node_add_child(e_mods, "route");
+      tsccfg::node_set_attribute(e_route, "name",
+                                 clientname + "." + stage.thisdeviceid);
+      size_t memchannels(stagemember.channels.size());
+      if(stagemember.senddownmix)
+        memchannels = 2u;
+      tsccfg::node_set_attribute(e_route, "channels",
+                                 std::to_string(memchannels));
+      tsccfg::node_set_attribute(
+          e_route, "gain", TASCAR::to_string(20 * log10(stagemember.gain)));
+      tsccfg::node_set_attribute(e_route, "connect", n2jclientname + ":out_.*");
+      for(size_t c = 0; c < memchannels; ++c) {
+        ++chcnt;
+        if(stage.thisstagedeviceid != stagemember.id) {
+          std::string srcport(clientname + "." + stage.thisdeviceid + ":out." +
+                              std::to_string(c));
+          std::string destport;
+          if(chcnt & 1)
+            destport = "master." + stage.thisdeviceid + ":in.0";
+          else
+            destport = "master." + stage.thisdeviceid + ":in.1";
+          if(!destport.empty()) {
+            waitports.push_back(srcport);
+            session_add_connect(e_session, srcport, destport);
+          }
+        }
+      }
+    } else {
+      // not in raw mode:
+      // create connections:
+      for(size_t c = 0; c < stagemember.channels.size(); ++c) {
+        if(stage.thisstagedeviceid != stagemember.id) {
+          std::string srcport(clientname + "." + stage.thisdeviceid + ":out_" +
+                              std::to_string(c + 1));
+          std::string destport("render." + stage.thisdeviceid + ":" +
+                               clientname + "." + std::to_string(c) + ".0");
+          waitports.push_back(srcport);
+          session_add_connect(e_session, srcport, destport);
+        }
+      }
+    }
+    if(stage.rendersettings.secrec > 0) {
+      // create a secondary network receiver with additional jitter buffer:
+      if(stage.thisstagedeviceid != stagemember.id) {
+        add_secondary_bus(stagemember, e_mods, e_session, waitports, zitapath,
+                          chanlist);
+      }
+    }
+  }
+}
+
 void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
                                                   tsccfg::node_t e_rec,
                                                   tsccfg::node_t e_scene)
@@ -359,48 +444,11 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
   // create zita-n2j receivers:
   // this variable holds the path to zita
   // binaries, or empty (default) for system installed:
+  uint32_t chcnt(0);
   for(auto stagemember : stage.stage) {
-    // only create a network receiver when the stage member is sending audio:
     if(stagemember.second.channels.size()) {
-      std::string chanlist;
-      for(uint32_t k = 0; k < stagemember.second.channels.size(); ++k) {
-        if(k)
-          chanlist += ",";
-        chanlist += std::to_string(k + 1);
-      }
-      // do not create a network receiver for local device:
-      if((stage.thisstagedeviceid != stagemember.second.id) &&
-         (!stagemember.second.senddownmix)) {
-        std::string clientname(get_stagedev_name(stagemember.second.id));
-        tsccfg::node_t e_sys(tsccfg::node_add_child(e_mods, "system"));
-        double buff(thisdev.receiverjitter + stagemember.second.senderjitter);
-        // provide access to path!
-        tsccfg::node_set_attribute(
-            e_sys, "command",
-            zitapath + "zita-n2j --chan " + chanlist + " --jname " +
-                clientname + "." + stage.thisdeviceid + " --buf " +
-                TASCAR::to_string(buff) + " 0.0.0.0 " +
-                TASCAR::to_string(4464 + 2 * stagemember.second.id));
-        tsccfg::node_set_attribute(e_sys, "onunload", "killall zita-n2j");
-        // create connections:
-        for(size_t c = 0; c < stagemember.second.channels.size(); ++c) {
-          if(stage.thisstagedeviceid != stagemember.second.id) {
-            std::string srcport(clientname + "." + stage.thisdeviceid +
-                                ":out_" + std::to_string(c + 1));
-            std::string destport("render." + stage.thisdeviceid + ":" +
-                                 clientname + "." + std::to_string(c) + ".0");
-            waitports.push_back(srcport);
-            session_add_connect(e_session, srcport, destport);
-          }
-        }
-        if(stage.rendersettings.secrec > 0) {
-          // create a secondary network receiver with additional jitter buffer:
-          if(stage.thisstagedeviceid != stagemember.second.id) {
-            add_secondary_bus(stagemember.second, e_mods, e_session, waitports,
-                              zitapath, chanlist);
-          }
-        }
-      }
+      add_network_receiver(stagemember.second, e_mods, e_session, waitports,
+                           chcnt);
     }
   }
   // when a second network receiver is used then also create a bus
@@ -545,63 +593,8 @@ void ov_render_tascar_t::create_raw_dev(tsccfg::node_t e_session)
   //
   uint32_t chcnt(0);
   for(auto stagemember : stage.stage) {
-    std::string chanlist;
-    for(uint32_t k = 0; k < stagemember.second.channels.size(); ++k) {
-      if(k)
-        chanlist += ",";
-      chanlist += std::to_string(k + 1);
-    }
-    if(stagemember.second.senddownmix)
-      chanlist = "1,2";
-    if(stage.thisstagedeviceid != stagemember.second.id) {
-      std::string clientname(get_stagedev_name(stagemember.second.id) + "." +
-                             stage.thisdeviceid);
-      std::string n2jclientname("n2j_" +
-                                get_stagedev_name(stagemember.second.id) + "." +
-                                stage.thisdeviceid);
-      tsccfg::node_t e_sys = tsccfg::node_add_child(e_mods, "system");
-      double buff(thisdev.receiverjitter + stagemember.second.senderjitter);
-      tsccfg::node_set_attribute(
-          e_sys, "command",
-          zitapath + "zita-n2j --chan " + chanlist + " --jname " +
-              n2jclientname + " --buf " + TASCAR::to_string(buff) +
-              " 0.0.0.0 " +
-              TASCAR::to_string(4464 + 2 * stagemember.second.id));
-      tsccfg::node_set_attribute(e_sys, "onunload", "killall zita-n2j");
-      tsccfg::node_t e_route = tsccfg::node_add_child(e_mods, "route");
-      tsccfg::node_set_attribute(e_route, "name", clientname);
-      size_t memchannels(stagemember.second.channels.size());
-      if(stagemember.second.senddownmix)
-        memchannels = 2u;
-      tsccfg::node_set_attribute(e_route, "channels",
-                                 std::to_string(memchannels));
-      tsccfg::node_set_attribute(
-          e_route, "gain",
-          TASCAR::to_string(20 * log10(stagemember.second.gain)));
-      tsccfg::node_set_attribute(e_route, "connect", n2jclientname + ":out_.*");
-      for(size_t c = 0; c < memchannels; ++c) {
-        ++chcnt;
-        if(stage.thisstagedeviceid != stagemember.second.id) {
-          std::string srcport(clientname + ":out." + std::to_string(c));
-          std::string destport;
-          if(chcnt & 1)
-            destport = "master." + stage.thisdeviceid + ":in.0";
-          else
-            destport = "master." + stage.thisdeviceid + ":in.1";
-          if(!destport.empty()) {
-            waitports.push_back(srcport);
-            session_add_connect(e_session, srcport, destport);
-          }
-        }
-      }
-      if(stage.rendersettings.secrec > 0) {
-        // create a secondary network receiver with additional jitter buffer:
-        if(stage.thisstagedeviceid != stagemember.second.id) {
-          add_secondary_bus(stagemember.second, e_mods, e_session, waitports,
-                            zitapath, chanlist);
-        }
-      }
-    }
+    add_network_receiver(stagemember.second, e_mods, e_session, waitports,
+                         chcnt);
   }
   // when a second network receiver is used then also create a bus
   // with a delayed version of the self monitor:
@@ -780,7 +773,8 @@ void ov_render_tascar_t::start_session()
     ovboxclient = new ovboxclient_t(
         stage.host, stage.port, 4464 + 2 * stage.thisstagedeviceid, 0, 30,
         stage.pin, stage.thisstagedeviceid, stage.rendersettings.peer2peer,
-        use_proxy, stage.thisdevice.receivedownmix,
+        use_proxy || (!stage.rendersettings.receive),
+        stage.thisdevice.receivedownmix,
         stage.stage[stage.thisstagedeviceid].sendlocal, sorter_deadline,
         stage.thisdevice.senddownmix);
     if(cb_seqerr)

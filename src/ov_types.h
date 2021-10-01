@@ -170,6 +170,8 @@ public:
   bool distancelaw;
   /// flag wether rendering of virtual acoustics is required:
   bool rawmode;
+  /// flag wether output is active:
+  bool receive;
   /// Receiver type, either ortf or hrtf:
   std::string rectype;
   /// self monitor gain:

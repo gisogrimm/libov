@@ -144,12 +144,12 @@ bool operator!=(const render_settings_t& a, const render_settings_t& b)
          (a.absorption != b.absorption) || (a.damping != b.damping) ||
          (a.reverbgain != b.reverbgain) || (a.renderreverb != b.renderreverb) ||
          (a.renderism != b.renderism) || (a.distancelaw != b.distancelaw) ||
-         (a.rawmode != b.rawmode) || (a.rectype != b.rectype) ||
-         (a.egogain != b.egogain) || (a.mastergain != b.mastergain) ||
-         (a.peer2peer != b.peer2peer) || (a.outputport1 != b.outputport1) ||
-         (a.outputport2 != b.outputport2) || (a.secrec != b.secrec) ||
-         (a.xports != b.xports) || (a.xrecport != b.xrecport) ||
-         (a.headtracking != b.headtracking) ||
+         (a.rawmode != b.rawmode) || (a.receive != b.receive) ||
+         (a.rectype != b.rectype) || (a.egogain != b.egogain) ||
+         (a.mastergain != b.mastergain) || (a.peer2peer != b.peer2peer) ||
+         (a.outputport1 != b.outputport1) || (a.outputport2 != b.outputport2) ||
+         (a.secrec != b.secrec) || (a.xports != b.xports) ||
+         (a.xrecport != b.xrecport) || (a.headtracking != b.headtracking) ||
          (a.headtrackingrotrec != b.headtrackingrotrec) ||
          (a.headtrackingrotsrc != b.headtrackingrotsrc) ||
          (a.headtrackingport != b.headtrackingport) ||
@@ -168,6 +168,7 @@ render_settings_t::render_settings_t()
       renderreverb(true),                 // bool renderreverb;
       renderism(false),                   // bool renderism;
       distancelaw(false), rawmode(false), // bool rawmode;
+      receive(true),                      // bool receive
       rectype("hrtf"),                    // std::string rectype;
       egogain(1.0),                       // double egogain;
       mastergain(1.0),                    // double mastergain;
