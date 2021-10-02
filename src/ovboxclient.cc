@@ -55,7 +55,14 @@
  *
  * A list of proxy clients is provided by the configuration server,
  * and is stored in ovboxclient_t::proxyclients using the function
- * ovboxclient_t::add_proxy_client().
+ * ovboxclient_t::add_proxy_client(). Incoming unencoded messages are
+ * processed in function ovboxclient_t::recsrv(). Here they are
+ * forwarded to all peer-to-peer mode devices which don't have sending
+ * deactivated, which are not using proxy mode or are in the same
+ * network. In a proxy device, incoming encoded messages are sent
+ * locally as unencoded messages, and forwarded as unencoded messages
+ * to the proxy clients if the message arrived from outside the local
+ * network, see ovboxclient_t::process_msg().
  */
 
 ovboxclient_t::ovboxclient_t(const std::string& desthost, port_t destport,
