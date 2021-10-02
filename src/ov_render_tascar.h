@@ -114,16 +114,19 @@ private:
   std::map<stage_device_id_t, std::string> proxyclients;
   /**
      \brief serve as proxy
+     \ingroup proxymode
 
-     A device which serves as proxy will send forwarded packages
-     not to localhost, but to a multicast group instead.
+     A device which serves as proxy will send incoming messages
+     arriving from other networks to all registered proxy clients.
    */
   bool is_proxy;
   /**
      \brief use a proxy
+     \ingroup proxymode
 
      A device which uses a proxy will not receive packages from a
-     server or peers, but will listen to a multicast group
+     server or peers outside the same network, but receive the
+     packages directly from the proxy instead.
 
   */
   bool use_proxy;

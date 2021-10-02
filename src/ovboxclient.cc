@@ -41,12 +41,29 @@
 #include <cmath>
 #include <errno.h>
 
+/**
+ * @defgroup proxymode Proxy mode
+ *
+ * Reduce external network load in case of multiple devices in the
+ * same network.
+ *
+ * Devices which use the proxy mode (flag
+ * ov_render_tascar_t::use_proxy is true) and which have a proxy
+ * device (flag ov_render_tascar_t::is_proxy) in the same network and
+ * session receive data only from the proxy, as well as from other
+ * devices in the local network.
+ *
+ * A list of proxy clients is provided by the configuration server,
+ * and is stored in ovboxclient_t::proxyclients using the function
+ * ovboxclient_t::add_proxy_client().
+ */
+
 ovboxclient_t::ovboxclient_t(const std::string& desthost, port_t destport,
                              port_t recport, port_t portoffset, int prio,
                              secret_t secret, stage_device_id_t callerid,
                              bool peer2peer_, bool donotsend_,
                              bool receivedownmix_, bool sendlocal_,
-                             double deadline, bool senddownmix)
+                             double deadline, bool senddownmix, bool usingproxy)
     : prio(prio), secret(secret), remote_server(secret, callerid),
       toport(destport), recport(recport), portoffset(portoffset),
       callerid(callerid), runsession(true), mode(0), cb_ping(nullptr),
@@ -62,6 +79,8 @@ ovboxclient_t::ovboxclient_t(const std::string& desthost, port_t destport,
     mode |= B_DONOTSEND;
   if(senddownmix)
     mode |= B_SENDDOWNMIX;
+  if(usingproxy)
+    mode |= B_USINGPROXY;
   local_server.set_timeout_usec(10000);
   local_server.set_destination("localhost");
   local_server.bind(recport, true);
@@ -349,16 +368,19 @@ void ovboxclient_t::process_msg(msgbuf_t& msg)
   // not a special port, thus we forward data to localhost and proxy
   // clients:
   if(msg.destport > MAXSPECIALPORT) {
-    if( msg.destport + portoffset != recport )
+    if(msg.destport + portoffset != recport)
       local_server.send(msg.msg, msg.size, msg.destport + portoffset);
     for(auto xd : xdest)
-      if( msg.destport + xd != recport )
+      if(msg.destport + xd != recport)
         local_server.send(msg.msg, msg.size, msg.destport + xd);
-    // now send to proxy clients:
-    for(auto client : proxyclients) {
-      if(msg.cid != client.first) {
-        client.second.sin_port = htons((unsigned short)msg.destport);
-        remote_server.send(msg.msg, msg.size, client.second);
+    // is this message from same network?
+    if(!is_same_network(msg.sender, localep)) {
+      // now send to proxy clients:
+      for(auto client : proxyclients) {
+        if(msg.cid != client.first) {
+          client.second.sin_port = htons((unsigned short)msg.destport);
+          remote_server.send(msg.msg, msg.size, client.second);
+        }
       }
     }
     return;
@@ -413,15 +435,18 @@ void ovboxclient_t::recsrv()
                 // not sending to ourself.
                 if(ep.mode & B_PEER2PEER) {
                   // other end is in peer-to-peer mode.
-                  if(!(ep.mode & B_DONOTSEND)) {
+                  bool target_in_same_network(
+                      (endpoints[callerid].ep.sin_addr.s_addr ==
+                       ep.ep.sin_addr.s_addr) &&
+                      (ep.localep.sin_addr.s_addr != 0));
+                  if((!(bool)(ep.mode & B_DONOTSEND)) ||
+                     ((bool)(ep.mode & B_USINGPROXY) &&
+                      target_in_same_network)) {
                     // sending is not deactivated.
                     if((bool)(ep.mode & B_RECEIVEDOWNMIX) ==
                        (bool)(mode & B_SENDDOWNMIX)) {
                       // remote is receiving downmix and this is downmixer
-                      if(sendlocal &&
-                         (endpoints[callerid].ep.sin_addr.s_addr ==
-                          ep.ep.sin_addr.s_addr) &&
-                         (ep.localep.sin_addr.s_addr != 0))
+                      if(sendlocal && target_in_same_network)
                         // same network.
                         remote_server.send(msg, un, ep.localep);
                       else
@@ -435,12 +460,12 @@ void ovboxclient_t::recsrv()
             }
             ++ocid;
           }
-          // serve proxy clients:
-          for(auto client : proxyclients) {
-            // send unencoded message:
-            client.second.sin_port = htons((unsigned short)recport);
-            remote_server.send(buffer, n, client.second);
-          }
+          //// serve proxy clients:
+          // for(auto client : proxyclients) {
+          //  // send unencoded message:
+          //  client.second.sin_port = htons((unsigned short)recport);
+          //  remote_server.send(buffer, n, client.second);
+          //}
         }
         if(sendtoserver) {
           remote_server.send(msg, un, toport);

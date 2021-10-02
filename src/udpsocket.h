@@ -47,6 +47,12 @@ std::string ep2ipstr(const endpoint_t& ep);
 std::string getmacaddr();
 endpoint_t getipaddr();
 
+inline bool is_same_network(const endpoint_t& a, const endpoint_t& b)
+{
+  return ((a.sin_addr.s_addr & 0xffffff) == (b.sin_addr.s_addr & 0xffffff)) &&
+         (a.sin_addr.s_addr != 0) && (b.sin_addr.s_addr != 0);
+};
+
 /**
  * Send and receive UDP messages
  */

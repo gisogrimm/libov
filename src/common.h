@@ -22,6 +22,7 @@
 
 /**
  * @defgroup operationmodes Operation modes of devices
+ * @ingroup proxymode
  */
 
 /**
@@ -91,6 +92,7 @@ void app_usage(const std::string& app_name, struct option* opt,
 
 /**
  * @ingroup operationmodes
+ * @ingroup proxymode
  * Bit mask describing device operation mode
  */
 typedef uint8_t epmode_t;
@@ -99,22 +101,29 @@ typedef uint8_t epmode_t;
  * @ingroup operationmodes
  * Use peer-to-peer mode
  */
-#define B_PEER2PEER 1
+#define B_PEER2PEER 0x01
 /**
  * @ingroup operationmodes
  * Can receive only downmixed signals
  */
-#define B_RECEIVEDOWNMIX 2
+#define B_RECEIVEDOWNMIX 0x02
 /**
  * @ingroup operationmodes
- * Using a proxy, do not send audio to this client.
+ * Do not send audio to this client.
+ * If also B_USINGPROXY is set, then devices from local network will send.
  */
-#define B_DONOTSEND 4
+#define B_DONOTSEND 0x04
 /**
  * @ingroup operationmodes
  * This device is sending a session mix, do not send to normal clients.
  */
-#define B_SENDDOWNMIX 8
+#define B_SENDDOWNMIX 0x08
+/**
+ * @ingroup operationmodes
+ *
+ * This device is using a proxy.
+ */
+#define B_USINGPROXY 0x10
 
 // the message header is a byte array with:
 // - secret

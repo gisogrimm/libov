@@ -106,7 +106,7 @@ public:
                 port_t portoffset, int prio, secret_t secret,
                 stage_device_id_t callerid, bool peer2peer, bool donotsend,
                 bool receivedownmix, bool sendlocal, double deadline,
-                bool senddownmix);
+                bool senddownmix, bool usingproxy);
   virtual ~ovboxclient_t();
   void announce_new_connection(stage_device_id_t cid, const ep_desc_t& ep);
   void announce_connection_lost(stage_device_id_t cid);
@@ -115,6 +115,7 @@ public:
   void add_extraport(port_t dest);
   /**
      \brief Add a proxy client
+     \ingroup proxymode
 
      \param cid Device ID of proxy client
      \param host Hostname or IP address of proxy client
@@ -167,7 +168,10 @@ private:
   udpsocket_t local_server;
   // additional port offsets to send data to locally:
   std::vector<port_t> xdest;
-  // list of proxy clients:
+  /**
+   * \brief list of proxy clients:
+   * \ingroup proxymode
+   */
   std::map<stage_device_id_t, endpoint_t> proxyclients;
   // destination port of relay server:
   port_t toport;
