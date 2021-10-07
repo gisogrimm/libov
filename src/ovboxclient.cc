@@ -505,14 +505,28 @@ void ovboxclient_t::xrecsrv(port_t srcport, port_t destport)
         size_t un = remote_server.packmsg(msg, BUFSIZE, destport, buffer, n);
         bool sendtoserver(!(mode & B_PEER2PEER));
         if(mode & B_PEER2PEER) {
+          // we are in peer-to-peer mode.
           size_t ocid(0);
           for(auto ep : endpoints) {
             if(ep.timeout) {
-              if((ocid != callerid) && (ep.mode & B_PEER2PEER) &&
-                 (!(ep.mode & B_DONOTSEND))) {
-                remote_server.send(msg, un, ep.ep);
-              } else {
-                sendtoserver = true;
+              // target is active.
+              if(ocid != callerid){
+                // not sending to ourselfs.
+                if(ep.mode & B_PEER2PEER){
+                  // target is in peer-to-peer mode.
+                  bool target_in_same_network(
+                      (endpoints[callerid].ep.sin_addr.s_addr ==
+                       ep.ep.sin_addr.s_addr) &&
+                      (ep.localep.sin_addr.s_addr != 0));
+                  if((!(bool)(ep.mode & B_DONOTSEND)) ||
+                     ((bool)(ep.mode & B_USINGPROXY) &&
+                      target_in_same_network)) {
+                    //if(!(ep.mode & B_DONOTSEND)) {
+                    remote_server.send(msg, un, ep.ep);
+                  } else {
+                    sendtoserver = true;
+                  }
+                }
               }
             }
             ++ocid;
