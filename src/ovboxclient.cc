@@ -493,7 +493,8 @@ void ovboxclient_t::xrecsrv(port_t srcport, port_t destport)
     udpsocket_t xlocal_server;
     xlocal_server.set_timeout_usec(100000);
     xlocal_server.set_destination("localhost");
-    xlocal_server.bind(srcport, true);
+    //xlocal_server.bind(srcport, true);
+    xlocal_server.bind(srcport, false);
     set_thread_prio(prio);
     char buffer[BUFSIZE];
     char msg[BUFSIZE];
