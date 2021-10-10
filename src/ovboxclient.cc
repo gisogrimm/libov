@@ -467,12 +467,6 @@ void ovboxclient_t::recsrv()
             }
             ++ocid;
           }
-          //// serve proxy clients:
-          // for(auto client : proxyclients) {
-          //  // send unencoded message:
-          //  client.second.sin_port = htons((unsigned short)recport);
-          //  remote_server.send(buffer, n, client.second);
-          //}
         }
         if(sendtoserver) {
           remote_server.send(msg, un, toport);
@@ -493,7 +487,7 @@ void ovboxclient_t::xrecsrv(port_t srcport, port_t destport)
     udpsocket_t xlocal_server;
     xlocal_server.set_timeout_usec(100000);
     xlocal_server.set_destination("localhost");
-    //xlocal_server.bind(srcport, true);
+    // xlocal_server.bind(srcport, true);
     xlocal_server.bind(srcport, false);
     set_thread_prio(prio);
     char buffer[BUFSIZE];
@@ -511,9 +505,9 @@ void ovboxclient_t::xrecsrv(port_t srcport, port_t destport)
           for(auto ep : endpoints) {
             if(ep.timeout) {
               // target is active.
-              if(ocid != callerid){
-                // not sending to ourselfs.
-                if(ep.mode & B_PEER2PEER){
+              if(ocid != callerid) {
+                // not sending to ourself.
+                if(ep.mode & B_PEER2PEER) {
                   // target is in peer-to-peer mode.
                   bool target_in_same_network(
                       (endpoints[callerid].ep.sin_addr.s_addr ==
@@ -522,8 +516,11 @@ void ovboxclient_t::xrecsrv(port_t srcport, port_t destport)
                   if((!(bool)(ep.mode & B_DONOTSEND)) ||
                      ((bool)(ep.mode & B_USINGPROXY) &&
                       target_in_same_network)) {
-                    //if(!(ep.mode & B_DONOTSEND)) {
-                    remote_server.send(msg, un, ep.ep);
+                    if(sendlocal && target_in_same_network)
+                      // same network.
+                      remote_server.send(msg, un, ep.localep);
+                    else
+                      remote_server.send(msg, un, ep.ep);
                   } else {
                     sendtoserver = true;
                   }
