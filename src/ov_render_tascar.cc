@@ -825,6 +825,7 @@ void ov_render_tascar_t::start_session()
     tascar = NULL;
     if(ovboxclient)
       delete ovboxclient;
+    ovboxclient = NULL;
     // end_session();
     throw ErrMsg(err);
   }
