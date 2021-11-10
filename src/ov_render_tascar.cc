@@ -440,6 +440,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
             TASCAR::to_string(stage.rendersettings.ambientlevel));
         tsccfg::node_set_attribute(e_snd, "loop", "0");
         tsccfg::node_set_attribute(e_snd, "transport", "false");
+        tsccfg::node_set_attribute(e_snd, "channelorder", "FuMa");
         tsccfg::node_set_attribute(e_snd, "license", "CC0");
         tsccfg::node_set_attribute(e_snd, "resample", "true");
       }

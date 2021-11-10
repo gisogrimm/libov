@@ -530,6 +530,9 @@ void ov_client_orlandoviols_t::service()
       sleep(15);
     }
   }
+  if(backend.is_session_active())
+    backend.end_session();
+  backend.stop_audiobackend();
 }
 
 /*

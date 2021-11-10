@@ -56,7 +56,7 @@ TASCAROBJECTS = licensehandler.o audiostates.o coordinates.o		\
   acousticmodel.o scene.o render.o session_reader.o session.o		\
   jackclient.o delayline.o errorhandling.o osc_scene.o ringbuffer.o	\
   jackiowav.o jackrender.o audioplugin.o levelmeter.o serviceclass.o	\
-  speakerarray.o spectrum.o fft.o stft.o ola.o
+  speakerarray.o spectrum.o fft.o stft.o ola.o tascar_os.o
 
 TASCARDMXOBJECTS =
 
