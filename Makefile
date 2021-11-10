@@ -35,7 +35,8 @@ SOURCE_DIR = src
 
 LDLIBS += `pkg-config --libs $(EXTERNALS)`
 CXXFLAGS += `pkg-config --cflags $(EXTERNALS)`
-LDLIBS += -ldl
+LDLIBS += -ldl -lovclienttascar
+LDFLAGS += -Ltascar/libtascar/build
 
 # libcpprest dependencies:
 #LDLIBS += -lcrypto -lboost_filesystem -lboost_system -lcpprest
@@ -123,8 +124,10 @@ lib: build/libov.a
 libovserver: EXTERNALS=libcurl
 libovserver: build/libovserver.a
 
-build/libov.a: $(BUILD_OBJ) $(patsubst %,tascar/libtascar/build/%,$(TASCAROBJECTS)) $(patsubst %,tascar/libtascar/build/%,$(TASCARDMXOBJECTS))
+build/libov.a: $(BUILD_OBJ)
 	ar rcs $@ $^
+
+# $(patsubst %,tascar/libtascar/build/%,$(TASCAROBJECTS)) $(patsubst %,tascar/libtascar/build/%,$(TASCARDMXOBJECTS))
 
 build/libovserver.a: $(BUILD_OBJ_SERVER)
 	ar rcs $@ $^
@@ -141,16 +144,17 @@ build/%.o: src/%.cc $(wildcard src/*.h)
 tscbuild:
 	$(MAKE) -C tascar/libtascar build
 
-$(patsubst %,tascar/libtascar/build/%,$(TASCAROBJECTS)): tscobj
+#$(patsubst %,tascar/libtascar/build/%,$(TASCAROBJECTS)): tscobj
 
 tscver: tscbuild
 	$(MAKE) -C tascar/libtascar ver
 
 tscobj: tscver
-	$(MAKE) -C tascar/libtascar TSCCXXFLAGS=-DPLUGINPREFIX='\"ovclient\"' $(patsubst %,build/%,$(TASCAROBJECTS))  $(patsubst %,build/%,$(TASCARDMXOBJECTS))
+	$(MAKE) -C tascar/libtascar PLUGINPREFIX=ovclient TSCCXXFLAGS=-DPLUGINPREFIX='\"ovclient\"' all
+#$(patsubst %,build/%,$(TASCAROBJECTS))  $(patsubst %,build/%,$(TASCARDMXOBJECTS))
 
 tscplug: tscver tscobj
-	 $(MAKE) -C tascar/plugins PLUGINPREFIX=ovclient RECEIVERS="$(TASCARRECEIVERS)" SOURCES="$(TASCARSOURCE)" TASCARMODS="$(TASCARMODULS)" TASCARMODSGUI= AUDIOPLUGINS="$(TASCARAUDIOPLUGS)" GLABSENSORS= TASCARLIB="$(patsubst %,../libtascar/build/%,$(TASCAROBJECTS))" TASCARDMXLIB="$(patsubst %,../libtascar/build/%,$(TASCARDMXOBJECTS))"
+	 $(MAKE) -C tascar/plugins PLUGINPREFIX=ovclient RECEIVERS="$(TASCARRECEIVERS)" SOURCES="$(TASCARSOURCE)" TASCARMODS="$(TASCARMODULS)" TASCARMODSGUI= AUDIOPLUGINS="$(TASCARAUDIOPLUGS)" GLABSENSORS= TASCARLIB="-lovclienttascar" TASCARDMXLIB="-lovclienttascardmx"
 
 clangformat:
 	clang-format-9 -i $(wildcard src/*.cc) $(wildcard src/*.h)
@@ -185,7 +189,7 @@ $(patsubst %,%-subdir-unit-tests,$(SUBDIRS)):
 	$(MAKE) -C $(@:-subdir-unit-tests=) unit-tests
 
 execute-unit-tests: $(BUILD_DIR)/unit-test-runner
-	if [ -x $< ]; then LD_LIBRARY_PATH=./build: $<; fi
+	if [ -x $< ]; then LD_LIBRARY_PATH=./build:./tascar/libtascar/build: $<; fi
 
 unit_tests_test_files = $(wildcard unittests/*.cc)
 $(BUILD_DIR)/unit-test-runner: $(BUILD_DIR)/.directory $(unit_tests_test_files) $(BUILD_OBJ)
