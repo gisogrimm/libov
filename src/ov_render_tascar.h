@@ -142,6 +142,10 @@ private:
   bool render_soundscape;
   // user provided TASCAR include file content:
   std::string tscinclude;
+  // jackrec file format:
+  std::string jackrec_fileformat;
+  // jackrec sample format:
+  std::string jackrec_sampleformat;
 };
 
 #endif

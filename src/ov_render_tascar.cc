@@ -128,7 +128,8 @@ ov_render_tascar_t::ov_render_tascar_t(const std::string& deviceid,
       headtrack_tauref(33.315), selfmonitor_delay(0.0), zitapath(ZITAPATH),
       is_proxy(false), use_proxy(false), cb_seqerr(nullptr),
       cb_seqerr_data(nullptr), sorter_deadline(5.0),
-      expedited_forwarding_PHB(false), render_soundscape(true)
+      expedited_forwarding_PHB(false), render_soundscape(true),
+      jackrec_fileformat("WAV"), jackrec_sampleformat("PCM_16")
 {
 #ifdef SHOWDEBUG
   std::cout << "ov_render_tascar_t::ov_render_tascar_t" << std::endl;
@@ -450,6 +451,9 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
   tsccfg::node_t e_mods(tsccfg::node_add_child(e_session, "modules"));
   tsccfg::node_t e_jackrec(tsccfg::node_add_child(e_mods, "jackrec"));
   tsccfg::node_set_attribute(e_jackrec, "url", "osc.udp://localhost:9000/");
+  tsccfg::node_set_attribute(e_jackrec, "sampleformat", jackrec_sampleformat);
+  tsccfg::node_set_attribute(e_jackrec, "fileformat", jackrec_fileformat);
+  tsccfg::node_set_attribute(e_jackrec, "pattern", "rec*.*");
   tsccfg::node_add_child(e_mods, "touchosc");
   // create zita-n2j receivers:
   // this variable holds the path to zita
@@ -586,6 +590,9 @@ void ov_render_tascar_t::create_raw_dev(tsccfg::node_t e_session)
   tsccfg::node_t e_mods(tsccfg::node_add_child(e_session, "modules"));
   tsccfg::node_t e_jackrec = tsccfg::node_add_child(e_mods, "jackrec");
   tsccfg::node_set_attribute(e_jackrec, "url", "osc.udp://localhost:9000/");
+  tsccfg::node_set_attribute(e_jackrec, "sampleformat", jackrec_sampleformat);
+  tsccfg::node_set_attribute(e_jackrec, "fileformat", jackrec_fileformat);
+  tsccfg::node_set_attribute(e_jackrec, "pattern", "rec*.*");
   tsccfg::node_add_child(e_mods, "touchosc");
   if(stage.rendersettings.receive) {
     tsccfg::node_t e_route = tsccfg::node_add_child(e_mods, "route");
@@ -777,6 +784,10 @@ void ov_render_tascar_t::start_session()
       tsccfg::node_t e_mods(tsccfg::node_add_child(e_session, "modules"));
       tsccfg::node_t e_jackrec = tsccfg::node_add_child(e_mods, "jackrec");
       tsccfg::node_set_attribute(e_jackrec, "url", "osc.udp://localhost:9000/");
+      tsccfg::node_set_attribute(e_jackrec, "sampleformat",
+                                 jackrec_sampleformat);
+      tsccfg::node_set_attribute(e_jackrec, "fileformat", jackrec_fileformat);
+      tsccfg::node_set_attribute(e_jackrec, "pattern", "rec*.*");
       tsccfg::node_add_child(e_mods, "touchosc");
     }
   } else {
@@ -1143,6 +1154,20 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
           if(is_session_active()) {
             metronome.update_osc(tascar, stage.thisdeviceid);
           }
+        }
+      }
+      if(xcfg["jackrec"].is_object()) {
+        std::string new_jackrec_sampleformat =
+            my_js_value(xcfg["jackrec"], "sampleformat", std::string("PCM_16"));
+        if(new_jackrec_sampleformat != jackrec_sampleformat) {
+          jackrec_sampleformat = new_jackrec_sampleformat;
+          restart_session = true;
+        }
+        std::string new_jackrec_fileformat =
+            my_js_value(xcfg["jackrec"], "fileformat", std::string("WAV"));
+        if(new_jackrec_fileformat != jackrec_fileformat) {
+          jackrec_fileformat = new_jackrec_fileformat;
+          restart_session = true;
         }
       }
       if(xcfg["proxy"].is_object()) {
