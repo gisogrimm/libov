@@ -107,7 +107,8 @@ private:
   std::vector<std::string> inputports;
   double headtrack_tauref;
   // self-monitor delay in milliseconds:
-  double selfmonitor_delay;
+  double selfmonitor_delay = 0.0;
+  bool selfmonitor_onlyreverb = false;
   // metronome settings:
   metronome_t metronome;
   std::string zitapath;
