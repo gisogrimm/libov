@@ -1,7 +1,7 @@
 /*
  * This file is part of the ovbox software tool, see <http://orlandoviols.com/>.
  *
- * Copyright (c) 2021 Giso Grimm, delude88, Tobias Hegemann
+ * Copyright (c) 2021 Giso Grimm, Tobias Hegemann
  */
 /*
  * ovbox is free software: you can redistribute it and/or modify
@@ -379,7 +379,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
               tsccfg::node_set_attribute(e_snd, "type", "cardioidmod");
             if((stagemember.second.id == thisdev.id) &&
                selfmonitor_onlyreverb) {
-              tsccfg::node_set_attribute(e_snd, "ismmin", "1");
+              tsccfg::node_set_attribute(e_snd, "layers", "2");
             }
             if((stagemember.second.id == thisdev.id) &&
                (selfmonitor_delay > 0.0)) {
@@ -721,6 +721,7 @@ void ov_render_tascar_t::start_session()
       // ->add_child_text(TASCAR, but only these two can produce audio which is
       // headphone-compatible):
       tsccfg::node_set_attribute(e_rec, "type", stage.rendersettings.rectype);
+      tsccfg::node_set_attribute(e_rec, "layers", "1");
       if(stage.rendersettings.rectype == "ortf") {
         tsccfg::node_set_attribute(e_rec, "angle", "140");
         tsccfg::node_set_attribute(e_rec, "f6db", "12000");
