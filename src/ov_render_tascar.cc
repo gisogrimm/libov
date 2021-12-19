@@ -125,11 +125,11 @@ ov_render_tascar_t::ov_render_tascar_t(const std::string& deviceid,
     : ov_render_base_t(deviceid), h_jack(NULL), h_webmixer(NULL), tascar(NULL),
       ovboxclient(NULL), pinglogport(pinglogport_), pinglogaddr(nullptr),
       inputports({"system:capture_1", "system:capture_2"}),
-      headtrack_tauref(33.315), zitapath(ZITAPATH),
-      is_proxy(false), use_proxy(false), cb_seqerr(nullptr),
-      cb_seqerr_data(nullptr), sorter_deadline(5.0),
-      expedited_forwarding_PHB(false), render_soundscape(true),
-      jackrec_fileformat("WAV"), jackrec_sampleformat("PCM_16")
+      headtrack_tauref(33.315), zitapath(ZITAPATH), is_proxy(false),
+      use_proxy(false), cb_seqerr(nullptr), cb_seqerr_data(nullptr),
+      sorter_deadline(5.0), expedited_forwarding_PHB(false),
+      render_soundscape(true), jackrec_fileformat("WAV"),
+      jackrec_sampleformat("PCM_16")
 {
 #ifdef SHOWDEBUG
   std::cout << "ov_render_tascar_t::ov_render_tascar_t" << std::endl;
@@ -379,7 +379,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
               tsccfg::node_set_attribute(e_snd, "type", "cardioidmod");
             if((stagemember.second.id == thisdev.id) &&
                selfmonitor_onlyreverb) {
-              tsccfg::node_set_attribute(e_snd,"ismmin","1");
+              tsccfg::node_set_attribute(e_snd, "ismmin", "1");
             }
             if((stagemember.second.id == thisdev.id) &&
                (selfmonitor_delay > 0.0)) {
@@ -1141,9 +1141,13 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
       }
       if(xcfg["headtrack"].is_object())
         headtrack_tauref = my_js_value(xcfg["headtrack"], "tauref", 33.315);
-      if(xcfg["monitor"].is_object()){
+      if(xcfg["monitor"].is_object()) {
         selfmonitor_delay = my_js_value(xcfg["monitor"], "delay", 0.0);
-        selfmonitor_onlyreverb = my_js_value(xcfg["monitor"], "onlyreverb", false);
+        bool new_onlyreverb = my_js_value(xcfg["monitor"], "onlyreverb", false);
+        if(new_onlyreverb != selfmonitor_onlyreverb) {
+          selfmonitor_onlyreverb = new_onlyreverb;
+          restart_session = true;
+        }
       }
       if(xcfg["render"].is_object()) {
         bool prev(render_soundscape);
