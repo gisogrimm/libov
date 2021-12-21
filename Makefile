@@ -93,12 +93,10 @@ else
 		LDFLAGS += -framework IOKit -framework CoreFoundation
 		CXXFLAGS += -I`brew --prefix libsoundio`/include
 #		LDLIBS += `brew --prefix libsoundio`
-#		LDFLAGS += -L`brew --prefix libsoundio`/lib
-#		LDLIBS += -lsoundio
-#		LDLIBS += `pkg-config --libs nlohmann_json`
-#		CXXFLAGS += `pkg-config --cflags nlohmann_json`
-		LDLIBS += `pkg-config --libs nlohmann_json libsoundio`
-		CXXFLAGS += `pkg-config --cflags nlohmann_json libsoundio`
+		LDFLAGS += -L`brew --prefix libsoundio`/lib
+		LDLIBS += -lsoundio
+		LDLIBS += `pkg-config --libs nlohmann_json`
+		CXXFLAGS += `pkg-config --cflags nlohmann_json`
 		ifeq ($(ARCH),arm64)
 			CXXFLAGS += "--target=arm64-apple-darwin"
 		endif
