@@ -191,6 +191,8 @@ $(patsubst %,%-subdir-unit-tests,$(SUBDIRS)):
 	$(MAKE) -C $(@:-subdir-unit-tests=) unit-tests
 
 execute-unit-tests: $(BUILD_DIR)/unit-test-runner
+	ls ./build/
+	ls ./tascar/libtascar/build/
 	if [ -x $< ]; then LD_LIBRARY_PATH=./build:./tascar/libtascar/build: $<; fi
 
 unit_tests_test_files = $(wildcard unittests/*.cc)
