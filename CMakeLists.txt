@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16.0)
 
 ### GLOBAL CONFIGURATION
-project(Ov
+project(ov
         LANGUAGES CXX
         VERSION 0.5
         DESCRIPTION "common header files and library code for ov-client and ov-server"
@@ -108,19 +108,19 @@ list(APPEND AUDIOPLUGINS
 add_subdirectory(tascar/plugins)
 get_property(TASCAR_PLUGIN_LIBRARIES GLOBAL PROPERTY TASCAR_PLUGIN_LIBRARIES)
 foreach (TASCAR_PLUGIN_LIBRARY IN LISTS TASCAR_PLUGIN_LIBRARIES)
-    add_library(Ov::Plugins::${TASCAR_PLUGIN_LIBRARY} ALIAS ${TASCAR_PLUGIN_LIBRARY})
+    add_library(ov::Plugins::${TASCAR_PLUGIN_LIBRARY} ALIAS ${TASCAR_PLUGIN_LIBRARY})
     list(APPEND OV_PLUGIN_LIBRARIES
-        Ov::Plugins::${TASCAR_PLUGIN_LIBRARY})
+        ov::Plugins::${TASCAR_PLUGIN_LIBRARY})
 endforeach()
 set_property(GLOBAL PROPERTY OV_PLUGIN_LIBRARIES)
 
 
 ### TARGETS
 # libov
-add_library(Ov STATIC ${SOURCES})
-add_library(Ov::Ov ALIAS Ov)
+add_library(ov STATIC ${SOURCES})
+add_library(ov::ov ALIAS ov)
 set_target_properties(Tascar PROPERTIES PUBLIC_HEADER "${HEADER}")
-target_link_libraries(Ov
+target_link_libraries(ov
         PRIVATE
         Tascar::Tascar
         ${CURL_LIBRARIES}
@@ -129,19 +129,19 @@ target_link_libraries(Ov
         cpprestsdk::cpprest
         ${SOUNDIO_LIBRARY}
         )
-set_target_properties(Ov PROPERTIES
+set_target_properties(ov PROPERTIES
         VERSION ${PROJECT_VERSION}
         SOVERSION 1
         )
 if (APPLE)
-    target_link_libraries(Ov
+    target_link_libraries(ov
             PUBLIC
             "-framework IOKit"
             "-framework CoreFoundation"
             )
 endif ()
 if (UNIX AND NOT APPLE)
-    target_link_libraries(Ov
+    target_link_libraries(ov
             PRIVATE
             ALSA::ALSA
             )
@@ -163,7 +163,7 @@ write_basic_package_version_file(
         "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake" COMPATIBILITY SameMajorVersion
 )
 install(
-        TARGETS Ov
+        TARGETS ov
         EXPORT "${TARGETS_EXPORT_NAME}"
         LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
         ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
@@ -177,6 +177,6 @@ install(
 )
 install(
         EXPORT "${TARGETS_EXPORT_NAME}"
-        NAMESPACE "Ov::"
+        NAMESPACE "ov::"
         DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
 )
