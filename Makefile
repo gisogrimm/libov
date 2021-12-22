@@ -28,6 +28,14 @@ ifeq "$(ARCH)" "x86_64"
 CXXFLAGS += -msse -msse2 -mfpmath=sse -ffast-math
 endif
 
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+LIBVAR=LD_LIBRARY_PATH
+endif
+ifeq ($(UNAME_S),Darwin)
+LIBVAR=DYLD_LIBRARY_PATH
+endif
+
 CPPFLAGS = -std=c++2a
 PREFIX = /usr/local
 BUILD_DIR = build
@@ -191,9 +199,7 @@ $(patsubst %,%-subdir-unit-tests,$(SUBDIRS)):
 	$(MAKE) -C $(@:-subdir-unit-tests=) unit-tests
 
 execute-unit-tests: $(BUILD_DIR)/unit-test-runner
-	ls -al ./build/
-	ls -al ./tascar/libtascar/build/
-	if [ -x $< ]; then LD_LIBRARY_PATH=./build:./tascar/libtascar/build: $<; fi
+	if [ -x $< ]; then $(LIBVAR)=./build:./tascar/libtascar/build: $<; fi
 
 unit_tests_test_files = $(wildcard unittests/*.cc)
 $(BUILD_DIR)/unit-test-runner: $(BUILD_DIR)/.directory $(unit_tests_test_files) $(BUILD_OBJ)
