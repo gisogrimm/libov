@@ -2,14 +2,14 @@
 
 #include "udpsocket.h"
 
-TEST(msgbuf, age)
-{
-  msgbuf_t msg;
-  msg.set_tick();
-  usleep(20000.0);
-  double age(msg.get_age());
-  ASSERT_NEAR(20.0, age, 15.0);
-}
+//TEST(msgbuf, age)
+//{
+//  msgbuf_t msg;
+//  msg.set_tick();
+//  usleep(20000.0);
+//  double age(msg.get_age());
+//  ASSERT_NEAR(20.0, age, 15.0);
+//}
 
 TEST(msgbuf, pack)
 {
