@@ -1,7 +1,7 @@
 /*
  * This file is part of the ovbox software tool, see <http://orlandoviols.com/>.
  *
- * Copyright (c) 2021 Giso Grimm, Tobias Hegemann, delude88
+ * Copyright (c) 2021 Giso Grimm, Tobias Hegemann
  */
 /*
  * ovbox is free software: you can redistribute it and/or modify
@@ -64,6 +64,7 @@ public:
   std::string get_client_stats();
   std::string get_zita_path();
   void set_zita_path(const std::string& path);
+  void set_allow_systemmods(bool);
   class metronome_t {
   public:
     metronome_t();
@@ -141,6 +142,7 @@ private:
   double sorter_deadline;
   bool expedited_forwarding_PHB;
   bool render_soundscape;
+  bool allow_systemmods = false;
   // user provided TASCAR include file content:
   std::string tscinclude;
   // jackrec file format:

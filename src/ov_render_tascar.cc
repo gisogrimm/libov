@@ -153,6 +153,11 @@ ov_render_tascar_t::~ov_render_tascar_t()
     lo_address_free(pinglogaddr);
 }
 
+void ov_render_tascar_t::set_allow_systemmods(bool allow)
+{
+  allow_systemmods = allow;
+}
+
 void ov_render_tascar_t::add_secondary_bus(const stage_device_t& stagemember,
                                            tsccfg::node_t& e_mods,
                                            tsccfg::node_t& e_session,
@@ -826,8 +831,18 @@ void ov_render_tascar_t::start_session()
   if(tscinclude.size()) {
     tsccfg::node_t e_inc(tsccfg::node_add_child(e_session, "include"));
     tsccfg::node_set_attribute(e_inc, "name", stage.thisdeviceid + ".itsc");
-    std::ofstream ofh(stage.thisdeviceid + ".itsc");
-    ofh << tscinclude;
+    TASCAR::xml_doc_t itsc(tscinclude, TASCAR::xml_doc_t::LOAD_STRING);
+    if(!allow_systemmods) {
+      auto modnodes(tsccfg::node_get_children(itsc.root(), "modules"));
+      for(auto mod : modnodes) {
+        auto sysnodes(tsccfg::node_get_children(mod, "system"));
+        for(auto sys : sysnodes)
+          tsccfg::node_remove_child(mod, sys);
+      }
+    }
+    itsc.save(stage.thisdeviceid + ".itsc");
+    // std::ofstream ofh(stage.thisdeviceid + ".itsc");
+    // ofh << tscinclude;
   }
   tsc.save(folder + "ovbox_debugsession.tsc");
   tascar = new TASCAR::session_t(tsc.save_to_string(),
