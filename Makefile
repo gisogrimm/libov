@@ -94,7 +94,9 @@ else
 		LDLIBS += -lasound
 	 	TASCARMODULS += ovheadtracker lightctl
 		TASCARDMXOBJECTS += termsetbaud.o serialport.o dmxdriver.o
+		ifndef ARCHLINUX
 		TASCARRECEIVERS += itu51
+		endif
 	endif
 	ifeq ($(UNAME_S),Darwin)
 		OSFLAG += -D OSX
