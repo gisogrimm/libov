@@ -95,7 +95,7 @@ else
 		LDLIBS += -lasound
 	 	TASCARMODULS += ovheadtracker lightctl
 		TASCARDMXOBJECTS += termsetbaud.o serialport.o dmxdriver.o
-		ifeq ($DISTRO,ubuntu)
+		ifneq ($DISTRO,arch)
 		TASCARRECEIVERS += itu51
 		endif
 	endif
