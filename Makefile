@@ -89,12 +89,13 @@ ifeq ($(OS),Windows_NT)
 else
 	UNAME_S := $(shell uname -s)
 	ifeq ($(UNAME_S),Linux)
+		DISTRO = $(shell . /etc/os-release && echo $${ID})
 		OSFLAG += -D LINUX
 		CXXFLAGS += -fext-numeric-literals
 		LDLIBS += -lasound
 	 	TASCARMODULS += ovheadtracker lightctl
 		TASCARDMXOBJECTS += termsetbaud.o serialport.o dmxdriver.o
-		ifndef ARCHLINUX
+		ifeq ($DISTRO,ubuntu)
 		TASCARRECEIVERS += itu51
 		endif
 	endif
@@ -127,6 +128,9 @@ CXXFLAGS += $(OSFLAG)
 
 showver: tascar/Makefile get_version.sh
 	@echo $(FULLVERSION)
+
+dist:
+	echo $(DISTRO)
 
 tascar/Makefile:
 	git submodule init && git submodule update
