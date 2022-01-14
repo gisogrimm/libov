@@ -46,6 +46,7 @@ std::string ep2ipstr(const endpoint_t& ep);
 
 std::string getmacaddr();
 endpoint_t getipaddr();
+std::vector<std::string> getnetworkdevices();
 
 inline bool is_same_network(const endpoint_t& a, const endpoint_t& b)
 {

@@ -828,6 +828,45 @@ void ov_render_tascar_t::start_session()
       ovboxclient->add_proxy_client(proxyclient.first, proxyclient.second);
     }
   }
+  if(mczita) {
+    std::vector<std::string> waitports;
+    tsccfg::node_t e_mods = tsccfg::node_add_child(e_session, "modules");
+    tsccfg::node_t e_zit = tsccfg::node_add_child(e_mods, "system");
+    std::map<uint32_t, uint32_t> chmap;
+    uint32_t och(0);
+    for(auto ch : mczitachannels) {
+      ++och;
+      chmap[ch] = och;
+    }
+    std::string chlist;
+    och = 0;
+    for(auto ch : chmap) {
+      ++och;
+      chlist += std::to_string(ch.first) + ",";
+      waitports.push_back("n2j_" + stage.thisdeviceid + "_mc:out_" +
+                          std::to_string(ch.first));
+      session_add_connect(e_session,
+                          "n2j_" + stage.thisdeviceid + "_mc:out_" +
+                              std::to_string(ch.first),
+                          "system:playback_" + std::to_string(ch.second));
+    }
+    if(chlist.size())
+      chlist.erase(chlist.size() - 1, 1);
+    std::string cmd = zitapath + "zita-n2j --chan " + chlist + " --buff " +
+                      std::to_string(mczitabuffer) + " --jname " + "n2j_" +
+                      stage.thisdeviceid + "_mc " + mczitaaddr + " " +
+                      std::to_string(mczitaport) + " " + mczitadevice;
+    DEBUG(cmd);
+    tsccfg::node_set_attribute(e_zit, "command", cmd);
+    tsccfg::node_set_attribute(e_zit, "onunload", "killall zita-n2j");
+    tsccfg::node_t e_wait = tsccfg::node_add_child(e_mods, "waitforjackport");
+    tsccfg::node_set_attribute(e_wait, "name",
+                               stage.thisdeviceid + ".waitforportsmc");
+    for(auto port : waitports) {
+      tsccfg::node_t e_p = tsccfg::node_add_child(e_wait, "port");
+      tsccfg::node_set_text(e_p, port);
+    }
+  }
   if(tscinclude.size()) {
     tsccfg::node_t e_inc(tsccfg::node_add_child(e_session, "include"));
     tsccfg::node_set_attribute(e_inc, "name", stage.thisdeviceid + ".itsc");
@@ -1221,6 +1260,26 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
         use_proxy = cfg_use_proxy;
         proxyclients = cfg_proxyclients;
         proxyip = cfg_proxyip;
+      }
+      if(xcfg["mcrec"].is_object()) {
+        auto prev_mczita = mczita;
+        mczita = my_js_value(xcfg["mcrec"], "use", mczita);
+        auto prev_mczitaaddr = mczitaaddr;
+        mczitaaddr = my_js_value(xcfg["mcrec"], "addr", mczitaaddr);
+        auto prev_mczitaport = mczitaport;
+        mczitaport = my_js_value(xcfg["mcrec"], "port", mczitaport);
+        auto prev_mczitadevice = mczitadevice;
+        mczitadevice = my_js_value(xcfg["mcrec"], "device", mczitadevice);
+        auto prev_mczitabuffer = mczitabuffer;
+        mczitabuffer = my_js_value(xcfg["mcrec"], "buffer", mczitabuffer);
+        auto prev_mczitachannels = mczitachannels;
+        mczitachannels = my_js_value(xcfg["mcrec"], "channels", mczitachannels);
+        if((prev_mczita != mczita) || (prev_mczitaaddr != mczitaaddr) ||
+           (prev_mczitaport != mczitaport) ||
+           (prev_mczitadevice != mczitadevice) ||
+           (prev_mczitabuffer != mczitabuffer) ||
+           (prev_mczitachannels != mczitachannels))
+          restart_session = true;
       }
       if(is_session_active() && restart_session) {
         require_session_restart();

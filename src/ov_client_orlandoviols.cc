@@ -193,6 +193,7 @@ std::string ov_client_orlandoviols_t::device_update(std::string url,
   jsdevice["version"] = "ovclient-" + std::string(OVBOXVERSION);
   jsdevice["isovbox"] = isovbox;
   jsdevice["pingstats"] = nlohmann::json::parse(backend.get_client_stats());
+  jsdevice["networkdevices"] = getnetworkdevices();
   std::string curlstrdevice(jsdevice.dump());
   CURLcode res;
   std::string retv;

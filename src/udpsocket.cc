@@ -456,6 +456,7 @@ endpoint_t getipaddr()
     if(tmp->ifa_addr && tmp->ifa_addr->sa_family == AF_INET &&
        (!(tmp->ifa_flags & IFF_LOOPBACK))) {
       memcpy(&my_addr, tmp->ifa_addr, sizeof(endpoint_t));
+      freeifaddrs(addrs);
       return my_addr;
     }
     tmp = tmp->ifa_next;
@@ -463,6 +464,21 @@ endpoint_t getipaddr()
   freeifaddrs(addrs);
 #endif
   return my_addr;
+}
+
+std::vector<std::string> getnetworkdevices()
+{
+  std::vector<std::string> devices;
+  struct ifaddrs* addrs;
+  getifaddrs(&addrs);
+  struct ifaddrs* tmp = addrs;
+  while(tmp) {
+    if(tmp->ifa_addr && tmp->ifa_addr->sa_family == AF_INET)
+      devices.push_back(tmp->ifa_name);
+    tmp = tmp->ifa_next;
+  }
+  freeifaddrs(addrs);
+  return devices;
 }
 
 msgbuf_t::msgbuf_t()

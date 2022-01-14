@@ -149,6 +149,13 @@ private:
   std::string jackrec_fileformat;
   // jackrec sample format:
   std::string jackrec_sampleformat;
+  // add multicast zita-n2j instance:
+  bool mczita = false;
+  std::string mczitaaddr = "";
+  uint32_t mczitaport = 10007;
+  std::string mczitadevice = "";
+  uint32_t mczitabuffer = 10;
+  std::vector<uint32_t> mczitachannels = {1, 2};
 };
 
 #endif
