@@ -28,6 +28,7 @@
 #include <sstream>
 #include <string.h>
 #include <unistd.h>
+#include <filesystem>
 
 CURL* curl;
 
@@ -124,6 +125,20 @@ bool ov_client_orlandoviols_t::download_file(const std::string& url,
   std::cout << "ov_client_orlandoviols_t::download_file " << url << " to "
             << dest << std::endl;
 #endif
+  std::string hashname = std::string("/usr/share/ovclient/sounds/")+url2localfilename(url);
+  std::ifstream localfile(hashname);
+  if( localfile.good() ) {
+    std::error_code ec;
+    std::filesystem::copy(hashname,dest,ec);
+    if( ec )
+      std::cerr << "Warning: " << ec.message() << " (" << dest << ")" << std::endl;
+    std::ifstream destfile(dest);
+    if( destfile.good() )
+      return true;
+    std::cerr << "could not copy " << hashname << ", downloading from " << url << std::endl;
+  }else{
+    std::cerr << "could not open " << hashname << ", downloading from " << url << std::endl;
+  }
   CURLcode res;
   struct webCURL::MemoryStruct chunk;
   chunk.memory =
@@ -170,12 +185,7 @@ std::string ov_client_orlandoviols_t::device_update(std::string url,
   // uint32_t nch(0);
   for(auto ch : backend.get_input_channel_ids()) {
     jsinchannels.push_back(ch);
-    // jsinchannels += "\"" + std::to_string(nch) + "\":\"" + ch + "\",";
-    //++nch;
   }
-  // if(jsinchannels.size())
-  //  jsinchannels.erase(jsinchannels.size() - 1, 1);
-  // jsinchannels += "}";
   std::vector<snddevname_t> alsadevs(list_sound_devices());
   nlohmann::json jsalsadevs;
   for(auto d : alsadevs)
@@ -337,12 +347,18 @@ void ov_client_orlandoviols_t::service()
   }
   std::string hash;
   double gracetime(9.0);
+  std::string owner;
   while(runservice) {
     try {
       std::string stagecfg(device_update(lobby, backend.get_deviceid(), hash));
       if(!stagecfg.empty()) {
         try {
           nlohmann::json js_stagecfg(nlohmann::json::parse(stagecfg));
+          auto newowner = my_js_value(js_stagecfg,"owner",owner);
+          if( newowner != owner ){
+            owner = newowner;
+            std::cout << "Device ID: " << backend.get_deviceid() << " User: " << owner << std::endl;
+          }
           if(!js_stagecfg["frontendconfig"].is_null()) {
             std::ofstream ofh(folder + "ov-client.cfg");
             ofh << js_stagecfg["frontendconfig"].dump();
