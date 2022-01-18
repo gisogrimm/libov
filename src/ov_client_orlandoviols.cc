@@ -353,7 +353,6 @@ void ov_client_orlandoviols_t::service()
   }
   std::string hash;
   double gracetime(9.0);
-  std::string owner;
   while(runservice) {
     try {
       std::string stagecfg(device_update(lobby, backend.get_deviceid(), hash));

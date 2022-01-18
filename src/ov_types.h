@@ -455,6 +455,7 @@ public:
   virtual void start_service() = 0;
   virtual void stop_service() = 0;
   virtual bool is_going_to_stop() const = 0;
+  virtual std::string get_owner() const { return ""; };
 
   virtual void set_runtime_folder(const std::string& value) { folder = value; };
   virtual const std::string& get_runtime_folder() const { return folder; };

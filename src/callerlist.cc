@@ -56,7 +56,7 @@ void endpoint_list_t::cid_register(stage_device_id_t cid, const endpoint_t& ep,
     if(mode != endpoints[cid].mode)
       endpoints[cid].announced = false;
     endpoints[cid].mode = mode;
-    endpoints[cid].timeout = TIMEOUT;
+    endpoints[cid].timeout = CALLERLIST_TIMEOUT;
     endpoints[cid].version = rver;
   }
 }
@@ -72,7 +72,7 @@ void endpoint_list_t::cid_setlocalip(stage_device_id_t cid,
 void endpoint_list_t::cid_setpingtime(stage_device_id_t cid, double pingtime)
 {
   if(cid < MAX_STAGE_ID) {
-    endpoints[cid].timeout = TIMEOUT;
+    endpoints[cid].timeout = CALLERLIST_TIMEOUT;
     if(pingtime > 0) {
       if(mstat.try_lock()) {
         ++endpoints[cid].pingt_n;

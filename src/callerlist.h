@@ -28,7 +28,7 @@
 // period time of ping statistic loggin, in ping periods:
 #define STATLOGPERIOD 600
 // timeout of caller actvity, in ping periods:
-#define TIMEOUT 120
+#define CALLERLIST_TIMEOUT 120
 
 class ep_desc_t {
 public:

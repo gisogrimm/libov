@@ -31,6 +31,7 @@ public:
   void stop_service();
   bool download_file(const std::string& url, const std::string& dest);
   bool is_going_to_stop() const { return quitrequest_; };
+  std::string get_owner() const { return owner; };
 
 private:
   void service();
@@ -45,6 +46,7 @@ private:
   std::string lobby;
   std::atomic<bool> quitrequest_;
   bool isovbox;
+  std::string owner;
 };
 
 #endif
