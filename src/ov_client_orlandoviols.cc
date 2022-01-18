@@ -28,7 +28,7 @@
 #include <sstream>
 #include <string.h>
 #include <unistd.h>
-#include <filesystem>
+//#include <filesystem>
 
 CURL* curl;
 
@@ -125,19 +125,25 @@ bool ov_client_orlandoviols_t::download_file(const std::string& url,
   std::cout << "ov_client_orlandoviols_t::download_file " << url << " to "
             << dest << std::endl;
 #endif
-  std::string hashname = std::string("/usr/share/ovclient/sounds/")+url2localfilename(url);
-  std::ifstream localfile(hashname);
-  if( localfile.good() ) {
-    std::error_code ec;
-    std::filesystem::copy(hashname,dest,ec);
-    if( ec )
-      std::cerr << "Warning: " << ec.message() << " (" << dest << ")" << std::endl;
-    std::ifstream destfile(dest);
-    if( destfile.good() )
-      return true;
-    std::cerr << "could not copy " << hashname << ", downloading from " << url << std::endl;
-  }else{
-    std::cerr << "could not open " << hashname << ", downloading from " << url << std::endl;
+  std::string hashname =
+      std::string("/usr/share/ovclient/sounds/") + url2localfilename(url);
+  std::ifstream localfile(hashname, std::ios::binary);
+  if(localfile.good()) {
+    // std::error_code ec;
+    // std::filesystem::copy(hashname,dest,ec);
+    // if( ec )
+    //  std::cerr << "Warning: " << ec.message() << " (" << dest << ")" <<
+    //  std::endl;
+    std::ofstream destfile(dest, std::ios::binary);
+    destfile << localfile.rdbuf();
+    return true;
+    // if( destfile.good() )
+    //  return true;
+    // std::cerr << "could not copy " << hashname << ", downloading from " <<
+    // url << std::endl;
+  } else {
+    std::cerr << "could not open " << hashname << ", downloading from " << url
+              << std::endl;
   }
   CURLcode res;
   struct webCURL::MemoryStruct chunk;
@@ -354,10 +360,11 @@ void ov_client_orlandoviols_t::service()
       if(!stagecfg.empty()) {
         try {
           nlohmann::json js_stagecfg(nlohmann::json::parse(stagecfg));
-          auto newowner = my_js_value(js_stagecfg,"owner",owner);
-          if( newowner != owner ){
+          auto newowner = my_js_value(js_stagecfg, "owner", owner);
+          if(newowner != owner) {
             owner = newowner;
-            std::cout << "Device ID: " << backend.get_deviceid() << " User: " << owner << std::endl;
+            std::cout << "Device ID: " << backend.get_deviceid()
+                      << " User: " << owner << std::endl;
           }
           if(!js_stagecfg["frontendconfig"].is_null()) {
             std::ofstream ofh(folder + "ov-client.cfg");
