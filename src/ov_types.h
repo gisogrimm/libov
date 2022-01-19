@@ -432,11 +432,13 @@ public:
    */
   void restart_session_if_needed();
   virtual std::string get_client_stats() { return ""; };
+  bool is_session_ready() const { return session_ready; };
 
 protected:
   audio_device_t audiodevice;
   stage_t stage;
   std::string folder;
+  bool session_ready = false;
 
 private:
   bool session_active;
@@ -459,6 +461,7 @@ public:
 
   virtual void set_runtime_folder(const std::string& value) { folder = value; };
   virtual const std::string& get_runtime_folder() const { return folder; };
+  bool is_session_ready() const { return backend.is_session_ready(); };
 
 protected:
   ov_render_base_t& backend;

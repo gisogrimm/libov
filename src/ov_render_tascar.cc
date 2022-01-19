@@ -915,6 +915,7 @@ void ov_render_tascar_t::start_session()
   if(!command.empty())
     h_webmixer = new spawn_process_t(command);
 #endif
+  session_ready = true;
 }
 
 void ov_render_tascar_t::end_session()
@@ -922,6 +923,7 @@ void ov_render_tascar_t::end_session()
 #ifdef SHOWDEBUG
   std::cout << "ov_render_tascar_t::end_session" << std::endl;
 #endif
+  session_ready = false;
   ov_render_base_t::end_session();
   if(h_webmixer)
     delete h_webmixer;
