@@ -156,6 +156,7 @@ private:
   std::string mczitadevice = "";
   uint32_t mczitabuffer = 10;
   std::vector<uint32_t> mczitachannels = {1, 2};
+  std::string zitasampleformat = "16bit";
 };
 
 #endif

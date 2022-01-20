@@ -513,8 +513,8 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
         e_sys, "command",
         zitapath + "zita-j2n --chan " +
             std::to_string(thisdev.channels.size()) + " --jname " +
-            stage.thisdeviceid + "_sender --16bit 127.0.0.1 " +
-            std::to_string(4464 + 2 * stage.thisstagedeviceid));
+            stage.thisdeviceid + "_sender --" + zitasampleformat +
+            " 127.0.0.1 " + std::to_string(4464 + 2 * stage.thisstagedeviceid));
     tsccfg::node_set_attribute(e_sys, "onunload", "killall zita-j2n");
     int chn(0);
     for(auto ch : thisdev.channels) {
@@ -539,8 +539,8 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
     tsccfg::node_set_attribute(
         e_sys, "command",
         zitapath + "zita-j2n --chan " + std::to_string(2) + " --jname " +
-            stage.thisdeviceid + "_sender --16bit 127.0.0.1 " +
-            std::to_string(4464 + 2 * stage.thisstagedeviceid));
+            stage.thisdeviceid + "_sender --" + zitasampleformat +
+            " 127.0.0.1 " + std::to_string(4464 + 2 * stage.thisstagedeviceid));
     tsccfg::node_set_attribute(e_sys, "onunload", "killall zita-j2n");
     session_add_connect(e_session, "render." + stage.thisdeviceid + ":master_l",
                         stage.thisdeviceid + "_sender:in_1");
@@ -656,8 +656,8 @@ void ov_render_tascar_t::create_raw_dev(tsccfg::node_t e_session)
         e_sys, "command",
         zitapath + "zita-j2n --chan " +
             std::to_string(thisdev.channels.size()) + " --jname " +
-            stage.thisdeviceid + "_sender --16bit 127.0.0.1 " +
-            std::to_string(4464 + 2 * stage.thisstagedeviceid));
+            stage.thisdeviceid + "_sender --" + zitasampleformat +
+            " 127.0.0.1 " + std::to_string(4464 + 2 * stage.thisstagedeviceid));
     tsccfg::node_set_attribute(e_sys, "onunload", "killall zita-j2n");
     int chn(0);
     for(auto ch : thisdev.channels) {
@@ -1211,6 +1211,12 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
         render_soundscape = my_js_value(xcfg["render"], "soundscape", true);
         if(prev != render_soundscape)
           restart_session = true;
+        auto new_zitasampleformat =
+            my_js_value(xcfg["render"], "zitasampleformat", zitasampleformat);
+        if(new_zitasampleformat != zitasampleformat) {
+          zitasampleformat = new_zitasampleformat;
+          restart_session = true;
+        }
       }
       if(xcfg["metronome"].is_object()) {
         metronome_t newmetro(xcfg["metronome"]);
