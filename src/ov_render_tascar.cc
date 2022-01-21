@@ -971,11 +971,18 @@ void ov_render_tascar_t::start_audiobackend()
         if(!devs.empty())
           devname = std::string("plug") + devs.rbegin()->dev;
       }
+#ifndef __APPLE__
       sprintf(cmd,
               "JACK_NO_AUDIO_RESERVATION=1 jackd --sync -P 40 -d alsa -d %s "
               "-r %g -p %d -n %d",
               devname.c_str(), audiodevice.srate, audiodevice.periodsize,
               audiodevice.numperiods);
+#else
+      sprintf(cmd,
+              "JACK_NO_AUDIO_RESERVATION=1 jackd --sync -P 40 -d coreaudio "
+              "-r %g -p %d",
+              audiodevice.srate, audiodevice.periodsize);
+#endif
     } else {
       sprintf(cmd,
               "JACK_NO_AUDIO_RESERVATION=1 jackd --sync -P 40 -d dummy "
