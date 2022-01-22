@@ -1071,7 +1071,7 @@ void ov_render_tascar_t::set_stage(
   // compare gains:
 }
 
-void ov_render_tascar_t::set_stage_device_gain(stage_device_id_t stagedeviceid,
+void ov_render_tascar_t::set_stage_device_gain(const stage_device_id_t& stagedeviceid,
                                                double gain)
 {
   DEBUG(gain);
@@ -1101,7 +1101,7 @@ void ov_render_tascar_t::set_stage_device_gain(stage_device_id_t stagedeviceid,
 }
 
 void ov_render_tascar_t::set_stage_device_channel_gain(
-    stage_device_id_t stagedeviceid, device_channel_id_t channeldeviceid,
+    const stage_device_id_t& stagedeviceid, const device_channel_id_t& channeldeviceid,
     double gain)
 {
   ov_render_base_t::set_stage_device_channel_gain(stagedeviceid,
@@ -1111,8 +1111,8 @@ void ov_render_tascar_t::set_stage_device_channel_gain(
 }
 
 void ov_render_tascar_t::set_stage_device_channel_position(
-    stage_device_id_t stagedeviceid, device_channel_id_t channeldeviceid,
-    pos_t position, zyx_euler_t orientation)
+    const stage_device_id_t& stagedeviceid, const device_channel_id_t& channeldeviceid,
+    const pos_t& position, const zyx_euler_t& orientation)
 {
   ov_render_base_t::set_stage_device_channel_position(
       stagedeviceid, channeldeviceid, position, orientation);

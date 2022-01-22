@@ -42,14 +42,14 @@ public:
   void add_stage_device(const stage_device_t& stagedevice);
   void rm_stage_device(stage_device_id_t stagedeviceid);
   void set_stage(const std::map<stage_device_id_t, stage_device_t>&);
-  void set_stage_device_gain(stage_device_id_t stagedeviceid, double gain);
-  void set_stage_device_channel_gain(stage_device_id_t stagedeviceid,
-                                     device_channel_id_t channeldeviceid,
+  void set_stage_device_gain(const stage_device_id_t& stagedeviceid, double gain);
+  void set_stage_device_channel_gain(const stage_device_id_t& stagedeviceid,
+                                     const device_channel_id_t& channeldeviceid,
                                      double gain);
-  void set_stage_device_channel_position(stage_device_id_t stagedeviceid,
-                                         device_channel_id_t channeldeviceid,
-                                         pos_t position,
-                                         zyx_euler_t orientation);
+  void set_stage_device_channel_position(const stage_device_id_t& stagedeviceid,
+                                         const device_channel_id_t& channeldeviceid,
+                                         const pos_t& position,
+                                         const zyx_euler_t& orientation);
   void set_render_settings(const render_settings_t& rendersettings,
                            stage_device_id_t thisstagedeviceid);
   std::string get_stagedev_name(stage_device_id_t stagedeviceid) const;
