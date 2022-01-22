@@ -161,7 +161,7 @@ private:
   // real time priority:
   const int prio;
   // PIN code to connect to server:
-  //secret_t secret;
+  // secret_t secret;
   // data relay server address:
   ovbox_udpsocket_t remote_server;
   // local UDP receiver:

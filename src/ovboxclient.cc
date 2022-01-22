@@ -71,10 +71,10 @@ ovboxclient_t::ovboxclient_t(const std::string& desthost, port_t destport,
                              bool peer2peer_, bool donotsend_,
                              bool receivedownmix_, bool sendlocal_,
                              double deadline, bool senddownmix, bool usingproxy)
-    : prio(prio), remote_server(secret, callerid),
-      toport(destport), recport(recport), portoffset(portoffset),
-      callerid(callerid), runsession(true), mode(0), cb_ping(nullptr),
-      cb_ping_data(nullptr), sendlocal(sendlocal_), last_tx(0), last_rx(0),
+    : prio(prio), remote_server(secret, callerid), toport(destport),
+      recport(recport), portoffset(portoffset), callerid(callerid),
+      runsession(true), mode(0), cb_ping(nullptr), cb_ping_data(nullptr),
+      sendlocal(sendlocal_), last_tx(0), last_rx(0),
       t_bitrate(std::chrono::high_resolution_clock::now()), cb_seqerr(nullptr),
       cb_seqerr_data(nullptr), msgbuffers(new msgbuf_t[MAX_STAGE_ID])
 {

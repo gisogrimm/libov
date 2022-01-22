@@ -82,8 +82,8 @@ std::vector<snddevname_t> list_sound_devices()
 #else
   sound_card_tools_t sndcards;
   auto cards = sndcards.get_sound_devices();
-  for( auto card : cards ){
-    retv.push_back({card.id,card.name});
+  for(auto card : cards) {
+    retv.push_back({card.id, card.name});
   }
 #endif
   return retv;

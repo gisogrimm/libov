@@ -972,20 +972,21 @@ void ov_render_tascar_t::start_audiobackend()
           devname = std::string("plug") + devs.rbegin()->dev;
       }
 #ifndef __APPLE__
+      setenv("JACK_NO_AUDIO_RESERVATION", "1", 1);
       sprintf(cmd,
-              "JACK_NO_AUDIO_RESERVATION=1 jackd --sync -P 40 -d alsa -d '%s' "
+              "jackd --sync -P 40 -d alsa -d '%s' "
               "-r %g -p %d -n %d",
               devname.c_str(), audiodevice.srate, audiodevice.periodsize,
               audiodevice.numperiods);
 #else
       sprintf(cmd,
-              "JACK_NO_AUDIO_RESERVATION=1 jackd --sync -P 40 -d coreaudio "
+              "jackd --sync -P 40 -d coreaudio "
               "-d '%s' -r %g -p %d",
               devname.c_str(), audiodevice.srate, audiodevice.periodsize);
 #endif
     } else {
       sprintf(cmd,
-              "JACK_NO_AUDIO_RESERVATION=1 jackd --sync -P 40 -d dummy "
+              "jackd --sync -P 40 -d dummy "
               "-r %g -p %d",
               audiodevice.srate, audiodevice.periodsize);
     }
@@ -1071,8 +1072,8 @@ void ov_render_tascar_t::set_stage(
   // compare gains:
 }
 
-void ov_render_tascar_t::set_stage_device_gain(const stage_device_id_t& stagedeviceid,
-                                               double gain)
+void ov_render_tascar_t::set_stage_device_gain(
+    const stage_device_id_t& stagedeviceid, double gain)
 {
   DEBUG(gain);
   ov_render_base_t::set_stage_device_gain(stagedeviceid, gain);
@@ -1101,8 +1102,8 @@ void ov_render_tascar_t::set_stage_device_gain(const stage_device_id_t& stagedev
 }
 
 void ov_render_tascar_t::set_stage_device_channel_gain(
-    const stage_device_id_t& stagedeviceid, const device_channel_id_t& channeldeviceid,
-    double gain)
+    const stage_device_id_t& stagedeviceid,
+    const device_channel_id_t& channeldeviceid, double gain)
 {
   ov_render_base_t::set_stage_device_channel_gain(stagedeviceid,
                                                   channeldeviceid, gain);
@@ -1111,8 +1112,9 @@ void ov_render_tascar_t::set_stage_device_channel_gain(
 }
 
 void ov_render_tascar_t::set_stage_device_channel_position(
-    const stage_device_id_t& stagedeviceid, const device_channel_id_t& channeldeviceid,
-    const pos_t& position, const zyx_euler_t& orientation)
+    const stage_device_id_t& stagedeviceid,
+    const device_channel_id_t& channeldeviceid, const pos_t& position,
+    const zyx_euler_t& orientation)
 {
   ov_render_base_t::set_stage_device_channel_position(
       stagedeviceid, channeldeviceid, position, orientation);
