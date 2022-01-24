@@ -31,9 +31,7 @@ public:
   ~spawn_process_t();
 
 private:
-  // on Linux we start the process in a pipe:
-  FILE* h_pipe;
-  pid_t pid;
+  pid_t pid = 0;
 };
 
 #endif
