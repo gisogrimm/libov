@@ -926,24 +926,34 @@ void ov_render_tascar_t::start_session()
 
 void ov_render_tascar_t::end_session()
 {
+  DEBUG(this);
 #ifdef SHOWDEBUG
   std::cout << "ov_render_tascar_t::end_session" << std::endl;
 #endif
   session_ready = false;
+  DEBUG(1);
   ov_render_base_t::end_session();
+  DEBUG(1);
   if(h_webmixer)
     delete h_webmixer;
+  DEBUG(1);
   h_webmixer = NULL;
   if(tascar) {
+    DEBUG(1);
     tascar->stop();
+    DEBUG(1);
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    DEBUG(1);
     delete tascar;
+    DEBUG(1);
     tascar = NULL;
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
   }
   if(ovboxclient) {
+    DEBUG(1);
     delete ovboxclient;
     ovboxclient = NULL;
+    DEBUG(1);
   }
 }
 
