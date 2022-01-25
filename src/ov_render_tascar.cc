@@ -862,7 +862,6 @@ void ov_render_tascar_t::start_session()
                       std::to_string(mczitabuffer) + " --jname " + "n2j_" +
                       stage.thisdeviceid + "_mc " + mczitaaddr + " " +
                       std::to_string(mczitaport) + " " + mczitadevice;
-    DEBUG(cmd);
     tsccfg::node_set_attribute(e_zit, "command", cmd);
     tsccfg::node_set_attribute(e_zit, "onunload", "killall zita-n2j");
     tsccfg::node_t e_wait = tsccfg::node_add_child(e_mods, "waitforjackport");
@@ -926,34 +925,24 @@ void ov_render_tascar_t::start_session()
 
 void ov_render_tascar_t::end_session()
 {
-  DEBUG(this);
 #ifdef SHOWDEBUG
   std::cout << "ov_render_tascar_t::end_session" << std::endl;
 #endif
   session_ready = false;
-  DEBUG(1);
   ov_render_base_t::end_session();
-  DEBUG(1);
   if(h_webmixer)
     delete h_webmixer;
-  DEBUG(1);
   h_webmixer = NULL;
   if(tascar) {
-    DEBUG(1);
     tascar->stop();
-    DEBUG(1);
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
-    DEBUG(1);
     delete tascar;
-    DEBUG(1);
     tascar = NULL;
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
   }
   if(ovboxclient) {
-    DEBUG(1);
     delete ovboxclient;
     ovboxclient = NULL;
-    DEBUG(1);
   }
 }
 

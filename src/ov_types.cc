@@ -203,14 +203,12 @@ ov_render_base_t::ov_render_base_t(const std::string& deviceid)
 
 void ov_render_base_t::start_session()
 {
-  DEBUG(this);
   session_active = true;
   restart_needed = false;
 }
 
 void ov_render_base_t::end_session()
 {
-  DEBUG(this);
   session_active = false;
 }
 
@@ -319,7 +317,6 @@ void ov_render_base_t::set_render_settings(
 void ov_render_base_t::set_relay_server(const std::string& host, port_t port,
                                         secret_t pin)
 {
-  DEBUG(is_session_active());
   bool restart(false);
   if(is_session_active() &&
      ((stage.host != host) || (stage.port != port) || (stage.pin != pin)))
