@@ -8,6 +8,7 @@ FULLVERSION=${VERSION}.${MINORVERSION}-${COMMIT}${COMMITMOD}
 #
 echo ${VERSION} > .ov_version
 echo ${MINORVERSION} > .ov_minor_version
+echo ${COMMIT}${COMMITMOD} > .ov_commitver
 echo ${FULLVERSION} > .ov_full_version
 #
 echo $FULLVERSION
