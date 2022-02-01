@@ -66,6 +66,9 @@ void endpoint_list_t::cid_setlocalip(stage_device_id_t cid,
 {
   if(cid < MAX_STAGE_ID) {
     endpoints[cid].localep = localep;
+    // workaround for invalidly packed sockaddr structures when
+    // receiving from some systems:
+    endpoints[cid].localep.sin_family = AF_INET;
   }
 }
 

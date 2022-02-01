@@ -201,11 +201,12 @@ void ovboxclient_t::announce_new_connection(stage_device_id_t cid,
 {
   if(cid == callerid)
     return;
-  log(recport,
-      "new connection for " + std::to_string(cid) + " from " + ep2str(ep.ep) +
-          " in " + ((ep.mode & B_PEER2PEER) ? "peer-to-peer" : "server") +
-          "-mode" + ((ep.mode & B_RECEIVEDOWNMIX) ? " receivedownmix" : "") +
-          ((ep.mode & B_DONOTSEND) ? " donotsend" : "") + " v" + ep.version);
+  log(recport, "new connection for " + std::to_string(cid) + " from " +
+                   ep2str(ep.ep) + " [" + ep2str(ep.localep) + "] in " +
+                   ((ep.mode & B_PEER2PEER) ? "p2p" : "srv") + "-mode" +
+                   ((ep.mode & B_RECEIVEDOWNMIX) ? " receivedownmix" : "") +
+                   ((ep.mode & B_DONOTSEND) ? " donotsend" : "") + " v" +
+                   ep.version);
 }
 
 void ovboxclient_t::announce_connection_lost(stage_device_id_t cid)
@@ -453,10 +454,10 @@ void ovboxclient_t::recsrv()
                     if((bool)(ep.mode & B_RECEIVEDOWNMIX) ==
                        (bool)(mode & B_SENDDOWNMIX)) {
                       // remote is receiving downmix and this is downmixer
-                      if(sendlocal && target_in_same_network)
+                      if(sendlocal && target_in_same_network) {
                         // same network.
                         remote_server.send(msg, un, ep.localep);
-                      else
+                      } else
                         remote_server.send(msg, un, ep.ep);
                     }
                   }
