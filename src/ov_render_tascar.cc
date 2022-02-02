@@ -912,7 +912,10 @@ void ov_render_tascar_t::start_session()
   ipaddr += " '";
   ipaddr += stage.thisdeviceid + " (" + stage.thisdevice.label + ")'";
   if(file_exists("/usr/share/ovclient/webmixer.js")) {
-    command = "(cd /usr/share/ovclient/ && node webmixer.js " + ipaddr + ")";
+    command = "node /usr/share/ovclient/webmixer.js " + ipaddr;
+  }
+  if(file_exists(bindir + "/webmixer.js")) {
+    command = "node " + bindir + "/webmixer.js " + ipaddr;
   }
   if(file_exists("webmixer.js")) {
     command = "node webmixer.js " + ipaddr;

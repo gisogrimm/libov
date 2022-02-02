@@ -433,6 +433,7 @@ public:
   void restart_session_if_needed();
   virtual std::string get_client_stats() { return ""; };
   bool is_session_ready() const { return session_ready; };
+  std::string bindir;
 
 protected:
   audio_device_t audiodevice;
