@@ -6,7 +6,7 @@ set(PROJECT_VERSION_MAJOR "${CMAKE_MATCH_1}.${CMAKE_MATCH_2}")
 
 # Read minorversion
 message("Executing version script inside ${CMAKE_CURRENT_LIST_DIR}")
-execute_process(COMMAND bash -c "git rev-list --count 595513602aca1641e204908cbf558a72a50f0707..HEAD"
+execute_process(COMMAND bash -c "git rev-list --count 47907e6dc43a21914d0a670e8467eb29ad789bcc..HEAD"
         WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}"
         OUTPUT_VARIABLE MINORVERSION)
 string(REGEX REPLACE "\n$" "" MINORVERSION "${MINORVERSION}")
