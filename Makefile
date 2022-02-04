@@ -74,8 +74,9 @@ TASCARRECEIVERS = ortf hrtf simplefdn omni
 TASCARSOURCE = omni cardioidmod
 
 TASCARMODULS = system touchosc waitforjackport route jackrec sleep	\
-  epicycles hossustain hoafdnrot matrix tracegui savegains		\
-  granularsynth
+  epicycles hossustain hoafdnrot matrix savegains granularsynth
+
+TASCARMODULSGUI = tracegui
 
 TASCARAUDIOPLUGS = sndfile delay metronome bandpass filter
 
@@ -172,7 +173,7 @@ tscobj: tscver
 #$(patsubst %,build/%,$(TASCAROBJECTS))  $(patsubst %,build/%,$(TASCARDMXOBJECTS))
 
 tscplug: tscver tscobj
-	 $(MAKE) -C tascar/plugins PLUGINPREFIX=ovclient RECEIVERS="$(TASCARRECEIVERS)" SOURCES="$(TASCARSOURCE)" TASCARMODS="$(TASCARMODULS)" TASCARMODSGUI= AUDIOPLUGINS="$(TASCARAUDIOPLUGS)" GLABSENSORS= TASCARLIB="-lovclienttascar" TASCARDMXLIB="-lovclienttascardmx"
+	 $(MAKE) -C tascar/plugins PLUGINPREFIX=ovclient RECEIVERS="$(TASCARRECEIVERS)" SOURCES="$(TASCARSOURCE)" TASCARMODS="$(TASCARMODULS)" TASCARMODSGUI="$(TASCARMODULSGUI)" AUDIOPLUGINS="$(TASCARAUDIOPLUGS)" GLABSENSORS= TASCARLIB="-lovclienttascar" TASCARDMXLIB="-lovclienttascardmx"
 
 clangformat:
 	clang-format-9 -i $(wildcard src/*.cc) $(wildcard src/*.h)
