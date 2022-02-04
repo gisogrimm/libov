@@ -173,11 +173,11 @@ void ov_render_tascar_t::add_secondary_bus(const stage_device_t& stagemember,
   tsccfg::node_set_attribute(e_sys, "noshell", "true");
   tsccfg::node_set_attribute(
       e_sys, "command",
-      zitapath + "zita-n2j --chan " + chanlist + " --jname " + netclientname +
+      zitapath + "ovzita-n2j --chan " + chanlist + " --jname " + netclientname +
           "." + stage.thisdeviceid + " --buf " +
           TASCAR::to_string(stage.rendersettings.secrec + buff) + " 0.0.0.0 " +
           TASCAR::to_string(4464 + 2 * stagemember.id + 100));
-  tsccfg::node_set_attribute(e_sys, "onunload", "killall zita-n2j");
+  tsccfg::node_set_attribute(e_sys, "onunload", "killall ovzita-n2j");
   // create also a route with correct gain settings:
   tsccfg::node_t e_route(tsccfg::node_add_child(e_mods, "route"));
   tsccfg::node_set_attribute(e_route, "name", clientname);
@@ -230,10 +230,10 @@ void ov_render_tascar_t::add_network_receiver(
     // provide access to path!
     tsccfg::node_set_attribute(
         e_sys, "command",
-        zitapath + "zita-n2j --chan " + chanlist + " --jname " + n2jclientname +
+        zitapath + "ovzita-n2j --chan " + chanlist + " --jname " + n2jclientname +
             " --buf " + TASCAR::to_string(buff) + " 0.0.0.0 " +
             TASCAR::to_string(4464 + 2 * stagemember.id));
-    tsccfg::node_set_attribute(e_sys, "onunload", "killall zita-n2j");
+    tsccfg::node_set_attribute(e_sys, "onunload", "killall ovzita-n2j");
     if(stage.rendersettings.rawmode || stage.thisdevice.receivedownmix) {
       // create additional route for gain control:
       tsccfg::node_t e_route = tsccfg::node_add_child(e_mods, "route");
@@ -514,11 +514,11 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
     tsccfg::node_set_attribute(e_sys, "noshell", "true");
     tsccfg::node_set_attribute(
         e_sys, "command",
-        zitapath + "zita-j2n --chan " +
+        zitapath + "ovzita-j2n --chan " +
             std::to_string(thisdev.channels.size()) + " --jname " +
             stage.thisdeviceid + "_sender --" + zitasampleformat +
             " 127.0.0.1 " + std::to_string(4464 + 2 * stage.thisstagedeviceid));
-    tsccfg::node_set_attribute(e_sys, "onunload", "killall zita-j2n");
+    tsccfg::node_set_attribute(e_sys, "onunload", "killall ovzita-j2n");
     int chn(0);
     for(auto ch : thisdev.channels) {
       ++chn;
@@ -542,10 +542,10 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
     tsccfg::node_set_attribute(e_sys, "noshell", "true");
     tsccfg::node_set_attribute(
         e_sys, "command",
-        zitapath + "zita-j2n --chan " + std::to_string(2) + " --jname " +
+        zitapath + "ovzita-j2n --chan " + std::to_string(2) + " --jname " +
             stage.thisdeviceid + "_sender --" + zitasampleformat +
             " 127.0.0.1 " + std::to_string(4464 + 2 * stage.thisstagedeviceid));
-    tsccfg::node_set_attribute(e_sys, "onunload", "killall zita-j2n");
+    tsccfg::node_set_attribute(e_sys, "onunload", "killall ovzita-j2n");
     session_add_connect(e_session, "render." + stage.thisdeviceid + ":master_l",
                         stage.thisdeviceid + "_sender:in_1");
     session_add_connect(e_session, "render." + stage.thisdeviceid + ":master_r",
@@ -659,11 +659,11 @@ void ov_render_tascar_t::create_raw_dev(tsccfg::node_t e_session)
     tsccfg::node_set_attribute(e_sys, "noshell", "true");
     tsccfg::node_set_attribute(
         e_sys, "command",
-        zitapath + "zita-j2n --chan " +
+        zitapath + "ovzita-j2n --chan " +
             std::to_string(thisdev.channels.size()) + " --jname " +
             stage.thisdeviceid + "_sender --" + zitasampleformat +
             " 127.0.0.1 " + std::to_string(4464 + 2 * stage.thisstagedeviceid));
-    tsccfg::node_set_attribute(e_sys, "onunload", "killall zita-j2n");
+    tsccfg::node_set_attribute(e_sys, "onunload", "killall ovzita-j2n");
     int chn(0);
     for(auto ch : thisdev.channels) {
       ++chn;
@@ -834,7 +834,6 @@ void ov_render_tascar_t::start_session()
     }
   }
   if(mczita) {
-    std::vector<std::string> waitports;
     tsccfg::node_t e_mods = tsccfg::node_add_child(e_session, "modules");
     tsccfg::node_t e_zit = tsccfg::node_add_child(e_mods, "system");
     tsccfg::node_set_attribute(e_zit, "noshell", "true");
@@ -845,33 +844,22 @@ void ov_render_tascar_t::start_session()
       chmap[ch] = och;
     }
     std::string chlist;
+    std::string conn_str;
     och = 0;
     for(auto ch : chmap) {
       ++och;
       chlist += std::to_string(ch.first) + ",";
-      waitports.push_back("n2j_" + stage.thisdeviceid + "_mc:out_" +
-                          std::to_string(ch.first));
-      session_add_connect(e_session,
-                          "n2j_" + stage.thisdeviceid + "_mc:out_" +
-                              std::to_string(ch.first),
-                          "system:playback_" + std::to_string(ch.second));
+      conn_str += "--conn system:playback_" + std::to_string(ch.second) + " ";
     }
     if(chlist.size())
       chlist.erase(chlist.size() - 1, 1);
-    std::string cmd = zitapath + "zita-n2j --chan " + chlist + " --buff " +
+    std::string cmd = zitapath + "ovzita-n2j --chan " + chlist + " --buff " +
                       std::to_string(mczitabuffer) + " --jname " + "n2j_" +
-                      stage.thisdeviceid + "_mc " + mczitaaddr + " " +
+                      stage.thisdeviceid + "_mc " + conn_str + mczitaaddr + " " +
                       std::to_string(mczitaport) + " " + mczitadevice;
     tsccfg::node_set_attribute(e_zit, "command", cmd);
-    tsccfg::node_set_attribute(e_zit, "onunload", "killall zita-n2j");
+    tsccfg::node_set_attribute(e_zit, "onunload", "killall ovzita-n2j");
     tsccfg::node_set_attribute(e_zit, "relaunch", "true");
-    tsccfg::node_t e_wait = tsccfg::node_add_child(e_mods, "waitforjackport");
-    tsccfg::node_set_attribute(e_wait, "name",
-                               stage.thisdeviceid + ".waitforportsmc");
-    for(auto port : waitports) {
-      tsccfg::node_t e_p = tsccfg::node_add_child(e_wait, "port");
-      tsccfg::node_set_text(e_p, port);
-    }
   }
   if(mczitasend) {
     std::vector<std::string> waitports;
@@ -882,12 +870,12 @@ void ov_render_tascar_t::start_session()
       waitports.push_back("j2n_" + stage.thisdeviceid + "_mc:in_" +
                           std::to_string(ch + 1));
     }
-    std::string cmd = zitapath + "zita-j2n --chan " +
+    std::string cmd = zitapath + "ovzita-j2n --chan " +
                       std::to_string(mczitasendch) + " --jname " + "j2n_" +
                       stage.thisdeviceid + "_mc " + mczitaaddr + " " +
                       std::to_string(mczitaport) + " " + mczitadevice;
     tsccfg::node_set_attribute(e_zit, "command", cmd);
-    tsccfg::node_set_attribute(e_zit, "onunload", "killall zita-j2n");
+    tsccfg::node_set_attribute(e_zit, "onunload", "killall ovzita-j2n");
     tsccfg::node_set_attribute(e_zit, "relaunch", "true");
     tsccfg::node_t e_wait = tsccfg::node_add_child(e_mods, "waitforjackport");
     tsccfg::node_set_attribute(e_wait, "name",
