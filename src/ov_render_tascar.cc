@@ -864,6 +864,7 @@ void ov_render_tascar_t::start_session()
                       std::to_string(mczitaport) + " " + mczitadevice;
     tsccfg::node_set_attribute(e_zit, "command", cmd);
     tsccfg::node_set_attribute(e_zit, "onunload", "killall zita-n2j");
+    tsccfg::node_set_attribute(e_zit, "relaunch", "true");
     tsccfg::node_t e_wait = tsccfg::node_add_child(e_mods, "waitforjackport");
     tsccfg::node_set_attribute(e_wait, "name",
                                stage.thisdeviceid + ".waitforportsmc");
@@ -887,6 +888,7 @@ void ov_render_tascar_t::start_session()
                       std::to_string(mczitaport) + " " + mczitadevice;
     tsccfg::node_set_attribute(e_zit, "command", cmd);
     tsccfg::node_set_attribute(e_zit, "onunload", "killall zita-j2n");
+    tsccfg::node_set_attribute(e_zit, "relaunch", "true");
     tsccfg::node_t e_wait = tsccfg::node_add_child(e_mods, "waitforjackport");
     tsccfg::node_set_attribute(e_wait, "name",
                                stage.thisdeviceid + ".waitforportsmcsend");
