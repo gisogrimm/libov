@@ -73,9 +73,11 @@ TASCARRECEIVERS = ortf hrtf simplefdn omni
 
 TASCARSOURCE = omni cardioidmod
 
-TASCARMODULS = system touchosc waitforjackport route jackrec sleep
+TASCARMODULS = system touchosc waitforjackport route jackrec sleep	\
+  epicycles hossustain hoafdnrot matrix tracegui savegains		\
+  granularsynth
 
-TASCARAUDIOPLUGS = sndfile delay metronome
+TASCARAUDIOPLUGS = sndfile delay metronome bandpass filter
 
 OSFLAG :=
 ifeq ($(OS),Windows_NT)
