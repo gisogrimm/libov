@@ -69,12 +69,13 @@ TASCAROBJECTS = licensehandler.o audiostates.o coordinates.o		\
 
 TASCARDMXOBJECTS =
 
-TASCARRECEIVERS = ortf hrtf simplefdn omni
+TASCARRECEIVERS = ortf hrtf simplefdn omni hoa2d_fuma_hos
 
 TASCARSOURCE = omni cardioidmod
 
 TASCARMODULS = system touchosc waitforjackport route jackrec sleep	\
-  epicycles hossustain hoafdnrot matrix savegains granularsynth
+  epicycles hossustain hoafdnrot matrix savegains granularsynth		\
+  oscserver
 
 TASCARMODULSGUI = tracegui
 
