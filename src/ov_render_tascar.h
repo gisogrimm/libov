@@ -153,6 +153,8 @@ private:
   std::string jackrec_sampleformat;
   // add multicast zita-n2j instance:
   bool mczita = false;
+  bool mczitasend = false;
+  uint32_t mczitasendch = 1;
   std::string mczitaaddr = "";
   uint32_t mczitaport = 10007;
   std::string mczitadevice = "";

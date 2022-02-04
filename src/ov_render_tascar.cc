@@ -872,6 +872,29 @@ void ov_render_tascar_t::start_session()
       tsccfg::node_set_text(e_p, port);
     }
   }
+  if(mczitasend) {
+    std::vector<std::string> waitports;
+    tsccfg::node_t e_mods = tsccfg::node_add_child(e_session, "modules");
+    tsccfg::node_t e_zit = tsccfg::node_add_child(e_mods, "system");
+    tsccfg::node_set_attribute(e_zit, "noshell", "true");
+    for(uint32_t ch = 0; ch < mczitasendch; ++ch) {
+      waitports.push_back("j2n_" + stage.thisdeviceid + "_mc:in_" +
+                          std::to_string(ch + 1));
+    }
+    std::string cmd = zitapath + "zita-j2n --chan " +
+                      std::to_string(mczitasendch) + " --jname " + "j2n_" +
+                      stage.thisdeviceid + "_mc " + mczitaaddr + " " +
+                      std::to_string(mczitaport) + " " + mczitadevice;
+    tsccfg::node_set_attribute(e_zit, "command", cmd);
+    tsccfg::node_set_attribute(e_zit, "onunload", "killall zita-j2n");
+    tsccfg::node_t e_wait = tsccfg::node_add_child(e_mods, "waitforjackport");
+    tsccfg::node_set_attribute(e_wait, "name",
+                               stage.thisdeviceid + ".waitforportsmcsend");
+    for(auto port : waitports) {
+      tsccfg::node_t e_p = tsccfg::node_add_child(e_wait, "port");
+      tsccfg::node_set_text(e_p, port);
+    }
+  }
   if(tscinclude.size()) {
     tsccfg::node_t e_inc(tsccfg::node_add_child(e_session, "include"));
     tsccfg::node_set_attribute(e_inc, "name", stage.thisdeviceid + ".itsc");
@@ -1289,6 +1312,10 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
       if(xcfg["mcrec"].is_object()) {
         auto prev_mczita = mczita;
         mczita = my_js_value(xcfg["mcrec"], "use", mczita);
+        auto prev_mczitasend = mczitasend;
+        mczitasend = my_js_value(xcfg["mcrec"], "usesender", mczitasend);
+        auto prev_mczitasendch = mczitasendch;
+        mczitasendch = my_js_value(xcfg["mcrec"], "sendchannels", mczitasendch);
         auto prev_mczitaaddr = mczitaaddr;
         mczitaaddr = my_js_value(xcfg["mcrec"], "addr", mczitaaddr);
         auto prev_mczitaport = mczitaport;
@@ -1299,8 +1326,9 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
         mczitabuffer = my_js_value(xcfg["mcrec"], "buffer", mczitabuffer);
         auto prev_mczitachannels = mczitachannels;
         mczitachannels = my_js_value(xcfg["mcrec"], "channels", mczitachannels);
-        if((prev_mczita != mczita) || (prev_mczitaaddr != mczitaaddr) ||
-           (prev_mczitaport != mczitaport) ||
+        if((prev_mczita != mczita) || (prev_mczitasend != mczitasend) ||
+           (prev_mczitasendch != mczitasendch) ||
+           (prev_mczitaaddr != mczitaaddr) || (prev_mczitaport != mczitaport) ||
            (prev_mczitadevice != mczitadevice) ||
            (prev_mczitabuffer != mczitabuffer) ||
            (prev_mczitachannels != mczitachannels))
