@@ -5,7 +5,7 @@ all: tscver build showver lib tscobj tscplug
 
 BASEOBJ = ov_types errmsg common udpsocket callerlist ov_tools MACAddressUtility
 
-OBJ = $(BASEOBJ) ovboxclient spawn_process ov_client_orlandoviols	\
+OBJ = $(BASEOBJ) ovboxclient ov_client_orlandoviols	\
   ov_render_tascar soundcardtools
 
 
@@ -65,7 +65,8 @@ TASCAROBJECTS = licensehandler.o audiostates.o coordinates.o		\
   acousticmodel.o scene.o render.o session_reader.o session.o		\
   jackclient.o delayline.o errorhandling.o osc_scene.o ringbuffer.o	\
   jackiowav.o jackrender.o audioplugin.o levelmeter.o serviceclass.o	\
-  speakerarray.o spectrum.o fft.o stft.o ola.o tascar_os.o
+  speakerarray.o spectrum.o fft.o stft.o ola.o tascar_os.o		\
+  spawn_process.o
 
 TASCARDMXOBJECTS =
 

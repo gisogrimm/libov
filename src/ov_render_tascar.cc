@@ -230,8 +230,8 @@ void ov_render_tascar_t::add_network_receiver(
     // provide access to path!
     tsccfg::node_set_attribute(
         e_sys, "command",
-        zitapath + "ovzita-n2j --chan " + chanlist + " --jname " + n2jclientname +
-            " --buf " + TASCAR::to_string(buff) + " 0.0.0.0 " +
+        zitapath + "ovzita-n2j --chan " + chanlist + " --jname " +
+            n2jclientname + " --buf " + TASCAR::to_string(buff) + " 0.0.0.0 " +
             TASCAR::to_string(4464 + 2 * stagemember.id));
     tsccfg::node_set_attribute(e_sys, "onunload", "killall ovzita-n2j");
     if(stage.rendersettings.rawmode || stage.thisdevice.receivedownmix) {
@@ -855,8 +855,8 @@ void ov_render_tascar_t::start_session()
       chlist.erase(chlist.size() - 1, 1);
     std::string cmd = zitapath + "ovzita-n2j --chan " + chlist + " --buff " +
                       std::to_string(mczitabuffer) + " --jname " + "n2j_" +
-                      stage.thisdeviceid + "_mc " + conn_str + mczitaaddr + " " +
-                      std::to_string(mczitaport) + " " + mczitadevice;
+                      stage.thisdeviceid + "_mc " + conn_str + mczitaaddr +
+                      " " + std::to_string(mczitaport) + " " + mczitadevice;
     tsccfg::node_set_attribute(e_zit, "command", cmd);
     tsccfg::node_set_attribute(e_zit, "onunload", "killall ovzita-n2j");
     tsccfg::node_set_attribute(e_zit, "relaunch", "true");
@@ -934,7 +934,7 @@ void ov_render_tascar_t::start_session()
     command = "node webmixer.js " + ipaddr;
   }
   if(!command.empty())
-    h_webmixer = new spawn_process_t(command);
+    h_webmixer = new TASCAR::spawn_process_t(command, false);
 #endif
   session_ready = true;
 }
@@ -1011,7 +1011,7 @@ void ov_render_tascar_t::start_audiobackend()
               "-r %g -p %d",
               audiodevice.srate, audiodevice.periodsize);
     }
-    h_jack = new spawn_process_t(cmd);
+    h_jack = new TASCAR::spawn_process_t(cmd, false);
     // replace sleep by testing for jack presence with timeout:
     sleep(7);
   }

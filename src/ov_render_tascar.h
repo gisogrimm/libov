@@ -21,9 +21,9 @@
 #define OV_RENDER_TASCAR
 
 #include "../tascar/libtascar/include/session.h"
+#include "../tascar/libtascar/include/spawn_process.h"
 #include "ov_tools.h"
 #include "ovboxclient.h"
-#include "spawn_process.h"
 #include <lo/lo.h>
 
 #ifndef ZITAPATH
@@ -98,11 +98,11 @@ private:
   // for the time being we (optionally if jack is chosen as an audio
   // backend) start the jack backend. This will be replaced by a more
   // generic audio backend interface:
-  spawn_process_t* h_jack;
+  TASCAR::spawn_process_t* h_jack;
   // for the time being we start the webmixer as a local nodejs server
   // on port 8080. This will be replaced (or extended) by a web mixer
   // on the remote configuration interface:
-  spawn_process_t* h_webmixer;
+  TASCAR::spawn_process_t* h_webmixer;
   TASCAR::session_t* tascar;
   ovboxclient_t* ovboxclient;
   port_t pinglogport;
