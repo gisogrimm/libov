@@ -177,7 +177,7 @@ void ov_render_tascar_t::add_secondary_bus(const stage_device_t& stagemember,
           "." + stage.thisdeviceid + " --buf " +
           TASCAR::to_string(stage.rendersettings.secrec + buff) + " 0.0.0.0 " +
           TASCAR::to_string(4464 + 2 * stagemember.id + 100));
-  tsccfg::node_set_attribute(e_sys, "onunload", "killall ovzita-n2j");
+  //tsccfg::node_set_attribute(e_sys, "onunload", "killall ovzita-n2j");
   // create also a route with correct gain settings:
   tsccfg::node_t e_route(tsccfg::node_add_child(e_mods, "route"));
   tsccfg::node_set_attribute(e_route, "name", clientname);
@@ -233,7 +233,7 @@ void ov_render_tascar_t::add_network_receiver(
         zitapath + "ovzita-n2j --chan " + chanlist + " --jname " +
             n2jclientname + " --buf " + TASCAR::to_string(buff) + " 0.0.0.0 " +
             TASCAR::to_string(4464 + 2 * stagemember.id));
-    tsccfg::node_set_attribute(e_sys, "onunload", "killall ovzita-n2j");
+    //tsccfg::node_set_attribute(e_sys, "onunload", "killall ovzita-n2j");
     if(stage.rendersettings.rawmode || stage.thisdevice.receivedownmix) {
       // create additional route for gain control:
       tsccfg::node_t e_route = tsccfg::node_add_child(e_mods, "route");
@@ -518,7 +518,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
             std::to_string(thisdev.channels.size()) + " --jname " +
             stage.thisdeviceid + "_sender --" + zitasampleformat +
             " 127.0.0.1 " + std::to_string(4464 + 2 * stage.thisstagedeviceid));
-    tsccfg::node_set_attribute(e_sys, "onunload", "killall ovzita-j2n");
+    //tsccfg::node_set_attribute(e_sys, "onunload", "killall ovzita-j2n");
     int chn(0);
     for(auto ch : thisdev.channels) {
       ++chn;
@@ -545,7 +545,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
         zitapath + "ovzita-j2n --chan " + std::to_string(2) + " --jname " +
             stage.thisdeviceid + "_sender --" + zitasampleformat +
             " 127.0.0.1 " + std::to_string(4464 + 2 * stage.thisstagedeviceid));
-    tsccfg::node_set_attribute(e_sys, "onunload", "killall ovzita-j2n");
+    //tsccfg::node_set_attribute(e_sys, "onunload", "killall ovzita-j2n");
     session_add_connect(e_session, "render." + stage.thisdeviceid + ":master_l",
                         stage.thisdeviceid + "_sender:in_1");
     session_add_connect(e_session, "render." + stage.thisdeviceid + ":master_r",
@@ -663,7 +663,7 @@ void ov_render_tascar_t::create_raw_dev(tsccfg::node_t e_session)
             std::to_string(thisdev.channels.size()) + " --jname " +
             stage.thisdeviceid + "_sender --" + zitasampleformat +
             " 127.0.0.1 " + std::to_string(4464 + 2 * stage.thisstagedeviceid));
-    tsccfg::node_set_attribute(e_sys, "onunload", "killall ovzita-j2n");
+    //tsccfg::node_set_attribute(e_sys, "onunload", "killall ovzita-j2n");
     int chn(0);
     for(auto ch : thisdev.channels) {
       ++chn;
@@ -858,7 +858,7 @@ void ov_render_tascar_t::start_session()
                       stage.thisdeviceid + "_mc " + conn_str + mczitaaddr +
                       " " + std::to_string(mczitaport) + " " + mczitadevice;
     tsccfg::node_set_attribute(e_zit, "command", cmd);
-    tsccfg::node_set_attribute(e_zit, "onunload", "killall ovzita-n2j");
+    //tsccfg::node_set_attribute(e_zit, "onunload", "killall ovzita-n2j");
     tsccfg::node_set_attribute(e_zit, "relaunch", "true");
   }
   if(mczitasend) {
@@ -875,7 +875,7 @@ void ov_render_tascar_t::start_session()
                       stage.thisdeviceid + "_mc " + mczitaaddr + " " +
                       std::to_string(mczitaport) + " " + mczitadevice;
     tsccfg::node_set_attribute(e_zit, "command", cmd);
-    tsccfg::node_set_attribute(e_zit, "onunload", "killall ovzita-j2n");
+    //tsccfg::node_set_attribute(e_zit, "onunload", "killall ovzita-j2n");
     tsccfg::node_set_attribute(e_zit, "relaunch", "true");
     tsccfg::node_t e_wait = tsccfg::node_add_child(e_mods, "waitforjackport");
     tsccfg::node_set_attribute(e_wait, "name",
