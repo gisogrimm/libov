@@ -181,7 +181,7 @@ clangformat:
 	clang-format-9 -i $(wildcard src/*.cc) $(wildcard src/*.h)
 
 clean:
-	rm -Rf build src/*~ .ov_version .ov_minor_version .ov_full_version libtascar googletest CMakeFiles
+	rm -Rf build src/*~ .ov_version .ov_minor_version .ov_full_version .ov_commitver libtascar googletest CMakeFiles
 	-$(MAKE) -C tascar clean
 
 ## unit testing:
