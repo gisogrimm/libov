@@ -378,6 +378,12 @@ void ov_client_orlandoviols_t::service()
             std::ofstream ofh(folder + "ov-client.usedevversion");
             quitrequest_ = true;
           }
+          std::string hifiberry = my_js_value(js_stagecfg, "usehifiberry", std::string(""));
+          if(hifiberry.size()) {
+            std::ofstream ofh(folder + "ov-client.hifiberry");
+            ofh << hifiberry << std::endl;
+            quitrequest_ = true;
+          }
           if(js_stagecfg["wifisettings"].is_object()) {
             std::ofstream ofh(folder + "ov-client.wificfg");
             std::string ssid(my_js_value(js_stagecfg["wifisettings"], "ssid",
