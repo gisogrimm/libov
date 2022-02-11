@@ -378,7 +378,8 @@ void ov_client_orlandoviols_t::service()
             std::ofstream ofh(folder + "ov-client.usedevversion");
             quitrequest_ = true;
           }
-          std::string hifiberry = my_js_value(js_stagecfg, "usehifiberry", std::string(""));
+          std::string hifiberry =
+              my_js_value(js_stagecfg, "usehifiberry", std::string(""));
           if(hifiberry.size()) {
             std::ofstream ofh(folder + "ov-client.hifiberry");
             ofh << hifiberry << std::endl;
@@ -506,11 +507,14 @@ void ov_client_orlandoviols_t::service()
               nlohmann::json js_xrecports(js_rendersettings["xrecport"]);
               if(js_xrecports.is_array())
                 for(auto xrp : js_xrecports) {
+                  int p = 0;
                   if(xrp.is_number()) {
-                    int p(xrp.get<int>());
-                    if(p > 0)
-                      rendersettings.xrecport.push_back(p);
+                    p = xrp.get<int>();
+                  } else if(xrp.is_string()) {
+                    p = atoi(xrp.get<std::string>().c_str());
                   }
+                  if(p > 0)
+                    rendersettings.xrecport.push_back(p);
                 }
               rendersettings.headtracking =
                   my_js_value(js_rendersettings, "headtracking", false);
@@ -538,7 +542,7 @@ void ov_client_orlandoviols_t::service()
             if(!backend.is_audio_active())
               backend.start_audiobackend();
             backend.restart_session_if_needed();
-            if( backend.is_session_active() )
+            if(backend.is_session_active())
               report_error(lobby, backend.get_deviceid(), "");
           }
         }
