@@ -538,8 +538,9 @@ void ov_client_orlandoviols_t::service()
             if(!backend.is_audio_active())
               backend.start_audiobackend();
             backend.restart_session_if_needed();
+            if( backend.is_session_active() )
+              report_error(lobby, backend.get_deviceid(), "");
           }
-          report_error(lobby, backend.get_deviceid(), "");
         }
         catch(const std::exception& e) {
           std::cerr << "Error: " << e.what() << std::endl;
