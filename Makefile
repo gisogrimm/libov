@@ -81,7 +81,7 @@ TASCARMODULS = system touchosc waitforjackport route jackrec sleep	\
 
 TASCARMODULSGUI = tracegui
 
-TASCARAUDIOPLUGS = sndfile delay metronome bandpass filter
+TASCARAUDIOPLUGS = sndfile delay metronome bandpass filter loopmachine
 
 OSFLAG :=
 ifeq ($(OS),Windows_NT)
@@ -99,7 +99,7 @@ else
 		OSFLAG += -D LINUX
 		CXXFLAGS += -fext-numeric-literals
 		LDLIBS += -lasound
-	 	TASCARMODULS += ovheadtracker lightctl
+		TASCARMODULS += ovheadtracker lightctl midicc2osc
 		TASCARDMXOBJECTS += termsetbaud.o serialport.o dmxdriver.o
 		ifneq ($DISTRO,arch)
 		TASCARRECEIVERS += itu51
