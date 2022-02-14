@@ -1000,10 +1000,20 @@ void ov_render_tascar_t::start_audiobackend()
               devname.c_str(), audiodevice.srate, audiodevice.periodsize,
               audiodevice.numperiods);
 #else
-      sprintf(cmd,
-              "jackd --sync -P 40 -d coreaudio "
-              "-d '%s' -r %g -p %d",
-              devname.c_str(), audiodevice.srate, audiodevice.periodsize);
+      bool setdev(true);
+      if((devname == "highest") || (devname == "plughighest") ||
+         (devname == "hw:1") || (devname == "plughw:1"))
+        setdev = false;
+      if(setdev)
+        sprintf(cmd,
+                "jackd --sync -P 40 -d coreaudio "
+                "-d '%s' -r %g -p %d",
+                devname.c_str(), audiodevice.srate, audiodevice.periodsize);
+      else
+        sprintf(cmd,
+                "jackd --sync -P 40 -d coreaudio "
+                "-r %g -p %d",
+                audiodevice.srate, audiodevice.periodsize);
 #endif
     } else {
       sprintf(cmd,
