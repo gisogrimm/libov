@@ -303,6 +303,23 @@ stage_device_t get_stage_dev(nlohmann::json& dev)
         devchannel.position.z = my_js_value(chpos, "z", 0.0);
         devchannel.directivity =
             my_js_value(ch, "directivity", std::string("omni"));
+        auto plugins = ch["plugins"];
+        for(auto& [plug, cfg] : plugins.items()) {
+          channel_plugin_t cplug;
+          cplug.name = plug;
+          for(auto& [param, val] : cfg.items()) {
+            if(val.is_string())
+              cplug.params[param] = val;
+            else if(val.is_number()) {
+              double v = val;
+              cplug.params[param] = TASCAR::to_string(v);
+            } else if(val.is_boolean()) {
+              bool v = val;
+              cplug.params[param] = TASCAR::to_string(v);
+            }
+          }
+          devchannel.plugins.push_back(cplug);
+        }
         stagedev.channels.push_back(devchannel);
       }
     /// Position of the stage device in the virtual space:

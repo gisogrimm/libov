@@ -96,6 +96,15 @@ struct audio_device_t {
 
 bool operator!=(const audio_device_t& a, const audio_device_t& b);
 
+struct channel_plugin_t {
+  /// plugin name
+  std::string name;
+  /// plugin parameter
+  std::map<std::string, std::string> params;
+};
+
+bool operator==(const channel_plugin_t& a, const channel_plugin_t& b);
+
 struct device_channel_t {
   /// unique channel ID (must be unique within one session):
   device_channel_id_t id;
@@ -107,6 +116,8 @@ struct device_channel_t {
   pos_t position;
   /// source directivity, e.g., omni, cardioid:
   std::string directivity;
+  /// audio plugins:
+  std::vector<channel_plugin_t> plugins;
 };
 
 bool operator!=(const device_channel_t& a, const device_channel_t& b);

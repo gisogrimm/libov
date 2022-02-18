@@ -23,6 +23,11 @@
 #include <iostream>
 #include <jack/jack.h>
 
+std::string get_channel_source(const device_channel_t& ch)
+{
+  return std::string("bus.") + ch.id + ":out.0";
+}
+
 bool ov_render_tascar_t::metronome_t::operator!=(const metronome_t& a)
 {
   return (a.bpb != bpb) || (a.bpm != bpm) || (a.bypass != bypass) ||
@@ -366,7 +371,8 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
             double gain(ch.gain * stagemember.second.gain);
             if(stagemember.second.id == thisdev.id) {
               // connect self-monitoring source ports:
-              tsccfg::node_set_attribute(e_snd, "connect", ch.sourceport);
+              tsccfg::node_set_attribute(e_snd, "connect",
+                                         get_channel_source(ch));
               gain *= stage.rendersettings.egogain;
             } else {
               if(!stage.rendersettings.distancelaw)
@@ -495,7 +501,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
                                TASCAR::to_string(20 * log10(thisdev.gain)));
     int chn(0);
     for(auto ch : thisdev.channels) {
-      session_add_connect(e_session, ch.sourceport,
+      session_add_connect(e_session, get_channel_source(ch),
                           clientname + ":in." + std::to_string(chn));
       ++chn;
     }
@@ -522,7 +528,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
     int chn(0);
     for(auto ch : thisdev.channels) {
       ++chn;
-      session_add_connect(e_session, ch.sourceport,
+      session_add_connect(e_session, get_channel_source(ch),
                           stage.thisdeviceid + "_sender:in_" +
                               std::to_string(chn));
       session_add_connect(e_session, stage.thisdeviceid + ".metronome:out.0",
@@ -648,7 +654,7 @@ void ov_render_tascar_t::create_raw_dev(tsccfg::node_t e_session)
     int chn(0);
     for(auto ch : thisdev.channels) {
       tsccfg::node_t e_port = tsccfg::node_add_child(e_session, "connect");
-      tsccfg::node_set_attribute(e_port, "src", ch.sourceport);
+      tsccfg::node_set_attribute(e_port, "src", get_channel_source(ch));
       tsccfg::node_set_attribute(e_port, "dest",
                                  clientname + ":in." + std::to_string(chn));
       ++chn;
@@ -668,7 +674,7 @@ void ov_render_tascar_t::create_raw_dev(tsccfg::node_t e_session)
     for(auto ch : thisdev.channels) {
       ++chn;
       tsccfg::node_t e_port = tsccfg::node_add_child(e_session, "connect");
-      tsccfg::node_set_attribute(e_port, "src", ch.sourceport);
+      tsccfg::node_set_attribute(e_port, "src", get_channel_source(ch));
       tsccfg::node_set_attribute(e_port, "dest",
                                  stage.thisdeviceid + "_sender:in_" +
                                      std::to_string(chn));
@@ -705,6 +711,7 @@ void ov_render_tascar_t::start_session()
   // do whatever needs to be done in base class:
   ov_render_base_t::start_session();
   // create a short link to this device:
+  stage_device_t& thisdev(stage.stage[stage.thisstagedeviceid]);
   // xml code for TASCAR configuration:
   TASCAR::xml_doc_t tsc;
   // default TASCAR session settings:
@@ -721,6 +728,23 @@ void ov_render_tascar_t::start_session()
   // create a virtual acoustics "scene":
   tsccfg::node_t e_scene(tsccfg::node_add_child(e_session, "scene"));
   tsccfg::node_set_attribute(e_scene, "name", stage.thisdeviceid);
+  // modules section:
+  tsccfg::node_t e_mods(tsccfg::node_add_child(e_session, "modules"));
+  // add effect bus:
+  for(auto ch : thisdev.channels) {
+    tsccfg::node_t e_bus(tsccfg::node_add_child(e_mods, "route"));
+    tsccfg::node_set_attribute(e_bus, "name", std::string("bus.") + ch.id);
+    tsccfg::node_set_attribute(e_bus, "channels", "1");
+    tsccfg::node_set_attribute(e_bus, "connect", ch.sourceport);
+    if(!ch.plugins.empty()) {
+      tsccfg::node_t e_plugs(tsccfg::node_add_child(e_bus, "plugins"));
+      for(auto plug : ch.plugins) {
+        auto e_plug = tsccfg::node_add_child(e_plugs, plug.name);
+        for(auto par : plug.params)
+          tsccfg::node_set_attribute(e_plug, par.first, par.second);
+      }
+    }
+  }
   // create virtual acoustics only when not in raw mode:
   if(!(stage.rendersettings.rawmode || stage.thisdevice.receivedownmix)) {
     tsccfg::node_t e_rec(NULL);
@@ -796,7 +820,7 @@ void ov_render_tascar_t::start_session()
         tsccfg::node_set_attribute(e_sndfile, "resample", "true");
         tsccfg::node_set_attribute(e_sndfile, "loop", "0");
       }
-      tsccfg::node_t e_mods(tsccfg::node_add_child(e_session, "modules"));
+      // tsccfg::node_t e_mods(tsccfg::node_add_child(e_session, "modules"));
       tsccfg::node_t e_jackrec = tsccfg::node_add_child(e_mods, "jackrec");
       tsccfg::node_set_attribute(e_jackrec, "url", "osc.udp://localhost:9000/");
       tsccfg::node_set_attribute(e_jackrec, "sampleformat",
@@ -834,7 +858,7 @@ void ov_render_tascar_t::start_session()
     }
   }
   if(mczita) {
-    tsccfg::node_t e_mods = tsccfg::node_add_child(e_session, "modules");
+    // tsccfg::node_t e_mods = tsccfg::node_add_child(e_session, "modules");
     tsccfg::node_t e_zit = tsccfg::node_add_child(e_mods, "system");
     tsccfg::node_set_attribute(e_zit, "noshell", "true");
     std::map<uint32_t, uint32_t> chmap;
@@ -863,7 +887,7 @@ void ov_render_tascar_t::start_session()
   }
   if(mczitasend) {
     std::vector<std::string> waitports;
-    tsccfg::node_t e_mods = tsccfg::node_add_child(e_session, "modules");
+    // tsccfg::node_t e_mods = tsccfg::node_add_child(e_session, "modules");
     tsccfg::node_t e_zit = tsccfg::node_add_child(e_mods, "system");
     tsccfg::node_set_attribute(e_zit, "noshell", "true");
     for(uint32_t ch = 0; ch < mczitasendch; ++ch) {
@@ -905,6 +929,10 @@ void ov_render_tascar_t::start_session()
   tascar = new TASCAR::session_t(tsc.save_to_string(),
                                  TASCAR::session_t::LOAD_STRING, "");
   try {
+    std::string v;
+    tascar->validate_attributes(v);
+    if(v.size())
+      throw TASCAR::ErrMsg(v);
     tascar->start();
   }
   catch(const std::exception& e) {

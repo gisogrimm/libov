@@ -97,10 +97,16 @@ bool operator!=(const audio_device_t& a, const audio_device_t& b)
          (a.numperiods != b.numperiods);
 }
 
+bool operator==(const channel_plugin_t& a, const channel_plugin_t& b)
+{
+  return (a.name == b.name) && (a.params == b.params);
+}
+
 bool operator!=(const device_channel_t& a, const device_channel_t& b)
 {
   return (a.sourceport != b.sourceport) || (a.gain != b.gain) ||
-         (a.position != b.position) || (a.directivity != b.directivity);
+         (a.position != b.position) || (a.directivity != b.directivity) ||
+         (!(a.plugins == b.plugins));
 }
 
 bool operator!=(const std::vector<device_channel_t>& a,
