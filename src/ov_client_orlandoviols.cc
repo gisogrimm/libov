@@ -315,12 +315,12 @@ stage_device_t get_stage_dev(nlohmann::json& dev)
             auto param = it.key();
             auto val = it.value();
             if(val.is_string())
-              cplug.params[param] = val;
+              cplug.params[param] = val.get<std::string>();
             else if(val.is_number()) {
-              double v = val;
+              double v = val.get<double>();
               cplug.params[param] = TASCAR::to_string(v);
             } else if(val.is_boolean()) {
-              bool v = val;
+              bool v = val.get<bool>();
               cplug.params[param] = TASCAR::to_string(v);
             }
           }
