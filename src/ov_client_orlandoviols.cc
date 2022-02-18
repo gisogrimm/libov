@@ -304,10 +304,16 @@ stage_device_t get_stage_dev(nlohmann::json& dev)
         devchannel.directivity =
             my_js_value(ch, "directivity", std::string("omni"));
         auto plugins = ch["plugins"];
-        for(auto& [plug, cfg] : plugins.items()) {
+        //for(auto& [plug, cfg] : plugins.items()) {
+        for( auto it = plugins.begin(); it != plugins.end(); ++it ){
+          auto plug = it.key();
+          auto cfg = it.value();
           channel_plugin_t cplug;
           cplug.name = plug;
-          for(auto& [param, val] : cfg.items()) {
+          //for(auto& [param, val] : cfg.items()) {
+          for(auto it = cfg.begin(); it != cfg.end(); ++it) {
+            auto param = it.key();
+            auto val = it.value();
             if(val.is_string())
               cplug.params[param] = val;
             else if(val.is_number()) {
