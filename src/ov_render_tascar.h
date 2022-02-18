@@ -109,6 +109,9 @@ private:
   lo_address pinglogaddr;
   std::vector<std::string> inputports;
   double headtrack_tauref;
+  std::string headtrack_tilturl;
+  std::string headtrack_tiltpath;
+  std::string headtrack_tiltmap;
   // self-monitor delay in milliseconds:
   double selfmonitor_delay = 0.0;
   bool selfmonitor_onlyreverb = false;

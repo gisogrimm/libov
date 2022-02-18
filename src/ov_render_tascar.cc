@@ -588,6 +588,9 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
     tsccfg::node_set_attribute(
         e_head, "autoref",
         std::to_string(1.0 - exp(-1.0 / (30.0 * headtrack_tauref))));
+    tsccfg::node_set_attribute(e_head, "tilturl", headtrack_tilturl);
+    tsccfg::node_set_attribute(e_head, "tiltpath", headtrack_tiltpath);
+    tsccfg::node_set_attribute(e_head, "tiltmap", headtrack_tiltmap);
     tsccfg::node_set_attribute(e_head, "levelpattern", "/*/ego/*");
     tsccfg::node_set_attribute(e_head, "name", stage.thisdeviceid);
     tsccfg::node_set_attribute(e_head, "send_only_quaternion", "true");
@@ -1264,8 +1267,15 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
             ovboxclient->set_expedited_forwarding_PHB();
         }
       }
-      if(xcfg["headtrack"].is_object())
+      if(xcfg["headtrack"].is_object()) {
         headtrack_tauref = my_js_value(xcfg["headtrack"], "tauref", 33.315);
+        headtrack_tilturl =
+            my_js_value(xcfg["headtrack"], "tilturl", std::string(""));
+        headtrack_tiltpath =
+            my_js_value(xcfg["headtrack"], "tiltpath", std::string("/tilt"));
+        headtrack_tiltmap = my_js_value(xcfg["headtrack"], "tiltmap",
+                                        std::string("0 0 180 180"));
+      }
       if(xcfg["monitor"].is_object()) {
         selfmonitor_delay = my_js_value(xcfg["monitor"], "delay", 0.0);
         bool new_onlyreverb = my_js_value(xcfg["monitor"], "onlyreverb", false);
