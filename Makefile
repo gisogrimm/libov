@@ -82,7 +82,7 @@ TASCARMODULS = system touchosc waitforjackport route jackrec sleep	\
 TASCARMODULSGUI = tracegui
 
 TASCARAUDIOPLUGS = sndfile delay metronome bandpass filter	\
-  loopmachine spksim
+  loopmachine spksim tubesim
 
 OSFLAG :=
 ifeq ($(OS),Windows_NT)
