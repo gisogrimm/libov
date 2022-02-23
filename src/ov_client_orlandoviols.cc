@@ -580,6 +580,7 @@ void ov_client_orlandoviols_t::service()
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
         t += 0.001;
       }
+      DEBUG(backend.get_current_plugincfg_as_json(0));
     }
     catch(const std::exception& e) {
       std::cerr << "Error: " << e.what() << std::endl;

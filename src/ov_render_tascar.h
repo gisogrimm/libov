@@ -65,6 +65,7 @@ public:
                            void* data);
   std::string get_client_stats();
   std::string get_zita_path();
+  std::string get_current_plugincfg_as_json(size_t channel);
   void set_zita_path(const std::string& path);
   void set_allow_systemmods(bool);
   class metronome_t {

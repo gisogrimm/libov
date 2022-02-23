@@ -92,6 +92,25 @@ void ov_render_tascar_t::metronome_t::update_osc(TASCAR::osc_server_t* srv,
   }
 }
 
+std::string ov_render_tascar_t::get_current_plugincfg_as_json(size_t channel)
+{
+  stage_device_t& thisdev = stage.stage[stage.thisstagedeviceid];
+  if( (!tascar)||(channel >= thisdev.channels.size()) )
+    return "{}";
+  std::string r = "{";
+  size_t pcnt = 0;
+  for( const auto& plug : thisdev.channels[channel].plugins ){
+    r+="\""+plug.name+"\":";
+    std::string prefix = std::string("/bus.") + thisdev.channels[channel].id + "/ap" + std::to_string(pcnt) + "/" + plug.name;
+    r += tascar->get_vars_as_json(prefix,false) + ",";
+    ++pcnt;
+  }
+  if( r[r.size()-1]==',')
+    r.erase(r.size()-1);
+  r +="}";
+  return r;
+}
+
 bool file_exists(const std::string& fname)
 {
   try {

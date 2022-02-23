@@ -444,6 +444,13 @@ public:
   void restart_session_if_needed();
   virtual std::string get_client_stats() { return ""; };
   bool is_session_ready() const { return session_ready; };
+  /**
+   * Return  current configuration of input channel effect plugins
+   */
+  virtual std::string get_current_plugincfg_as_json(size_t channel)
+  {
+    return "{}";
+  };
   std::string bindir;
 
 protected:
