@@ -876,9 +876,9 @@ void ov_client_digitalstage_t::syncLocalStageMember()
       std::string directivity = customTrackPosition
                                     ? customTrackPosition->directivity
                                     : track.directivity;
-      deviceChannels.push_back(
-          {track._id, "system:capture_" + std::to_string(track.channel), volume,
-           pos, directivity});
+      deviceChannels.push_back(device_channel_t(
+          track._id, "system:capture_" + std::to_string(track.channel), volume,
+          pos, directivity));
     }
 
     // Calculate stage member volume
@@ -1011,9 +1011,10 @@ void ov_client_digitalstage_t::syncRemoteStageMembers()
         std::string directivity = customTrackPosition
                                       ? customTrackPosition->directivity
                                       : track.directivity;
-        deviceChannels.push_back({track._id,
-                                  "", // TODO: What is sourceport
-                                  volume, pos, directivity});
+        deviceChannels.push_back(
+            device_channel_t(track._id,
+                             "", // TODO: What is sourceport
+                             volume, pos, directivity));
       }
 
       // Calculate stage member volume

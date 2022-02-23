@@ -108,6 +108,11 @@ bool operator==(const channel_plugin_t& a, const channel_plugin_t& b);
 class device_channel_t {
 public:
   device_channel_t(){};
+  device_channel_t(device_channel_id_t id_, const std::string& sourceport_,
+                   double gain_, pos_t position_,
+                   const std::string& directivity_)
+      : id(id_), sourceport(sourceport_), gain(gain_), position(position_),
+        directivity(directivity_){};
   void update_plugin_cfg(const std::string& jscfg);
   /// unique channel ID (must be unique within one session):
   device_channel_id_t id;
