@@ -47,6 +47,7 @@ private:
   std::atomic<bool> quitrequest_;
   bool isovbox;
   std::string owner;
+  std::string refplugcfg;
 };
 
 #endif

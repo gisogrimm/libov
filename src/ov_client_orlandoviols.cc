@@ -192,6 +192,20 @@ std::string ov_client_orlandoviols_t::device_update(std::string url,
   for(auto ch : backend.get_input_channel_ids()) {
     jsinchannels.push_back(ch);
   }
+  nlohmann::json effectplugincfg;
+  if(backend.is_session_active() && backend.in_room()) {
+    std::string currenteffectplugincfg =
+        backend.get_all_current_plugincfg_as_json();
+    if(currenteffectplugincfg != refplugcfg) {
+      effectplugincfg = nlohmann::json::parse(currenteffectplugincfg);
+      size_t chcnt = 0;
+      for(const auto& ch : effectplugincfg) {
+        backend.update_plugincfg(ch.dump(), chcnt);
+        ++chcnt;
+      }
+    }
+    refplugcfg = currenteffectplugincfg;
+  }
   std::vector<snddevname_t> alsadevs(list_sound_devices());
   nlohmann::json jsalsadevs;
   for(auto d : alsadevs)
@@ -210,6 +224,7 @@ std::string ov_client_orlandoviols_t::device_update(std::string url,
   jsdevice["isovbox"] = isovbox;
   jsdevice["pingstats"] = nlohmann::json::parse(backend.get_client_stats());
   jsdevice["networkdevices"] = getnetworkdevices();
+  jsdevice["effectplugincfg"] = effectplugincfg;
   std::string curlstrdevice(jsdevice.dump());
   CURLcode res;
   std::string retv;
@@ -303,29 +318,7 @@ stage_device_t get_stage_dev(nlohmann::json& dev)
         devchannel.position.z = my_js_value(chpos, "z", 0.0);
         devchannel.directivity =
             my_js_value(ch, "directivity", std::string("omni"));
-        auto plugins = ch["plugins"];
-        //for(auto& [plug, cfg] : plugins.items()) {
-        for( auto it = plugins.begin(); it != plugins.end(); ++it ){
-          auto plug = it.key();
-          auto cfg = it.value();
-          channel_plugin_t cplug;
-          cplug.name = plug;
-          //for(auto& [param, val] : cfg.items()) {
-          for(auto it = cfg.begin(); it != cfg.end(); ++it) {
-            auto param = it.key();
-            auto val = it.value();
-            if(val.is_string())
-              cplug.params[param] = val.get<std::string>();
-            else if(val.is_number()) {
-              double v = val.get<double>();
-              cplug.params[param] = TASCAR::to_string(v);
-            } else if(val.is_boolean()) {
-              bool v = val.get<bool>();
-              cplug.params[param] = TASCAR::to_string(v);
-            }
-          }
-          devchannel.plugins.push_back(cplug);
-        }
+        devchannel.update_plugin_cfg(ch["plugins"].dump());
         stagedev.channels.push_back(devchannel);
       }
     /// Position of the stage device in the virtual space:
@@ -565,6 +558,7 @@ void ov_client_orlandoviols_t::service()
             if(!backend.is_audio_active())
               backend.start_audiobackend();
             backend.restart_session_if_needed();
+            refplugcfg = backend.get_all_current_plugincfg_as_json();
             if(backend.is_session_active())
               report_error(lobby, backend.get_deviceid(), "");
           }
@@ -580,7 +574,6 @@ void ov_client_orlandoviols_t::service()
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
         t += 0.001;
       }
-      DEBUG(backend.get_current_plugincfg_as_json(0));
     }
     catch(const std::exception& e) {
       std::cerr << "Error: " << e.what() << std::endl;

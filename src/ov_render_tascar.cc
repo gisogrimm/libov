@@ -92,22 +92,35 @@ void ov_render_tascar_t::metronome_t::update_osc(TASCAR::osc_server_t* srv,
   }
 }
 
+std::string ov_render_tascar_t::get_all_current_plugincfg_as_json()
+{
+  std::string currenteffectplugincfg = "[";
+  for(size_t ch = 0; ch < get_num_inputs(); ++ch) {
+    currenteffectplugincfg += get_current_plugincfg_as_json(ch);
+  }
+  if(currenteffectplugincfg[currenteffectplugincfg.size() - 1] == ',')
+    currenteffectplugincfg.erase(currenteffectplugincfg.size() - 1);
+  currenteffectplugincfg += "]";
+  return currenteffectplugincfg;
+}
+
 std::string ov_render_tascar_t::get_current_plugincfg_as_json(size_t channel)
 {
   stage_device_t& thisdev = stage.stage[stage.thisstagedeviceid];
-  if( (!tascar)||(channel >= thisdev.channels.size()) )
+  if((!tascar) || (channel >= thisdev.channels.size()))
     return "{}";
   std::string r = "{";
   size_t pcnt = 0;
-  for( const auto& plug : thisdev.channels[channel].plugins ){
-    r+="\""+plug.name+"\":";
-    std::string prefix = std::string("/bus.") + thisdev.channels[channel].id + "/ap" + std::to_string(pcnt) + "/" + plug.name;
-    r += tascar->get_vars_as_json(prefix,false) + ",";
+  for(const auto& plug : thisdev.channels[channel].plugins) {
+    r += "\"" + plug.name + "\":";
+    std::string prefix = std::string("/bus.") + thisdev.channels[channel].id +
+                         "/ap" + std::to_string(pcnt) + "/" + plug.name;
+    r += tascar->get_vars_as_json(prefix, true) + ",";
     ++pcnt;
   }
-  if( r[r.size()-1]==',')
-    r.erase(r.size()-1);
-  r +="}";
+  if(r[r.size() - 1] == ',')
+    r.erase(r.size() - 1);
+  r += "}";
   return r;
 }
 

@@ -18,7 +18,10 @@
  */
 
 #include "ov_types.h"
+#include "../tascar/libtascar/include/tscconfig.h"
 #include <iostream>
+#include <nlohmann/json.hpp>
+
 #ifndef DEBUG
 #define DEBUG(x)                                                               \
   std::cerr << __FILE__ << ":" << __LINE__ << ": " << __PRETTY_FUNCTION__      \
@@ -104,6 +107,26 @@ bool operator==(const channel_plugin_t& a, const channel_plugin_t& b)
 
 bool operator!=(const device_channel_t& a, const device_channel_t& b)
 {
+  if(!(a.plugins == b.plugins)) {
+    std::cout << "a=";
+    for(const auto& pl : a.plugins) {
+      std::cout << pl.name << ":[";
+      for(const auto& par : pl.params) {
+        std::cout << " " << par.first << ":" << par.second;
+      }
+      std::cout << " ] ";
+    }
+    std::cout << "\n";
+    std::cout << "b=";
+    for(const auto& pl : b.plugins) {
+      std::cout << pl.name << ":[";
+      for(const auto& par : pl.params) {
+        std::cout << " " << par.first << ":" << par.second;
+      }
+      std::cout << " ] ";
+    }
+    std::cout << "\n";
+  }
   return (a.sourceport != b.sourceport) || (a.gain != b.gain) ||
          (a.position != b.position) || (a.directivity != b.directivity) ||
          (!(a.plugins == b.plugins));
@@ -253,6 +276,15 @@ const bool ov_render_base_t::is_audio_active() const
 const std::string& ov_render_base_t::get_deviceid() const
 {
   return stage.thisdeviceid;
+}
+
+void ov_render_base_t::update_plugincfg(const std::string& cfg, size_t channel)
+{
+  if(channel < get_num_inputs()) {
+    stage.thisdevice.channels[channel].update_plugin_cfg(cfg);
+    stage.stage[stage.thisstagedeviceid].channels[channel].update_plugin_cfg(
+        cfg);
+  }
 }
 
 /**
@@ -429,6 +461,41 @@ void message_stat_t::operator-=(const message_stat_t& src)
   lost -= src.lost;
   seqerr_in -= src.seqerr_in;
   seqerr_out -= src.seqerr_out;
+}
+
+void device_channel_t::update_plugin_cfg(const std::string& jscfg)
+{
+  nlohmann::json jsplugins = nlohmann::json::parse(jscfg);
+  size_t pcnt = 0;
+  for(auto it = jsplugins.begin(); it != jsplugins.end(); ++it) {
+    std::string pname;
+    if(pcnt < plugins.size())
+      pname = plugins[pcnt].name;
+    auto plug = it.key();
+    auto cfg = it.value();
+    channel_plugin_t cplug;
+    if(plug == pname)
+      cplug = plugins[pcnt];
+    cplug.name = plug;
+    for(auto it = cfg.begin(); it != cfg.end(); ++it) {
+      auto param = it.key();
+      auto val = it.value();
+      if(val.is_string())
+        cplug.params[param] = val.get<std::string>();
+      else if(val.is_number()) {
+        double v = val.get<double>();
+        cplug.params[param] = TASCAR::to_string(v);
+      } else if(val.is_boolean()) {
+        bool v = val.get<bool>();
+        cplug.params[param] = TASCAR::to_string(v);
+      }
+    }
+    if(pcnt < plugins.size())
+      plugins[pcnt] = cplug;
+    else
+      plugins.push_back(cplug);
+    ++pcnt;
+  }
 }
 
 /*

@@ -105,13 +105,16 @@ struct channel_plugin_t {
 
 bool operator==(const channel_plugin_t& a, const channel_plugin_t& b);
 
-struct device_channel_t {
+class device_channel_t {
+public:
+  device_channel_t(){};
+  void update_plugin_cfg(const std::string& jscfg);
   /// unique channel ID (must be unique within one session):
   device_channel_id_t id;
   /// Source of channel (used locally only):
   std::string sourceport;
   /// Linear playback gain:
-  double gain;
+  double gain = 1.0;
   /// Position relative to stage device origin:
   pos_t position;
   /// source directivity, e.g., omni, cardioid:
@@ -451,6 +454,16 @@ public:
   {
     return "{}";
   };
+  void update_plugincfg(const std::string& cfg, size_t channel);
+  /**
+   * Return  current configuration of all input channel effect plugins
+   */
+  virtual std::string get_all_current_plugincfg_as_json() { return "[]"; };
+  virtual size_t get_num_inputs() const
+  {
+    return stage.thisdevice.channels.size();
+  };
+  bool in_room() const { return !stage.host.empty(); };
   std::string bindir;
 
 protected:
