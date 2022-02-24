@@ -289,6 +289,8 @@ public:
   message_stat_t state_packages;
 };
 
+class ov_client_base_t;
+
 class ov_render_base_t {
 public:
   /**
@@ -470,12 +472,14 @@ public:
   };
   bool in_room() const { return !stage.host.empty(); };
   std::string bindir;
+  void set_client(ov_client_base_t* cl) { client = cl; };
 
 protected:
   audio_device_t audiodevice;
   stage_t stage;
   std::string folder;
   bool session_ready = false;
+  ov_client_base_t* client;
 
 private:
   bool session_active;
@@ -489,16 +493,26 @@ private:
 // ov_client_digitalstage_t.
 class ov_client_base_t {
 public:
-  ov_client_base_t(ov_render_base_t& backend) : backend(backend), folder(""){};
-  virtual ~ov_client_base_t(){};
+  ov_client_base_t(ov_render_base_t& backend) : backend(backend), folder("")
+  {
+    backend.set_client(this);
+  };
+  virtual ~ov_client_base_t() { backend.set_client(NULL); };
   virtual void start_service() = 0;
   virtual void stop_service() = 0;
   virtual bool is_going_to_stop() const = 0;
   virtual std::string get_owner() const { return ""; };
-
   virtual void set_runtime_folder(const std::string& value) { folder = value; };
   virtual const std::string& get_runtime_folder() const { return folder; };
   bool is_session_ready() const { return backend.is_session_ready(); };
+  /**
+   * @brief Upload channel configuration to backend. This may contain
+   * gains, positions and effect parameters which were changed locally
+   * (e.g., web mixer).
+   *
+   * This method can be called from the backend.
+   */
+  virtual void upload_plugin_settings(){};
 
 protected:
   ov_render_base_t& backend;

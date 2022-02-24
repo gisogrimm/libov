@@ -32,6 +32,7 @@ public:
   bool download_file(const std::string& url, const std::string& dest);
   bool is_going_to_stop() const { return quitrequest_; };
   std::string get_owner() const { return owner; };
+  void upload_plugin_settings();
 
 private:
   void service();

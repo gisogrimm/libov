@@ -69,6 +69,7 @@ public:
   std::string get_all_current_plugincfg_as_json();
   void set_zita_path(const std::string& path);
   void set_allow_systemmods(bool);
+  void upload_channelcfg();
   class metronome_t {
   public:
     metronome_t();

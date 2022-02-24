@@ -738,6 +738,22 @@ void ov_render_tascar_t::clear_stage()
   }
 }
 
+int osc_trigger_upload(const char* path, const char* types, lo_arg** argv,
+                       int argc, lo_message msg, void* user_data)
+{
+  if(user_data) {
+    ov_render_tascar_t* tsc(reinterpret_cast<ov_render_tascar_t*>(user_data));
+    tsc->upload_channelcfg();
+  }
+  return 1;
+}
+
+void ov_render_tascar_t::upload_channelcfg()
+{
+  if(client)
+    client->upload_plugin_settings();
+}
+
 void ov_render_tascar_t::start_session()
 {
   //#ifdef SHOWDEBUG
@@ -969,6 +985,7 @@ void ov_render_tascar_t::start_session()
     if(v.size())
       throw TASCAR::ErrMsg(v);
     tascar->start();
+    tascar->add_method("/uploadchannelcfg", "", &osc_trigger_upload, this);
   }
   catch(const std::exception& e) {
     DEBUG(e.what());

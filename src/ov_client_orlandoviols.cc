@@ -64,7 +64,6 @@ ov_client_orlandoviols_t::ov_client_orlandoviols_t(ov_render_base_t& backend,
     : ov_client_base_t(backend), runservice(true), lobby(lobby),
       quitrequest_(false), isovbox(is_ovbox())
 {
-  // curl_global_init(CURL_GLOBAL_DEFAULT);
   curl = curl_easy_init();
   if(!curl)
     throw ErrMsg("Unable to initialize curl");
@@ -187,25 +186,8 @@ std::string ov_client_orlandoviols_t::device_update(std::string url,
   if(0 == gethostname(chost, 1023))
     hostname = chost;
   nlohmann::json jsinchannels;
-  // std::string jsinchannels("{");
-  // uint32_t nch(0);
-  for(auto ch : backend.get_input_channel_ids()) {
+  for(auto ch : backend.get_input_channel_ids())
     jsinchannels.push_back(ch);
-  }
-  nlohmann::json effectplugincfg;
-  if(backend.is_session_active() && backend.in_room()) {
-    std::string currenteffectplugincfg =
-        backend.get_all_current_plugincfg_as_json();
-    if(currenteffectplugincfg != refplugcfg) {
-      effectplugincfg = nlohmann::json::parse(currenteffectplugincfg);
-      size_t chcnt = 0;
-      for(const auto& ch : effectplugincfg) {
-        backend.update_plugincfg(ch.dump(), chcnt);
-        ++chcnt;
-      }
-    }
-    refplugcfg = currenteffectplugincfg;
-  }
   std::vector<snddevname_t> alsadevs(list_sound_devices());
   nlohmann::json jsalsadevs;
   for(auto d : alsadevs)
@@ -224,7 +206,6 @@ std::string ov_client_orlandoviols_t::device_update(std::string url,
   jsdevice["isovbox"] = isovbox;
   jsdevice["pingstats"] = nlohmann::json::parse(backend.get_client_stats());
   jsdevice["networkdevices"] = getnetworkdevices();
-  jsdevice["effectplugincfg"] = effectplugincfg;
   std::string curlstrdevice(jsdevice.dump());
   CURLcode res;
   std::string retv;
@@ -293,6 +274,50 @@ void ov_client_orlandoviols_t::register_device(std::string url,
   free(chunk.memory);
   if(result != "OK")
     throw TASCAR::ErrMsg("The front end did not respond \"OK\".");
+}
+
+void ov_client_orlandoviols_t::upload_plugin_settings()
+{
+  nlohmann::json pluginscfg;
+  if(backend.is_session_active() && backend.in_room()) {
+    std::string currenteffectplugincfg =
+        backend.get_all_current_plugincfg_as_json();
+    try {
+      if(currenteffectplugincfg != refplugcfg) {
+        pluginscfg = nlohmann::json::parse(currenteffectplugincfg);
+        size_t chcnt = 0;
+        for(const auto& ch : pluginscfg) {
+          backend.update_plugincfg(ch.dump(), chcnt);
+          ++chcnt;
+        }
+      }
+      refplugcfg = currenteffectplugincfg;
+      if(!pluginscfg.is_null()) {
+        std::string curlpost(pluginscfg.dump());
+        std::string retv;
+        struct webCURL::MemoryStruct chunk;
+        chunk.memory =
+            (char*)malloc(1); /* will be grown as needed by the realloc above */
+        chunk.size = 0;       /* no data at this point */
+        std::string url = lobby + "?pluginscfg=" + backend.get_deviceid();
+        curl_easy_reset(curl);
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl, CURLOPT_USERPWD, "device:device");
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,
+                         webCURL::WriteMemoryCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&chunk);
+        curl_easy_setopt(curl, CURLOPT_USERAGENT, "libcurl-agent/1.0");
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, curlpost.c_str());
+        curl_easy_perform(curl);
+        free(chunk.memory);
+      }
+    }
+    catch(const std::exception& e) {
+      std::cerr << "Error: " << e.what() << std::endl;
+      std::cerr << currenteffectplugincfg << std::endl;
+    }
+  }
 }
 
 stage_device_t get_stage_dev(nlohmann::json& dev)
