@@ -1073,6 +1073,7 @@ void ov_client_digitalstage_t::syncRemoteStageMembers()
       }
 
       stage_device_t stageDevice = {stageMember.ovStageDeviceId,
+                                    stageMember._id,
                                     user ? user->name : stageMember._id,
                                     deviceChannels,
                                     position,
