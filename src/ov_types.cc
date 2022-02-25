@@ -57,6 +57,7 @@ zyx_euler_t default_rot = {
 
 stage_device_t default_device = {
     0,           // stage_device_id_t id
+    "",          // uid
     "",          // std::string label;
     {},          // std::vector<device_channel_t> channels;
     default_pos, // pos_t position;
@@ -157,10 +158,10 @@ bool operator!=(const stage_device_t& a, const stage_device_t& b)
   DEBUGNEQ(a.receiverjitter, b.receiverjitter);
   DEBUGNEQ(a.sendlocal, b.sendlocal);
 #endif
-  return (a.id != b.id) || (a.label != b.label) || (a.channels != b.channels) ||
-         (a.position != b.position) || (a.orientation != b.orientation) ||
-         (a.gain != b.gain) || (a.mute != b.mute) ||
-         (a.senderjitter != b.senderjitter) ||
+  return (a.id != b.id) || (a.uid != b.uid) || (a.label != b.label) ||
+         (a.channels != b.channels) || (a.position != b.position) ||
+         (a.orientation != b.orientation) || (a.gain != b.gain) ||
+         (a.mute != b.mute) || (a.senderjitter != b.senderjitter) ||
          (a.receiverjitter != b.receiverjitter) ||
          (a.sendlocal != b.sendlocal) ||
          (a.receivedownmix != b.receivedownmix) ||

@@ -320,11 +320,28 @@ void ov_client_orlandoviols_t::upload_plugin_settings()
   }
 }
 
+void ov_client_orlandoviols_t::upload_session_gains()
+{
+  if(backend.is_session_active() && backend.in_room()) {
+    DEBUG(1);
+    float mastergain = 1.0f;
+    float egogain = 1.0f;
+    std::map<std::string, std::vector<float>> othergains;
+    backend.get_session_gains(mastergain, egogain, othergains);
+    DEBUG(mastergain);
+    DEBUG(egogain);
+    for(const auto& g : othergains) {
+      std::cerr << "  " << g.first << ": " << g.second << std::endl;
+    }
+  }
+}
+
 stage_device_t get_stage_dev(nlohmann::json& dev)
 {
   try {
     stage_device_t stagedev;
     stagedev.id = my_js_value(dev, "id", -1);
+    stagedev.uid = my_js_value(dev, "deviceid", std::string(""));
     stagedev.label = my_js_value(dev, "label", std::string(""));
     stagedev.receivedownmix = my_js_value(dev, "receivedownmix", false);
     stagedev.senddownmix = my_js_value(dev, "senddownmix", false);

@@ -124,6 +124,26 @@ std::string ov_render_tascar_t::get_current_plugincfg_as_json(size_t channel)
   return r;
 }
 
+void ov_render_tascar_t::get_session_gains(
+    float& mastergain, float& egogain,
+    std::map<std::string, std::vector<float>>& othergains)
+{
+  const stage_device_t& thisdev = stage.stage[stage.thisstagedeviceid];
+  if(tascar) {
+    for(auto stagemember : stage.stage) {
+      std::vector<float> gains;
+      for(auto ch : stagemember.second.channels) {
+        gains.push_back(tascar->sound_by_id(ch.id).get_gain() / 0.6f);
+      }
+      if(stagemember.second.id == thisdev.id) {
+        if(gains.size())
+          egogain = gains[0] * 0.6;
+      } else
+        othergains[stagemember.second.uid] = gains;
+    }
+  }
+}
+
 bool file_exists(const std::string& fname)
 {
   try {
@@ -738,20 +758,37 @@ void ov_render_tascar_t::clear_stage()
   }
 }
 
-int osc_trigger_upload(const char* path, const char* types, lo_arg** argv,
-                       int argc, lo_message msg, void* user_data)
+int osc_upload_plugin_settings(const char* path, const char* types,
+                               lo_arg** argv, int argc, lo_message msg,
+                               void* user_data)
 {
   if(user_data) {
     ov_render_tascar_t* tsc(reinterpret_cast<ov_render_tascar_t*>(user_data));
-    tsc->upload_channelcfg();
+    tsc->upload_plugin_settings();
   }
   return 1;
 }
 
-void ov_render_tascar_t::upload_channelcfg()
+void ov_render_tascar_t::upload_plugin_settings()
 {
   if(client)
     client->upload_plugin_settings();
+}
+
+int osc_upload_session_gains(const char* path, const char* types, lo_arg** argv,
+                             int argc, lo_message msg, void* user_data)
+{
+  if(user_data) {
+    ov_render_tascar_t* tsc(reinterpret_cast<ov_render_tascar_t*>(user_data));
+    tsc->upload_session_gains();
+  }
+  return 1;
+}
+
+void ov_render_tascar_t::upload_session_gains()
+{
+  if(client)
+    client->upload_session_gains();
 }
 
 void ov_render_tascar_t::start_session()
@@ -985,7 +1022,10 @@ void ov_render_tascar_t::start_session()
     if(v.size())
       throw TASCAR::ErrMsg(v);
     tascar->start();
-    tascar->add_method("/uploadchannelcfg", "", &osc_trigger_upload, this);
+    tascar->add_method("/uploadpluginsettings", "", &osc_upload_plugin_settings,
+                       this);
+    tascar->add_method("/uploadsessiongains", "", &osc_upload_session_gains,
+                       this);
   }
   catch(const std::exception& e) {
     DEBUG(e.what());

@@ -133,6 +133,8 @@ bool operator!=(const device_channel_t& a, const device_channel_t& b);
 struct stage_device_t {
   /// ID within the stage, typically a number from 0 to number of stage devices:
   stage_device_id_t id;
+  /// universal ID:
+  std::string uid;
   /// Label of the stage device:
   std::string label;
   /// List of channels the device is providing:
@@ -466,6 +468,8 @@ public:
    * Return  current configuration of all input channel effect plugins
    */
   virtual std::string get_all_current_plugincfg_as_json() { return "[]"; };
+  virtual void get_session_gains(float&, float&,
+                                 std::map<std::string, std::vector<float>>&){};
   virtual size_t get_num_inputs() const
   {
     return stage.thisdevice.channels.size();
@@ -506,13 +510,13 @@ public:
   virtual const std::string& get_runtime_folder() const { return folder; };
   bool is_session_ready() const { return backend.is_session_ready(); };
   /**
-   * @brief Upload channel configuration to backend. This may contain
-   * gains, positions and effect parameters which were changed locally
-   * (e.g., web mixer).
+   * @brief Upload effect parameters which were changed locally, e.g.,
+   * via the web mixer
    *
-   * This method can be called from the backend.
+   * This method can be called by the backend.
    */
   virtual void upload_plugin_settings(){};
+  virtual void upload_session_gains(){};
 
 protected:
   ov_render_base_t& backend;
