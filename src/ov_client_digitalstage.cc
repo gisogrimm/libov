@@ -944,9 +944,9 @@ void ov_client_digitalstage_t::syncLocalStageMember()
       return;
     }
     this->backend_.set_thisdev({
-        currentStageMember->ovStageDeviceId, localUser->name, deviceChannels,
-        position, orientation, gain, muted, localDevice->senderJitter,
-        localDevice->receiverJitter,
+        currentStageMember->ovStageDeviceId, currentStageMember->_id,
+        localUser->name, deviceChannels, position, orientation, gain, muted,
+        localDevice->senderJitter, localDevice->receiverJitter,
         true // sendlocal always true?
     });
   } else {
