@@ -176,7 +176,7 @@ bool operator!=(const render_settings_t& a, const render_settings_t& b)
          (a.renderism != b.renderism) || (a.distancelaw != b.distancelaw) ||
          (a.rawmode != b.rawmode) || (a.receive != b.receive) ||
          (a.rectype != b.rectype) || (a.egogain != b.egogain) ||
-         (a.mastergain != b.mastergain) || (a.peer2peer != b.peer2peer) ||
+         (a.outputgain != b.outputgain) || (a.peer2peer != b.peer2peer) ||
          (a.outputport1 != b.outputport1) || (a.outputport2 != b.outputport2) ||
          (a.secrec != b.secrec) || (a.xports != b.xports) ||
          (a.xrecport != b.xrecport) || (a.headtracking != b.headtracking) ||
@@ -201,7 +201,7 @@ render_settings_t::render_settings_t()
       receive(true),                      // bool receive
       rectype("hrtf"),                    // std::string rectype;
       egogain(1.0),                       // double egogain;
-      mastergain(1.0),                    // double mastergain;
+      outputgain(1.0),                    // double outputgain;
       peer2peer(true),                    // bool peer2peer;
       outputport1(""),                    // std::string outputport1;
       outputport2(""),                    // std::string outputport2;
@@ -339,7 +339,7 @@ void ov_render_base_t::rm_stage_device(stage_device_id_t stagedeviceid)
 }
 
 void ov_render_base_t::set_stage_device_gain(
-    const stage_device_id_t& stagedeviceid, double gain)
+    const stage_device_id_t& stagedeviceid, float gain)
 {
   if(stage.stage.find(stagedeviceid) != stage.stage.end())
     stage.stage[stagedeviceid].gain = gain;
@@ -415,7 +415,7 @@ bool operator!=(const std::map<stage_device_id_t, stage_device_t>& a,
 
 void ov_render_base_t::set_stage_device_channel_gain(
     const stage_device_id_t& stagedeviceid,
-    const device_channel_id_t& channeldeviceid, double gain)
+    const device_channel_id_t& channeldeviceid, float gain)
 {
   DEBUG(stagedeviceid);
   DEBUG(channeldeviceid);

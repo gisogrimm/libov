@@ -192,8 +192,8 @@ std::string ov_client_orlandoviols_t::device_update(std::string url,
   nlohmann::json jsalsadevs;
   for(auto d : alsadevs)
     jsalsadevs[d.dev] = d.desc;
-  double txrate(0);
-  double rxrate(0);
+  double txrate = 0.0;
+  double rxrate = 0.0;
   backend.getbitrate(txrate, rxrate);
   nlohmann::json jsdevice;
   jsdevice["alsadevs"] = jsalsadevs;
@@ -324,11 +324,12 @@ void ov_client_orlandoviols_t::upload_session_gains()
 {
   if(backend.is_session_active() && backend.in_room()) {
     DEBUG(1);
-    float mastergain = 1.0f;
+    float outputgain = 1.0f;
     float egogain = 1.0f;
+    float reverbgain = 1.0f;
     std::map<std::string, std::vector<float>> othergains;
-    backend.get_session_gains(mastergain, egogain, othergains);
-    DEBUG(mastergain);
+    backend.get_session_gains(outputgain, egogain, reverbgain, othergains);
+    DEBUG(outputgain);
     DEBUG(egogain);
     for(const auto& g : othergains) {
       std::cerr << "  " << g.first << ": " << g.second << std::endl;
@@ -489,13 +490,13 @@ void ov_client_orlandoviols_t::service()
               nlohmann::json js_reverb(js_stage["reverb"]);
               render_settings_t rendersettings;
               GETJS(rendersettings, id);
-              rendersettings.roomsize.x = my_js_value(js_roomsize, "x", 25.0);
-              rendersettings.roomsize.y = my_js_value(js_roomsize, "y", 13.0);
-              rendersettings.roomsize.z = my_js_value(js_roomsize, "z", 7.5);
+              rendersettings.roomsize.x = my_js_value(js_roomsize, "x", 25.0f);
+              rendersettings.roomsize.y = my_js_value(js_roomsize, "y", 13.0f);
+              rendersettings.roomsize.z = my_js_value(js_roomsize, "z", 7.5f);
               rendersettings.absorption =
-                  my_js_value(js_reverb, "absorption", 0.6);
-              rendersettings.damping = my_js_value(js_reverb, "damping", 0.7);
-              rendersettings.reverbgain = my_js_value(js_reverb, "gain", 0.4);
+                  my_js_value(js_reverb, "absorption", 0.6f);
+              rendersettings.damping = my_js_value(js_reverb, "damping", 0.7f);
+              rendersettings.reverbgain = my_js_value(js_reverb, "gain", 0.4f);
               GETJS(rendersettings, renderreverb);
               GETJS(rendersettings, renderism);
               GETJS(rendersettings, distancelaw);
@@ -509,7 +510,7 @@ void ov_client_orlandoviols_t::service()
               GETJS(rendersettings, rectype);
               GETJS(rendersettings, secrec);
               GETJS(rendersettings, egogain);
-              GETJS(rendersettings, mastergain);
+              GETJS(rendersettings, outputgain);
               GETJS(rendersettings, peer2peer);
               // level metering:
               GETJS(rendersettings, lmetertc);
@@ -518,7 +519,7 @@ void ov_client_orlandoviols_t::service()
               rendersettings.ambientsound =
                   my_js_value(js_stage, "ambientsound", std::string(""));
               rendersettings.ambientlevel =
-                  my_js_value(js_stage, "ambientlevel", 0.0);
+                  my_js_value(js_stage, "ambientlevel", 0.0f);
               rendersettings.ambientsound =
                   ovstrrep(rendersettings.ambientsound, "\\/", "/");
               // if not empty then download file to hash code:

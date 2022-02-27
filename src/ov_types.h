@@ -32,11 +32,11 @@
  */
 struct pos_t {
   /// x is forward direction
-  double x;
+  float x;
   /// y is left direction
-  double y;
+  float y;
   /// z is up direction
-  double z;
+  float z;
 };
 
 bool operator!=(const pos_t& a, const pos_t& b);
@@ -46,11 +46,11 @@ bool operator!=(const pos_t& a, const pos_t& b);
  */
 struct zyx_euler_t {
   /// rotation around z axis
-  double z;
+  float z;
   /// rotation around y axis
-  double y;
+  float y;
   /// rotation around x axis
-  double x;
+  float x;
 };
 
 bool operator!=(const zyx_euler_t& a, const zyx_euler_t& b);
@@ -87,7 +87,7 @@ struct audio_device_t {
   /// string represenation of device identifier, e.g., hw:1 for ALSA or jack
   std::string devicename;
   /// sampling rate in Hz
-  double srate;
+  float srate;
   /// number of samples in one period
   unsigned int periodsize;
   /// number of buffers
@@ -109,7 +109,7 @@ class device_channel_t {
 public:
   device_channel_t(){};
   device_channel_t(device_channel_id_t id_, const std::string& sourceport_,
-                   double gain_, pos_t position_,
+                   float gain_, pos_t position_,
                    const std::string& directivity_)
       : id(id_), sourceport(sourceport_), gain(gain_), position(position_),
         directivity(directivity_){};
@@ -119,7 +119,7 @@ public:
   /// Source of channel (used locally only):
   std::string sourceport;
   /// Linear playback gain:
-  double gain = 1.0;
+  float gain = 1.0f;
   /// Position relative to stage device origin:
   pos_t position;
   /// source directivity, e.g., omni, cardioid:
@@ -144,13 +144,13 @@ struct stage_device_t {
   /// Orientation of the stage device in the virtual space, ZYX Euler angles:
   zyx_euler_t orientation;
   /// Linear gain of the stage device:
-  double gain;
+  float gain;
   /// Mute flag:
   bool mute;
   /// sender jitter:
-  double senderjitter;
+  float senderjitter;
   /// receiver jitter:
-  double receiverjitter;
+  float receiverjitter;
   /// send to local IP if same network:
   bool sendlocal;
   /// receive only downmixed signal:
@@ -178,11 +178,11 @@ public:
   /// room dimensions:
   pos_t roomsize;
   /// average wall absorption coefficient:
-  double absorption;
+  float absorption;
   /// damping coefficient, defines frequency tilt of T60:
-  double damping;
+  float damping;
   /// linear gain of reverberation:
-  double reverbgain;
+  float reverbgain;
   /// flag wether rendering of reverb is required or not:
   bool renderreverb;
   /// flag wether rendering of image source model (ISM) or not:
@@ -196,9 +196,9 @@ public:
   /// Receiver type, either ortf or hrtf:
   std::string rectype;
   /// self monitor gain:
-  double egogain;
-  /// master gain:
-  double mastergain;
+  float egogain;
+  /// main output gain:
+  float outputgain;
   /// peer-to-peer mode:
   bool peer2peer;
   /// output ports of device master (names may depend on audio backend):
@@ -211,7 +211,7 @@ public:
   std::vector<port_t> xrecport;
   /// jitterbuffersize for second data receiver (e.g., for recording or
   /// broadcasting):
-  double secrec;
+  float secrec;
   /// load headtracking module:
   bool headtracking;
   /// apply head rotation to receiver:
@@ -223,15 +223,15 @@ public:
   /// ambient sound file url:
   std::string ambientsound;
   /// ambient sound file level in dB:
-  double ambientlevel;
+  float ambientlevel;
   /// Level meter time constant:
-  double lmetertc;
+  float lmetertc;
   /// Level meter frequency weighting:
   std::string lmeterfw;
   /// delay compensation in meter:
-  double delaycomp;
+  float delaycomp;
   /// decorrelation length in milliseconds:
-  double decorr;
+  float decorr;
 };
 
 bool operator!=(const render_settings_t& a, const render_settings_t& b);
@@ -272,10 +272,10 @@ public:
 class ping_stat_t {
 public:
   ping_stat_t();
-  double t_min;
-  double t_med;
-  double t_p99;
-  double t_mean;
+  float t_min;
+  float t_med;
+  float t_p99;
+  float t_mean;
   size_t received;
   size_t lost;
   size_t state_sent;
@@ -353,7 +353,7 @@ public:
      @todo Discuss exact gain definition
    */
   virtual void set_stage_device_gain(const stage_device_id_t& stagedeviceid,
-                                     double gain);
+                                     float gain);
   /**
      Set output gain of a single device channel of an stage device
      @param stagedeviceid Stage device ID
@@ -365,7 +365,7 @@ public:
   virtual void
   set_stage_device_channel_gain(const stage_device_id_t& stagedeviceid,
                                 const device_channel_id_t& devicechannelid,
-                                double gain);
+                                float gain);
 
   /**
      Set position and orientation of a stage device
@@ -413,7 +413,7 @@ public:
   const bool is_audio_active() const;
   const std::string& get_deviceid() const;
   virtual void getbitrate(double& txrate, double& rxrate);
-  virtual double get_load() const { return 0; };
+  virtual float get_load() const { return 0; };
   virtual std::vector<std::string> get_input_channel_ids() const
   {
     return {"system:capture_1", "system:capture_2"};
@@ -468,8 +468,15 @@ public:
    * Return  current configuration of all input channel effect plugins
    */
   virtual std::string get_all_current_plugincfg_as_json() { return "[]"; };
-  virtual void get_session_gains(float&, float&,
-                                 std::map<std::string, std::vector<float>>&){};
+  /**
+   * @brief Return current gains in a session, including changes made
+   * internally or via the webmixer
+   *
+   * @param outputgain
+   */
+  virtual void
+  get_session_gains(float& outputgain, float& egogain, float& reverbgain,
+                    std::map<std::string, std::vector<float>>& othergains){};
   virtual size_t get_num_inputs() const
   {
     return stage.thisdevice.channels.size();

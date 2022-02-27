@@ -125,23 +125,51 @@ std::string ov_render_tascar_t::get_current_plugincfg_as_json(size_t channel)
 }
 
 void ov_render_tascar_t::get_session_gains(
-    float& mastergain, float& egogain,
+    float& outputgain, float& egogain, float& reverbgain,
     std::map<std::string, std::vector<float>>& othergains)
 {
+  DEBUG("---");
   const stage_device_t& thisdev = stage.stage[stage.thisstagedeviceid];
+  egogain = stage.rendersettings.egogain;
+  reverbgain = stage.rendersettings.reverbgain;
+  outputgain = stage.rendersettings.outputgain;
+  DEBUG(20.0f * log10f(outputgain));
+  DEBUG(20.0f * log10f(egogain));
+  DEBUG(20.0f * log10f(reverbgain));
   if(tascar) {
+    // gain calculation: G_device * G_channel * (this: G_self | (!distancelaw:
+    // 0.6 | 1.0) )
     for(auto stagemember : stage.stage) {
       std::vector<float> gains;
-      for(auto ch : stagemember.second.channels) {
-        gains.push_back(tascar->sound_by_id(ch.id).get_gain() / 0.6f);
-      }
+      for(auto ch : stagemember.second.channels)
+        gains.push_back(tascar->sound_by_id(ch.id).get_gain() /
+                        (ch.gain * stagemember.second.gain));
       if(stagemember.second.id == thisdev.id) {
         if(gains.size())
-          egogain = gains[0] * 0.6;
-      } else
+          egogain = gains[0];
+      } else {
+        if(!stage.rendersettings.distancelaw)
+          for(auto& g : gains)
+            // if not self-monitor then decrease gain:
+            g /= 0.6f;
         othergains[stagemember.second.uid] = gains;
+      }
     }
   }
+  {
+    auto ports =
+        tascar->find_audio_ports({"/" + stage.thisdeviceid + "/reverb"});
+    if(ports.size())
+      reverbgain = ports[0]->get_gain();
+  }
+  {
+    auto ports = tascar->find_audio_ports({"/" + stage.thisdeviceid + "/main"});
+    if(ports.size())
+      outputgain = ports[0]->get_gain();
+  }
+  DEBUG(20.0f * log10f(outputgain));
+  DEBUG(20.0f * log10f(egogain));
+  DEBUG(20.0f * log10f(reverbgain));
 }
 
 bool file_exists(const std::string& fname)
@@ -311,9 +339,9 @@ void ov_render_tascar_t::add_network_receiver(
                               std::to_string(c));
           std::string destport;
           if(chcnt & 1)
-            destport = "master." + stage.thisdeviceid + ":in.0";
+            destport = "main." + stage.thisdeviceid + ":in.0";
           else
-            destport = "master." + stage.thisdeviceid + ":in.1";
+            destport = "main." + stage.thisdeviceid + ":in.1";
           if(!destport.empty()) {
             waitports.push_back(srcport);
             session_add_connect(e_session, srcport, destport);
@@ -420,7 +448,9 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
               tsccfg::node_set_attribute(e_snd, "gainmodel", "1");
             tsccfg::node_set_attribute(e_snd, "delayline", "false");
             tsccfg::node_set_attribute(e_snd, "id", ch.id);
-            double gain(ch.gain * stagemember.second.gain);
+            // gain calculation: G_device * G_channel * (this: G_self |
+            // (!distancelaw: 0.6 | 1.0) )
+            float gain(ch.gain * stagemember.second.gain);
             if(stagemember.second.id == thisdev.id) {
               // connect self-monitoring source ports:
               tsccfg::node_set_attribute(e_snd, "connect",
@@ -432,7 +462,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
                 gain *= 0.6;
             }
             tsccfg::node_set_attribute(e_snd, "gain",
-                                       TASCAR::to_string(20.0 * log10(gain)));
+                                       TASCAR::to_string(20.0f * log10f(gain)));
             // set relative channel positions:
             TASCAR::pos_t chpos(to_tascar(ch.position));
             tsccfg::node_set_attribute(e_snd, "x", TASCAR::to_string(chpos.x));
@@ -447,12 +477,12 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
               tsccfg::node_set_attribute(e_snd, "layers", "2");
             }
             if((stagemember.second.id == thisdev.id) &&
-               (selfmonitor_delay > 0.0)) {
+               (selfmonitor_delay > 0.0f)) {
               tsccfg::node_t e_plugs(tsccfg::node_add_child(e_snd, "plugins"));
               tsccfg::node_t e_delay(tsccfg::node_add_child(e_plugs, "delay"));
               tsccfg::node_set_attribute(
                   e_delay, "delay",
-                  TASCAR::to_string(selfmonitor_delay * 0.001));
+                  TASCAR::to_string(selfmonitor_delay * 0.001f));
             }
           }
         }
@@ -474,6 +504,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
     if(stage.rendersettings.renderreverb) {
       // create reverb engine:
       tsccfg::node_t e_rvb(tsccfg::node_add_child(e_scene, "reverb"));
+      tsccfg::node_set_attribute(e_rvb, "name", "reverb");
       tsccfg::node_set_attribute(e_rvb, "type", "simplefdn");
       tsccfg::node_set_attribute(
           e_rvb, "volumetric",
@@ -488,7 +519,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
           e_rvb, "damping", TASCAR::to_string(stage.rendersettings.damping));
       tsccfg::node_set_attribute(
           e_rvb, "gain",
-          TASCAR::to_string(20 * log10(stage.rendersettings.reverbgain)));
+          TASCAR::to_string(20.0f * log10f(stage.rendersettings.reverbgain)));
     }
     // ambient sounds:
     if(stage.rendersettings.ambientsound.size() && render_soundscape) {
@@ -604,9 +635,9 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
             stage.thisdeviceid + "_sender --" + zitasampleformat +
             " 127.0.0.1 " + std::to_string(4464 + 2 * stage.thisstagedeviceid));
     // tsccfg::node_set_attribute(e_sys, "onunload", "killall ovzita-j2n");
-    session_add_connect(e_session, "render." + stage.thisdeviceid + ":master_l",
+    session_add_connect(e_session, "render." + stage.thisdeviceid + ":main_l",
                         stage.thisdeviceid + "_sender:in_1");
-    session_add_connect(e_session, "render." + stage.thisdeviceid + ":master_r",
+    session_add_connect(e_session, "render." + stage.thisdeviceid + ":main_r",
                         stage.thisdeviceid + "_sender:in_2");
   }
   tsccfg::node_t e_wait = tsccfg::node_add_child(e_mods, "waitforjackport");
@@ -628,7 +659,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
               std::to_string(stage.rendersettings.headtrackingport) + "/");
     std::vector<std::string> actor;
     if(stage.rendersettings.headtrackingrotrec)
-      actor.push_back("/" + stage.thisdeviceid + "/master");
+      actor.push_back("/" + stage.thisdeviceid + "/main");
     if(stage.rendersettings.headtrackingrotsrc) {
       actor.push_back("/" + stage.thisdeviceid + "/ego");
       tsccfg::node_set_attribute(e_head, "roturl", "osc.udp://localhost:9870/");
@@ -670,12 +701,12 @@ void ov_render_tascar_t::create_raw_dev(tsccfg::node_t e_session)
   tsccfg::node_add_child(e_mods, "touchosc");
   if(stage.rendersettings.receive) {
     tsccfg::node_t e_route = tsccfg::node_add_child(e_mods, "route");
-    std::string clname("master." + stage.thisdeviceid);
+    std::string clname("main." + stage.thisdeviceid);
     tsccfg::node_set_attribute(e_route, "name", clname);
     tsccfg::node_set_attribute(e_route, "channels", "2");
     tsccfg::node_set_attribute(
         e_route, "gain",
-        TASCAR::to_string(20 * log10(stage.rendersettings.mastergain)));
+        TASCAR::to_string(20 * log10(stage.rendersettings.outputgain)));
     if(stage.rendersettings.outputport1.size())
       session_add_connect(e_session, clname + ":out.0",
                           stage.rendersettings.outputport1);
@@ -855,10 +886,10 @@ void ov_render_tascar_t::start_session()
             e_rec, "decorr_length",
             TASCAR::to_string(0.001 * stage.rendersettings.decorr));
       }
-      tsccfg::node_set_attribute(e_rec, "name", "master");
+      tsccfg::node_set_attribute(e_rec, "name", "main");
       tsccfg::node_set_attribute(
           e_rec, "gain",
-          TASCAR::to_string(20 * log10(stage.rendersettings.mastergain)));
+          TASCAR::to_string(20 * log10(stage.rendersettings.outputgain)));
       // do not add delay (usually used for dynamic scene rendering):
       tsccfg::node_set_attribute(
           e_rec, "delaycomp",
@@ -866,21 +897,21 @@ void ov_render_tascar_t::start_session()
       // connect output ports:
       if(!stage.thisdevice.senddownmix) {
         if(!stage.rendersettings.outputport1.empty()) {
-          std::string srcport("master_l");
+          std::string srcport("main_l");
           if(stage.rendersettings.rectype == "itu51")
-            srcport = "master.0L";
+            srcport = "main.0L";
           if(stage.rendersettings.rectype == "omni")
-            srcport = "master.0";
+            srcport = "main.0";
           session_add_connect(e_session,
                               "render." + stage.thisdeviceid + ":" + srcport,
                               stage.rendersettings.outputport1);
         }
         if(!stage.rendersettings.outputport2.empty()) {
-          std::string srcport("master_r");
+          std::string srcport("main_r");
           if(stage.rendersettings.rectype == "itu51")
-            srcport = "master.1R";
+            srcport = "main.1R";
           if(stage.rendersettings.rectype == "omni")
-            srcport = "master.0";
+            srcport = "main.0";
           session_add_connect(e_session,
                               "render." + stage.thisdeviceid + ":" + srcport,
                               stage.rendersettings.outputport2);
@@ -1224,7 +1255,7 @@ void ov_render_tascar_t::set_stage(
 }
 
 void ov_render_tascar_t::set_stage_device_gain(
-    const stage_device_id_t& stagedeviceid, double gain)
+    const stage_device_id_t& stagedeviceid, float gain)
 {
   DEBUG(gain);
   ov_render_base_t::set_stage_device_gain(stagedeviceid, gain);
@@ -1254,7 +1285,7 @@ void ov_render_tascar_t::set_stage_device_gain(
 
 void ov_render_tascar_t::set_stage_device_channel_gain(
     const stage_device_id_t& stagedeviceid,
-    const device_channel_id_t& channeldeviceid, double gain)
+    const device_channel_id_t& channeldeviceid, float gain)
 {
   ov_render_base_t::set_stage_device_channel_gain(stagedeviceid,
                                                   channeldeviceid, gain);
@@ -1311,12 +1342,12 @@ std::vector<std::string> ov_render_tascar_t::get_input_channel_ids() const
   return inputports;
 }
 
-double ov_render_tascar_t::get_load() const
+float ov_render_tascar_t::get_load() const
 {
   if(tascar) {
-    return 0.01 * tascar->get_cpu_load();
+    return 0.01f * tascar->get_cpu_load();
   }
-  return 0;
+  return 0.0f;
 }
 
 std::string ov_render_tascar_t::get_zita_path()

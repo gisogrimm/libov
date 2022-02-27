@@ -43,10 +43,10 @@ public:
   void rm_stage_device(stage_device_id_t stagedeviceid);
   void set_stage(const std::map<stage_device_id_t, stage_device_t>&);
   void set_stage_device_gain(const stage_device_id_t& stagedeviceid,
-                             double gain);
+                             float gain);
   void set_stage_device_channel_gain(const stage_device_id_t& stagedeviceid,
                                      const device_channel_id_t& channeldeviceid,
-                                     double gain);
+                                     float gain);
   void
   set_stage_device_channel_position(const stage_device_id_t& stagedeviceid,
                                     const device_channel_id_t& channeldeviceid,
@@ -57,7 +57,7 @@ public:
   std::string get_stagedev_name(stage_device_id_t stagedeviceid) const;
   void getbitrate(double& txrate, double& rxrate);
   std::vector<std::string> get_input_channel_ids() const;
-  double get_load() const;
+  float get_load() const;
   void set_extra_config(const std::string&);
   void set_seqerr_callback(std::function<void(stage_device_id_t, sequence_t,
                                               sequence_t, port_t, void*)>
@@ -67,7 +67,7 @@ public:
   std::string get_zita_path();
   std::string get_current_plugincfg_as_json(size_t channel);
   std::string get_all_current_plugincfg_as_json();
-  void get_session_gains(float&, float&,
+  void get_session_gains(float& outputgain, float& egogain, float& reverbgain,
                          std::map<std::string, std::vector<float>>&);
   void set_zita_path(const std::string& path);
   void set_allow_systemmods(bool);
@@ -82,10 +82,10 @@ public:
     void update_osc(TASCAR::osc_server_t* srv, const std::string& dev) const;
 
     uint32_t bpb;
-    double bpm;
+    float bpm;
     bool bypass;
-    double delay;
-    double level;
+    float delay;
+    float level;
   };
 
 private:
@@ -114,12 +114,12 @@ private:
   port_t pinglogport;
   lo_address pinglogaddr;
   std::vector<std::string> inputports;
-  double headtrack_tauref;
+  float headtrack_tauref;
   std::string headtrack_tilturl;
   std::string headtrack_tiltpath;
   std::string headtrack_tiltmap;
   // self-monitor delay in milliseconds:
-  double selfmonitor_delay = 0.0;
+  float selfmonitor_delay = 0.0f;
   bool selfmonitor_onlyreverb = false;
   // metronome settings:
   metronome_t metronome;
@@ -150,7 +150,7 @@ private:
       cb_seqerr;
   void* cb_seqerr_data;
   std::map<stage_device_id_t, client_stats_t> client_stats;
-  double sorter_deadline;
+  float sorter_deadline;
   bool expedited_forwarding_PHB;
   bool render_soundscape;
   bool allow_systemmods = false;
