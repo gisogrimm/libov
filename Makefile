@@ -1,4 +1,4 @@
-VERSION=0.16
+VERSION=0.17
 export FULLVERSION:=$(shell ./get_version.sh)
 
 all: tscver build showver lib tscobj tscplug
@@ -71,7 +71,7 @@ TASCAROBJECTS = licensehandler.o audiostates.o coordinates.o		\
 
 TASCARDMXOBJECTS =
 
-TASCARRECEIVERS = ortf hrtf simplefdn omni hoa2d_fuma_hos
+TASCARRECEIVERS = ortf hrtf simplefdn omni itu51
 
 TASCARSOURCE = omni cardioidmod
 
@@ -102,9 +102,9 @@ else
 		LDLIBS += -lasound
 		TASCARMODULS += ovheadtracker lightctl midicc2osc
 		TASCARDMXOBJECTS += termsetbaud.o serialport.o dmxdriver.o
-		ifneq ($DISTRO,arch)
-		TASCARRECEIVERS += itu51
-		endif
+#		ifneq ($DISTRO,arch)
+#		TASCARRECEIVERS += itu51
+#		endif
 	endif
 	ifeq ($(UNAME_S),Darwin)
 		OSFLAG += -D OSX
