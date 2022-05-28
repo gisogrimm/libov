@@ -652,15 +652,18 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
   // head tracking:
   if(stage.rendersettings.headtracking && stage.rendersettings.receive) {
     tsccfg::node_t e_head = tsccfg::node_add_child(e_mods, "ovheadtracker");
+    // enable data logging and/or OSC distribution:
     if(stage.rendersettings.headtrackingport > 0)
       tsccfg::node_set_attribute(
           e_head, "url",
           "osc.udp://localhost:" +
               std::to_string(stage.rendersettings.headtrackingport) + "/");
     std::vector<std::string> actor;
+    // control local receiver:
     if(stage.rendersettings.headtrackingrotrec)
       actor.push_back("/" + stage.thisdeviceid + "/main");
     if(stage.rendersettings.headtrackingrotsrc) {
+      // control local and remote sound source:
       actor.push_back("/" + stage.thisdeviceid + "/ego");
       tsccfg::node_set_attribute(e_head, "roturl", "osc.udp://localhost:9870/");
       tsccfg::node_set_attribute(e_head, "rotpath",
@@ -668,9 +671,13 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
                                      "/zyxeuler");
     }
     tsccfg::node_set_attribute(e_head, "actor", TASCAR::vecstr2str(actor));
+    // set auto referencing time constant:
     tsccfg::node_set_attribute(
         e_head, "autoref",
         std::to_string(1.0 - exp(-1.0 / (30.0 * headtrack_tauref))));
+    tsccfg::node_set_attribute(e_head, "autoref_zonly",
+                               headtrack_autorefzonly ? "true" : "false");
+    tsccfg::node_set_attribute(e_head, "smooth", "0.01");
     tsccfg::node_set_attribute(e_head, "tilturl", headtrack_tilturl);
     tsccfg::node_set_attribute(e_head, "tiltpath", headtrack_tiltpath);
     tsccfg::node_set_attribute(e_head, "tiltmap", headtrack_tiltmap);
@@ -1395,6 +1402,8 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
             my_js_value(xcfg["headtrack"], "tiltpath", std::string("/tilt"));
         headtrack_tiltmap = my_js_value(xcfg["headtrack"], "tiltmap",
                                         std::string("0 0 180 180"));
+        headtrack_autorefzonly =
+            my_js_value(xcfg["headtrack"], "autorefzonly", false);
       }
       if(xcfg["monitor"].is_object()) {
         selfmonitor_delay = my_js_value(xcfg["monitor"], "delay", 0.0);

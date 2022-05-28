@@ -118,6 +118,7 @@ private:
   std::string headtrack_tilturl;
   std::string headtrack_tiltpath;
   std::string headtrack_tiltmap;
+  bool headtrack_autorefzonly = false;
   // self-monitor delay in milliseconds:
   float selfmonitor_delay = 0.0f;
   bool selfmonitor_onlyreverb = false;
