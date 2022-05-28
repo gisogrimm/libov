@@ -128,14 +128,10 @@ void ov_render_tascar_t::get_session_gains(
     float& outputgain, float& egogain, float& reverbgain,
     std::map<std::string, std::vector<float>>& othergains)
 {
-  DEBUG("---");
   const stage_device_t& thisdev = stage.stage[stage.thisstagedeviceid];
   egogain = stage.rendersettings.egogain;
   reverbgain = stage.rendersettings.reverbgain;
   outputgain = stage.rendersettings.outputgain;
-  DEBUG(20.0f * log10f(outputgain));
-  DEBUG(20.0f * log10f(egogain));
-  DEBUG(20.0f * log10f(reverbgain));
   if(tascar) {
     // gain calculation: G_device * G_channel * (this: G_self | (!distancelaw:
     // 0.6 | 1.0) )
@@ -167,9 +163,6 @@ void ov_render_tascar_t::get_session_gains(
     if(ports.size())
       outputgain = ports[0]->get_gain();
   }
-  DEBUG(20.0f * log10f(outputgain));
-  DEBUG(20.0f * log10f(egogain));
-  DEBUG(20.0f * log10f(reverbgain));
 }
 
 bool file_exists(const std::string& fname)
