@@ -665,9 +665,13 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
     }
     tsccfg::node_set_attribute(e_head, "actor", TASCAR::vecstr2str(actor));
     // set auto referencing time constant:
-    tsccfg::node_set_attribute(
-        e_head, "autoref",
-        std::to_string(1.0 - exp(-1.0 / (30.0 * headtrack_tauref))));
+    if(headtrack_tauref > 0) {
+      tsccfg::node_set_attribute(
+          e_head, "autoref",
+          std::to_string(1.0 - exp(-1.0 / (30.0 * headtrack_tauref))));
+    } else {
+      tsccfg::node_set_attribute(e_head, "autoref", "0");
+    }
     tsccfg::node_set_attribute(e_head, "autoref_zonly",
                                headtrack_autorefzonly ? "true" : "false");
     tsccfg::node_set_attribute(e_head, "smooth", "0.01");
@@ -1396,7 +1400,7 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
         headtrack_tiltmap = my_js_value(xcfg["headtrack"], "tiltmap",
                                         std::string("0 0 180 180"));
         headtrack_autorefzonly =
-            my_js_value(xcfg["headtrack"], "autorefzonly", false);
+            my_js_value(xcfg["headtrack"], "autorefzonly", true);
       }
       if(xcfg["monitor"].is_object()) {
         selfmonitor_delay = my_js_value(xcfg["monitor"], "delay", 0.0);
