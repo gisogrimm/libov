@@ -77,7 +77,7 @@ TASCARSOURCE = omni cardioidmod
 
 TASCARMODULS = system touchosc waitforjackport route jackrec sleep	\
   epicycles hossustain hoafdnrot matrix savegains granularsynth		\
-  oscserver oscrelay
+  oscserver oscrelay pos2osc
 
 TASCARMODULSGUI = tracegui
 
