@@ -249,6 +249,7 @@ void ov_render_tascar_t::add_secondary_bus(const stage_device_t& stagemember,
   tsccfg::node_t e_sys(tsccfg::node_add_child(e_mods, "system"));
   double buff(thisdev.receiverjitter + stagemember.senderjitter);
   tsccfg::node_set_attribute(e_sys, "noshell", "true");
+  tsccfg::node_set_attribute(e_sys, "sleep", "0.2");
   tsccfg::node_set_attribute(
       e_sys, "command",
       zitapath + "ovzita-n2j --chan " + chanlist + " --jname " + netclientname +
@@ -303,6 +304,7 @@ void ov_render_tascar_t::add_network_receiver(
       n2jclientname = "n2j_" + n2jclientname;
     }
     tsccfg::node_t e_sys(tsccfg::node_add_child(e_mods, "system"));
+    tsccfg::node_set_attribute(e_sys, "sleep", "0.2");
     tsccfg::node_set_attribute(e_sys, "noshell", "true");
     double buff(thisdev.receiverjitter + stagemember.senderjitter);
     // provide access to path!
@@ -593,6 +595,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
                           tsccfg::node_add_child(e_mplug, "delay"));
     // create network sender:
     tsccfg::node_t e_sys(tsccfg::node_add_child(e_mods, "system"));
+    tsccfg::node_set_attribute(e_sys, "sleep", "0.2");
     tsccfg::node_set_attribute(e_sys, "noshell", "true");
     tsccfg::node_set_attribute(
         e_sys, "command",
@@ -621,6 +624,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
   if(stage.thisdevice.senddownmix && stage.rendersettings.receive) {
     // create network sender:
     tsccfg::node_t e_sys(tsccfg::node_add_child(e_mods, "system"));
+    tsccfg::node_set_attribute(e_sys, "sleep", "0.2");
     tsccfg::node_set_attribute(e_sys, "noshell", "true");
     tsccfg::node_set_attribute(
         e_sys, "command",
@@ -752,6 +756,7 @@ void ov_render_tascar_t::create_raw_dev(tsccfg::node_t e_session)
   }
   if(thisdev.channels.size() > 0) {
     tsccfg::node_t e_sys = tsccfg::node_add_child(e_mods, "system");
+    tsccfg::node_set_attribute(e_sys, "sleep", "0.2");
     tsccfg::node_set_attribute(e_sys, "noshell", "true");
     tsccfg::node_set_attribute(
         e_sys, "command",
@@ -983,6 +988,7 @@ void ov_render_tascar_t::start_session()
   if(mczita) {
     // tsccfg::node_t e_mods = tsccfg::node_add_child(e_session, "modules");
     tsccfg::node_t e_zit = tsccfg::node_add_child(e_mods, "system");
+    tsccfg::node_set_attribute(e_zit, "sleep", "0.2");
     tsccfg::node_set_attribute(e_zit, "noshell", "true");
     std::map<uint32_t, uint32_t> chmap;
     uint32_t och(0);
@@ -1012,6 +1018,7 @@ void ov_render_tascar_t::start_session()
     std::vector<std::string> waitports;
     // tsccfg::node_t e_mods = tsccfg::node_add_child(e_session, "modules");
     tsccfg::node_t e_zit = tsccfg::node_add_child(e_mods, "system");
+    tsccfg::node_set_attribute(e_zit, "sleep", "0.2");
     tsccfg::node_set_attribute(e_zit, "noshell", "true");
     for(uint32_t ch = 0; ch < mczitasendch; ++ch) {
       waitports.push_back("j2n_" + stage.thisdeviceid + "_mc:in_" +
@@ -1088,8 +1095,10 @@ void ov_render_tascar_t::start_session()
   if(file_exists("webmixer.js")) {
     command = "node webmixer.js " + ipaddr;
   }
-  if(!command.empty())
+  if(!command.empty()){
     h_webmixer = new TASCAR::spawn_process_t(command, false);
+    usleep(10000);
+  }
 #endif
   session_ready = true;
 }
