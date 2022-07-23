@@ -1195,6 +1195,8 @@ void ov_render_tascar_t::start_audiobackend()
   jack_status_t jstat;
   jc = jack_client_open("listchannels", opt, &jstat);
   if(jc) {
+    audiodevice.srate = jack_get_sample_rate(jc);
+    audiodevice.periodsize = jack_get_buffer_size(jc);
     std::vector<std::string> ports;
     const char** pp_ports(
         jack_get_ports(jc, NULL, NULL, JackPortIsOutput | JackPortIsPhysical));

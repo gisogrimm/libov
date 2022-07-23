@@ -485,6 +485,15 @@ public:
   std::string bindir;
   void set_client(ov_client_base_t* cl) { client = cl; };
 
+  /**
+   * @brief Return current fragment size
+   */
+  virtual size_t get_periodsize() { return audiodevice.periodsize; };
+  /**
+   * @brief Return current sampling rate in Hz
+   */
+  virtual size_t get_srate() { return audiodevice.srate; };
+
 protected:
   audio_device_t audiodevice;
   stage_t stage;
