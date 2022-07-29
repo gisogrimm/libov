@@ -3,6 +3,16 @@ export FULLVERSION:=$(shell ./get_version.sh)
 
 all: tscver build showver lib tscobj tscplug
 
+tscplug: tscobj
+
+tscobj: lib
+
+lib: showver tscver tscobj
+
+showver: build
+
+build: tscver
+
 BASEOBJ = ov_types errmsg common udpsocket callerlist ov_tools MACAddressUtility
 
 OBJ = $(BASEOBJ) ovboxclient ov_client_orlandoviols	\
@@ -24,6 +34,7 @@ BUILD_OBJ_SERVER = $(patsubst %,build/%.o,$(BASEOBJ))
 
 CXXFLAGS += -DOVBOXVERSION="\"$(FULLVERSION)\""
 
+$(BUILD_OBJ): tscobj
 
 ifeq "$(ARCH)" "x86_64"
 CXXFLAGS += -msse -msse2 -mfpmath=sse -ffast-math
@@ -189,8 +200,7 @@ clean:
 ## unit testing:
 
 googletest/WORKSPACE:
-	git clone https://github.com/google/googletest
-	(cd googletest && git checkout release-1.11.0)
+	git clone https://github.com/google/googletest &&	(cd googletest && git checkout release-1.11.0)
 
 gtest:
 	$(MAKE) googlemock
@@ -213,6 +223,8 @@ $(patsubst %,%-subdir-unit-tests,$(SUBDIRS)):
 
 execute-unit-tests: $(BUILD_DIR)/unit-test-runner
 	if [ -x $< ]; then $(LIBVAR)=./build:./tascar/libtascar/build: $<; fi
+
+$(BUILD_DIR)/unit-test-runner: gtest
 
 unit_tests_test_files = $(wildcard unittests/*.cc)
 $(BUILD_DIR)/unit-test-runner: $(BUILD_DIR)/.directory $(unit_tests_test_files) $(BUILD_OBJ)
