@@ -224,8 +224,8 @@ $(patsubst %,%-subdir-unit-tests,$(SUBDIRS)):
 execute-unit-tests: $(BUILD_DIR)/unit-test-runner
 	if [ -x $< ]; then $(LIBVAR)=./build:./tascar/libtascar/build: $<; fi
 
-$(BUILD_DIR)/unit-test-runner: gtest
+#$(BUILD_DIR)/unit-test-runner: gtest
 
 unit_tests_test_files = $(wildcard unittests/*.cc)
 $(BUILD_DIR)/unit-test-runner: $(BUILD_DIR)/.directory $(unit_tests_test_files) $(BUILD_OBJ)
-	if test -n "$(unit_tests_test_files)"; then $(CXX) $(CXXFLAGS) -I$(BUILD_DIR)/include -I$(SOURCE_DIR) -L$(BUILD_DIR) -L$(BUILD_DIR)/lib -o $@ $(wordlist 2, $(words $^), $^)  $(LDFLAGS) -lov $(LDLIBS) -lgtest_main -lgtest -lpthread; fi
+	$(MAKE) gtest && if test -n "$(unit_tests_test_files)"; then $(CXX) $(CXXFLAGS) -I$(BUILD_DIR)/include -I$(SOURCE_DIR) -L$(BUILD_DIR) -L$(BUILD_DIR)/lib -o $@ $(wordlist 2, $(words $^), $^)  $(LDFLAGS) -lov $(LDLIBS) -lgtest_main -lgtest -lpthread; fi
