@@ -448,8 +448,9 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
             float gain(ch.gain * stagemember.second.gain);
             if(stagemember.second.id == thisdev.id) {
               // connect self-monitoring source ports:
-              tsccfg::node_set_attribute(e_snd, "connect",
-                                         get_channel_source(ch));
+              if( selfmonitor_active )
+                tsccfg::node_set_attribute(e_snd, "connect",
+                                           get_channel_source(ch));
               gain *= stage.rendersettings.egogain;
             } else {
               if(!stage.rendersettings.distancelaw)
@@ -1418,6 +1419,11 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
         bool new_onlyreverb = my_js_value(xcfg["monitor"], "onlyreverb", false);
         if(new_onlyreverb != selfmonitor_onlyreverb) {
           selfmonitor_onlyreverb = new_onlyreverb;
+          restart_session = true;
+        }
+        bool new_selfmonitor_active = my_js_value(xcfg["monitor"], "active", true);
+        if(new_selfmonitor_active != selfmonitor_active) {
+          selfmonitor_active = new_selfmonitor_active;
           restart_session = true;
         }
       }

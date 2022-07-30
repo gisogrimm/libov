@@ -122,6 +122,7 @@ private:
   // self-monitor delay in milliseconds:
   float selfmonitor_delay = 0.0f;
   bool selfmonitor_onlyreverb = false;
+  bool selfmonitor_active = true;
   // metronome settings:
   metronome_t metronome;
   std::string zitapath;
