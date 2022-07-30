@@ -5,8 +5,6 @@ all: tscver build showver lib tscobj tscplug
 
 tscplug: tscobj
 
-tscobj: lib
-
 lib: showver tscver tscobj
 
 showver: build
