@@ -448,7 +448,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
             float gain(ch.gain * stagemember.second.gain);
             if(stagemember.second.id == thisdev.id) {
               // connect self-monitoring source ports:
-              if( selfmonitor_active )
+              if(selfmonitor_active && (!useloudspeaker))
                 tsccfg::node_set_attribute(e_snd, "connect",
                                            get_channel_source(ch));
               gain *= stage.rendersettings.egogain;
@@ -692,6 +692,11 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
     else
       tsccfg::node_set_attribute(e_head, "apply_rot", "false");
     tsccfg::node_set_attribute(e_head, "apply_loc", "false");
+  }
+  if(useloudspeaker) {
+    tsccfg::node_t e_echoc = tsccfg::node_add_child(e_mods, "echoc");
+    tsccfg::node_set_attribute(e_echoc, "autoreconnect", "true");
+    tsccfg::node_set_attribute(e_echoc, "measureatstart", "true");
   }
 }
 
@@ -1096,7 +1101,7 @@ void ov_render_tascar_t::start_session()
   if(file_exists("webmixer.js")) {
     command = "node webmixer.js " + ipaddr;
   }
-  if(!command.empty()){
+  if(!command.empty()) {
     h_webmixer = new TASCAR::spawn_process_t(command, false);
     usleep(10000);
   }
@@ -1376,6 +1381,13 @@ void ov_render_tascar_t::set_zita_path(const std::string& path)
   zitapath = path;
 }
 
+#define UPDATEVAR_RESTART(category, var)                                       \
+  auto new_##var = my_js_value(xcfg[category], #var, var);                     \
+  if(new_##var != var) {                                                       \
+    var = new_##var;                                                           \
+    restart_session = true;                                                    \
+  }
+
 void ov_render_tascar_t::set_extra_config(const std::string& js)
 {
   try {
@@ -1421,7 +1433,8 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
           selfmonitor_onlyreverb = new_onlyreverb;
           restart_session = true;
         }
-        bool new_selfmonitor_active = my_js_value(xcfg["monitor"], "active", true);
+        bool new_selfmonitor_active =
+            my_js_value(xcfg["monitor"], "active", true);
         if(new_selfmonitor_active != selfmonitor_active) {
           selfmonitor_active = new_selfmonitor_active;
           restart_session = true;
@@ -1432,12 +1445,14 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
         render_soundscape = my_js_value(xcfg["render"], "soundscape", true);
         if(prev != render_soundscape)
           restart_session = true;
-        auto new_zitasampleformat =
-            my_js_value(xcfg["render"], "zitasampleformat", zitasampleformat);
-        if(new_zitasampleformat != zitasampleformat) {
-          zitasampleformat = new_zitasampleformat;
-          restart_session = true;
-        }
+        // auto new_zitasampleformat =
+        //    my_js_value(xcfg["render"], "zitasampleformat", zitasampleformat);
+        // if(new_zitasampleformat != zitasampleformat) {
+        //  zitasampleformat = new_zitasampleformat;
+        //  restart_session = true;
+        //}
+        UPDATEVAR_RESTART("render", zitasampleformat);
+        UPDATEVAR_RESTART("render", useloudspeaker);
       }
       if(xcfg["metronome"].is_object()) {
         metronome_t newmetro(xcfg["metronome"]);
