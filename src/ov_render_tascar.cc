@@ -694,9 +694,24 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
     tsccfg::node_set_attribute(e_head, "apply_loc", "false");
   }
   if(useloudspeaker) {
-    tsccfg::node_t e_echoc = tsccfg::node_add_child(e_mods, "echoc");
-    tsccfg::node_set_attribute(e_echoc, "autoreconnect", "true");
-    tsccfg::node_set_attribute(e_echoc, "measureatstart", "true");
+    std::string spkports = stage.rendersettings.outputport1 + " " +
+                           stage.rendersettings.outputport2;
+    std::string micports;
+    for(auto ch : thisdev.channels)
+      micports += ch.sourceport + " ";
+    if(!micports.empty())
+      micports.erase(micports.size() - 1);
+    if(!spkports.empty() && !micports.empty()) {
+      tsccfg::node_t e_echoc = tsccfg::node_add_child(e_mods, "echoc");
+      tsccfg::node_set_attribute(e_echoc, "autoreconnect", "true");
+      tsccfg::node_set_attribute(e_echoc, "measureatstart", "true");
+      tsccfg::node_set_attribute(e_echoc, "loudspeakerports", spkports);
+      tsccfg::node_set_attribute(e_echoc, "micports", micports);
+      tsccfg::node_set_attribute(e_echoc, "premax", "16");
+      tsccfg::node_set_attribute(e_echoc, "level", "60");
+      tsccfg::node_set_attribute(e_echoc, "nrep", "64");
+      tsccfg::node_set_attribute(e_echoc, "maxdist", "4");
+    }
   }
 }
 
