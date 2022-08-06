@@ -11,7 +11,8 @@ showver: build
 
 build: tscver
 
-BASEOBJ = ov_types errmsg common udpsocket callerlist ov_tools MACAddressUtility
+BASEOBJ = ov_types errmsg common udpsocket ovtcpsocket callerlist	\
+	ov_tools MACAddressUtility
 
 OBJ = $(BASEOBJ) ovboxclient ov_client_orlandoviols	\
   ov_render_tascar soundcardtools
