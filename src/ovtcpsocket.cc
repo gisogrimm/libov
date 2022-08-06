@@ -79,7 +79,7 @@ void ovtcpsocket_t::close()
 
 void ovtcpsocket_t::acceptor()
 {
-  std::cerr << "server ready to accept connections.\n";
+  std::cerr << "TCP server ready to accept connections.\n";
   while(run_server) {
     endpoint_t ep;
     unsigned int len = sizeof(ep);
@@ -93,7 +93,7 @@ void ovtcpsocket_t::acceptor()
           std::thread(&ovtcpsocket_t::handleconnection, this, clientfd, ep);
     }
   }
-  std::cerr << "server closed\n";
+  std::cerr << "TCP server closed\n";
 }
 
 int ovtcpsocket_t::nbread(int fd, uint8_t* buf, size_t cnt)
@@ -166,13 +166,14 @@ void udpreceive(udpsocket_t* udp, std::atomic_bool* runthread,
 
 void ovtcpsocket_t::handleconnection(int fd, endpoint_t ep)
 {
+  port_t targetport = get_port();
   udpsocket_t udp;
   port_t udpport = udp.bind(udpresponseport);
   udp.set_timeout_usec(10000);
-  std::cerr << "connection from " << ep2str(ep) << " established, UDP port "
-            << udpport << "\n";
+  std::cerr << "connection from " << ep2str(ep)
+            << " established, UDP listening on port " << udpport
+            << ", sending to " << targetport << "\n";
   udp.set_destination("localhost");
-  port_t targetport = get_port();
   uint8_t buf[1 << 16];
   std::atomic_bool runthread = true;
   std::thread udphandlethread(&udpreceive, &udp, &runthread, this, fd);
