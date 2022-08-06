@@ -186,7 +186,7 @@ bool operator!=(const render_settings_t& a, const render_settings_t& b)
          (a.ambientsound != b.ambientsound) ||
          (a.ambientlevel != b.ambientlevel) || (a.lmetertc != b.lmetertc) ||
          (a.lmeterfw != b.lmeterfw) || (a.delaycomp != b.delaycomp) ||
-         (a.decorr != b.decorr);
+         (a.decorr != b.decorr) || (a.usetcptunnel != b.usetcptunnel);
 }
 
 render_settings_t::render_settings_t()
@@ -220,7 +220,8 @@ render_settings_t::render_settings_t()
       lmetertc(0.5),                   // double levelmeter_tc;
       lmeterfw("Z"),                   // std::string lmeterfw;
       delaycomp(2.4),                  // double delaycomp;
-      decorr(0.0)                      // double decorr;
+      decorr(0.0),                     // double decorr;
+      usetcptunnel(false)              // bool usetcptunnel;
 {
 }
 

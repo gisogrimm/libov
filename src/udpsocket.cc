@@ -58,6 +58,31 @@ const size_t
                 sizeof(std::chrono::high_resolution_clock::time_point) +
                 sizeof(stage_device_id_t) + sizeof(endpoint_t) + 100);
 
+endpoint_t ovgethostbyname(const std::string& host)
+{
+  // resolve host:
+  struct hostent* server;
+  server = gethostbyname(host.c_str());
+  if(server == NULL)
+#if defined(WIN32) || defined(UNDER_CE)
+    // windows:
+    throw ErrMsg("No such host: " + std::to_string(WSAGetLastError()));
+#else
+    throw ErrMsg("No such host: " + std::string(hstrerror(h_errno)));
+#endif
+  endpoint_t serv_addr;
+#if defined(WIN32) || defined(UNDER_CE)
+  // windows:
+  memset((char*)&serv_addr, 0, sizeof(serv_addr));
+#else
+  bzero((char*)&serv_addr, sizeof(serv_addr));
+#endif
+  serv_addr.sin_family = AF_INET;
+  memcpy((char*)&serv_addr.sin_addr.s_addr, (char*)server->h_addr,
+         server->h_length);
+  return serv_addr;
+}
+
 udpsocket_t::udpsocket_t() : tx_bytes(0), rx_bytes(0)
 {
   // linux part, sets value pointed to by &serv_addr to 0 value:

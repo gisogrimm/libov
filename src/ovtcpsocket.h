@@ -9,6 +9,8 @@ public:
   /**
    * Default constructor.
    *
+   * @param udpresponseport Port on which the UDP receiver will listen.
+   *
    * This call will open a TCP socket of AF_INET domain. If the socket
    * creation failed, an exception of type ErrMsg with an appropriate
    * error message is thrown.
@@ -48,7 +50,13 @@ public:
    * of type ErrMsg with an appropriate error message is thrown.
    */
   port_t bind(port_t port, bool loopback = false);
-  int connect(endpoint_t ep, port_t udpresponseport);
+  /**
+   * Connect socket to a remote server.
+   *
+   * @param ep Endpoint to connect to.
+   * @param targetport Local UDP target port where incoming messages will be sent to.
+   */
+  port_t connect(endpoint_t ep, port_t targetport);
   /**
    * Close the socket.
    */
@@ -59,7 +67,7 @@ public:
 
   void handleconnection(int fd, endpoint_t ep);
 
-  port_t get_port() const { return targetport; };
+  port_t get_target_port() const { return targetport; };
 
 private:
   void acceptor();
@@ -72,6 +80,8 @@ private:
   std::thread clienthandler;
   port_t targetport = 0;
   port_t udpresponseport = 0;
+  std::atomic_bool binding = false;
+  port_t connect_receiveport = 0;
 };
 
 #endif

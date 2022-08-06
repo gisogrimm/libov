@@ -65,12 +65,13 @@
  * network, see ovboxclient_t::process_msg().
  */
 
-ovboxclient_t::ovboxclient_t(const std::string& desthost, port_t destport,
+ovboxclient_t::ovboxclient_t(std::string desthost, port_t destport,
                              port_t recport, port_t portoffset, int prio,
                              secret_t secret, stage_device_id_t callerid,
                              bool peer2peer_, bool donotsend_,
                              bool receivedownmix_, bool sendlocal_,
-                             double deadline, bool senddownmix, bool usingproxy)
+                             double deadline, bool senddownmix, bool usingproxy,
+                             bool use_tcp_tunnel)
     : prio(prio), remote_server(secret, callerid), toport(destport),
       recport(recport), portoffset(portoffset), callerid(callerid),
       runsession(true), mode(0), cb_ping(nullptr), cb_ping_data(nullptr),
@@ -78,6 +79,24 @@ ovboxclient_t::ovboxclient_t(const std::string& desthost, port_t destport,
       t_bitrate(std::chrono::high_resolution_clock::now()), cb_seqerr(nullptr),
       cb_seqerr_data(nullptr), msgbuffers(new msgbuf_t[MAX_STAGE_ID])
 {
+  DEBUG(desthost);
+  DEBUG(destport);
+  if(use_tcp_tunnel && (!peer2peer_)) {
+    tcp_tunnel = new ovtcpsocket_t(0);
+    try {
+      endpoint_t ep = ovgethostbyname(desthost);
+      ep.sin_port = htons(destport);
+      toport = tcp_tunnel->connect(ep, recport);
+      DEBUG(ep2str(ep));
+      DEBUG(recport);
+      desthost = "127.0.0.1";
+      DEBUG(toport);
+    }
+    catch(...) {
+      delete tcp_tunnel;
+      throw;
+    }
+  }
   if(peer2peer_)
     mode |= B_PEER2PEER;
   if(receivedownmix_)
@@ -111,6 +130,9 @@ ovboxclient_t::~ovboxclient_t()
   for(auto th = xrecthread.begin(); th != xrecthread.end(); ++th)
     th->join();
   delete[] msgbuffers;
+  if(tcp_tunnel)
+    delete tcp_tunnel;
+  DEBUG(1);
 }
 
 void ovboxclient_t::set_expedited_forwarding_PHB()

@@ -40,6 +40,8 @@
 
 typedef struct sockaddr_in endpoint_t;
 
+endpoint_t ovgethostbyname(const std::string& host);
+
 std::string addr2str(const struct in_addr& addr);
 std::string ep2str(const endpoint_t& ep);
 std::string ep2ipstr(const endpoint_t& ep);

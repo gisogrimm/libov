@@ -232,6 +232,8 @@ public:
   float delaycomp;
   /// decorrelation length in milliseconds:
   float decorr;
+  /// use tcp tunnel:
+  bool usetcptunnel;
 };
 
 bool operator!=(const render_settings_t& a, const render_settings_t& b);

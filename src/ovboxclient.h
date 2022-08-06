@@ -22,6 +22,7 @@
 #define OVBOXCLIENT
 
 #include "callerlist.h"
+#include "ovtcpsocket.h"
 #include <functional>
 
 std::string to_string(const ping_stat_t& ps);
@@ -102,11 +103,11 @@ public:
      \param sendlocal allow sending to local IP address if in same network
      \param senddownmix send downmix to downmix layer, no physical inputs
    */
-  ovboxclient_t(const std::string& desthost, port_t destport, port_t recport,
+  ovboxclient_t(std::string desthost, port_t destport, port_t recport,
                 port_t portoffset, int prio, secret_t secret,
                 stage_device_id_t callerid, bool peer2peer, bool donotsend,
                 bool receivedownmix, bool sendlocal, double deadline,
-                bool senddownmix, bool usingproxy);
+                bool senddownmix, bool usingproxy, bool use_tcp_tunnel);
   virtual ~ovboxclient_t();
   void announce_new_connection(stage_device_id_t cid, const ep_desc_t& ep);
   void announce_connection_lost(stage_device_id_t cid);
@@ -207,6 +208,8 @@ private:
   std::map<stage_device_id_t, ping_stat_collecor_t> ping_stat_collecors_srv;
   std::map<stage_device_id_t, ping_stat_collecor_t> ping_stat_collecors_local;
   std::map<stage_device_id_t, client_stats_t> client_stats_announce;
+
+  ovtcpsocket_t* tcp_tunnel = NULL;
 };
 
 #endif

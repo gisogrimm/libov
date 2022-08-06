@@ -25,16 +25,23 @@ ovtcpsocket_t::~ovtcpsocket_t()
     clienthandler.join();
 }
 
-int ovtcpsocket_t::connect(endpoint_t ep, port_t udpresponseport)
+port_t ovtcpsocket_t::connect(endpoint_t ep, port_t targetport_)
 {
   run_server = true;
   int retv = ::connect(sockfd, (const struct sockaddr*)(&ep), sizeof(ep));
+  if( retv != 0 )
+    throw ErrMsg("Connection to "+ep2str(ep)+" failed: ", errno);
+  binding = true;
   if(retv == 0) {
+    targetport = targetport_;
     clienthandler =
         std::thread(&ovtcpsocket_t::handleconnection, this, sockfd, ep);
-    targetport = udpresponseport;
+    //std::cerr << "Connected to " << ep2str(ep) << ", new target port is "
+    //         << targetport << std::endl;
   }
-  return retv;
+  while( binding )
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  return connect_receiveport;
 }
 
 port_t ovtcpsocket_t::bind(port_t port, bool loopback)
@@ -166,14 +173,18 @@ void udpreceive(udpsocket_t* udp, std::atomic_bool* runthread,
 
 void ovtcpsocket_t::handleconnection(int fd, endpoint_t ep)
 {
-  port_t targetport = get_port();
+  port_t targetport = get_target_port();
   udpsocket_t udp;
   port_t udpport = udp.bind(udpresponseport);
+  connect_receiveport = udpport;
+  binding = false;
   udp.set_timeout_usec(10000);
+  DEBUG(udpresponseport);
+  DEBUG(udpport);
   std::cerr << "connection from " << ep2str(ep)
             << " established, UDP listening on port " << udpport
             << ", sending to " << targetport << "\n";
-  udp.set_destination("localhost");
+  udp.set_destination("127.0.0.1");
   uint8_t buf[1 << 16];
   std::atomic_bool runthread = true;
   std::thread udphandlethread(&udpreceive, &udp, &runthread, this, fd);
