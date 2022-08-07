@@ -103,7 +103,7 @@ void ovtcpsocket_t::acceptor()
   std::cerr << "TCP server closed\n";
 }
 
-int ovtcpsocket_t::nbread(int fd, uint8_t* buf, size_t cnt)
+ssize_t ovtcpsocket_t::nbread(int fd, uint8_t* buf, size_t cnt)
 {
   int rcnt = 0;
   while(run_server && (cnt > 0)) {
@@ -124,12 +124,12 @@ int ovtcpsocket_t::nbread(int fd, uint8_t* buf, size_t cnt)
   return rcnt;
 }
 
-int ovtcpsocket_t::nbwrite(int fd, uint8_t* buf, size_t cnt)
+ssize_t ovtcpsocket_t::nbwrite(int fd, uint8_t* buf, size_t cnt)
 {
-  int rcnt = 0;
+  size_t rcnt = 0;
   while(run_server && (cnt > 0)) {
     // attempt to write cnt bytes:
-    int lrcnt = write(fd, buf, cnt);
+    ssize_t lrcnt = write(fd, buf, cnt);
     if(lrcnt == -1) {
       // an error occurred.
       // ignore (EAGAIN or EWOULDBLOCK), otherwise return error:
@@ -139,7 +139,7 @@ int ovtcpsocket_t::nbwrite(int fd, uint8_t* buf, size_t cnt)
       // no error:
       if(lrcnt > 0) {
         // some bytes were written.
-        if(lrcnt != cnt) {
+        if(lrcnt != (ssize_t)cnt) {
           DEBUG(lrcnt);
           DEBUG(cnt);
         }
@@ -158,10 +158,6 @@ int ovtcpsocket_t::nbwrite(int fd, uint8_t* buf, size_t cnt)
 
 ssize_t ovtcpsocket_t::send(int fd, const char* buf, size_t len)
 {
-  if(len >= 1 << 32) {
-    DEBUG(len);
-    return -3;
-  }
   uint8_t csize[4];
   csize[0] = len & 0xff;
   csize[1] = (len >> 8) & 0xff;
@@ -185,11 +181,11 @@ ssize_t ovtcpsocket_t::send(int fd, const char* buf, size_t len)
 void udpreceive(udpsocket_t* udp, std::atomic_bool* runthread,
                 ovtcpsocket_t* tcp, int fd)
 {
-  char buf[1 << 16];
+  char buf[BUFSIZE];
   endpoint_t eptmp;
   while(*runthread) {
     ssize_t len = 0;
-    if((len = udp->recvfrom(buf, 1 << 16, eptmp)) > 0) {
+    if((len = udp->recvfrom(buf, BUFSIZE, eptmp)) > 0) {
       ssize_t slen = tcp->send(fd, buf, len);
       if(slen != len) {
         DEBUG(len);
@@ -214,12 +210,12 @@ void ovtcpsocket_t::handleconnection(int fd, endpoint_t ep)
             << " established, UDP listening on port " << udpport
             << ", sending to " << targetport << "\n";
   udp.set_destination("127.0.0.1");
-  uint8_t buf[1 << 16];
+  uint8_t buf[BUFSIZE];
   std::atomic_bool runthread = true;
   std::thread udphandlethread(&udpreceive, &udp, &runthread, this, fd);
   while(run_server) {
-    char csize[4] = {0, 0, 0, 0};
-    int cnt = nbread(fd, (uint8_t*)csize, 4);
+    uint8_t csize[4] = {0, 0, 0, 0};
+    ssize_t cnt = nbread(fd, csize, 4);
     if(cnt < 4) {
       DEBUG(cnt);
       break;
@@ -228,9 +224,13 @@ void ovtcpsocket_t::handleconnection(int fd, endpoint_t ep)
       size_t size =
           csize[0] + (csize[1] << 8) + (csize[2] << 16) + (csize[3] << 24);
       // read package:
+      if( size > BUFSIZE ){
+        std::cerr << "Message is too large to fit into buffer.\n";
+        break;
+      }
       cnt = nbread(fd, buf, size);
       buf[cnt] = 0;
-      if(cnt == size) {
+      if(cnt == (ssize_t)size) {
         udp.send((char*)buf, cnt, targetport);
         std::cerr << "r";
       } else {

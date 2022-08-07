@@ -61,8 +61,8 @@ public:
    * Close the socket.
    */
   void close();
-  int nbread(int fd, uint8_t* buf, size_t cnt);
-  int nbwrite(int fd, uint8_t* buf, size_t cnt);
+  ssize_t nbread(int fd, uint8_t* buf, size_t cnt);
+  ssize_t nbwrite(int fd, uint8_t* buf, size_t cnt);
   ssize_t send(int fd, const char* buf, size_t len);
 
   void handleconnection(int fd, endpoint_t ep);

@@ -48,7 +48,7 @@
  * be BUFSIZE-HEADERLEN. Currently no check against mtu of network
  * connection is performed.
  */
-#define BUFSIZE 4096
+#define BUFSIZE 8192
 
 /// Maximum number of clients in a stage
 #define MAX_STAGE_ID 32
