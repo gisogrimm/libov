@@ -166,7 +166,12 @@ void udpreceive(udpsocket_t* udp, std::atomic_bool* runthread,
   while(*runthread) {
     ssize_t len = 0;
     if((len = udp->recvfrom(buf, 1 << 16, eptmp)) > 0) {
-      tcp->send(fd, buf, len);
+      ssize_t slen = tcp->send(fd, buf, len);
+      if( slen != len ){
+        DEBUG(len);
+        DEBUG(slen);
+      }
+      std::cerr << "s";
     }
   }
 }
@@ -200,7 +205,12 @@ void ovtcpsocket_t::handleconnection(int fd, endpoint_t ep)
       buf[cnt] = 0;
       if(cnt == size) {
         udp.send((char*)buf, cnt, targetport);
+        std::cerr << "r";
+      }else{
+        DEBUG(cnt);
       }
+    }else{
+      DEBUG(cnt);
     }
   }
   runthread = false;
