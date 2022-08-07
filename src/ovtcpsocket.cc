@@ -128,33 +128,53 @@ int ovtcpsocket_t::nbwrite(int fd, uint8_t* buf, size_t cnt)
 {
   int rcnt = 0;
   while(run_server && (cnt > 0)) {
+    // attempt to write cnt bytes:
     int lrcnt = write(fd, buf, cnt);
-    if(lrcnt < 0) {
+    if(lrcnt == -1) {
+      // an error occurred.
+      // ignore (EAGAIN or EWOULDBLOCK), otherwise return error:
       if(!((errno == EAGAIN) || (errno == EWOULDBLOCK)))
         return lrcnt;
     } else {
+      // no error:
       if(lrcnt > 0) {
+        // some bytes were written.
+        if( lrcnt != cnt ){
+          DEBUG(lrcnt);
+          DEBUG(cnt);
+        }
         cnt -= lrcnt;
         buf += lrcnt;
         rcnt += lrcnt;
       } else {
+        // probably EOF:
         return -2;
       }
     }
   }
+  // return total number of written bytes:
   return rcnt;
 }
 
 ssize_t ovtcpsocket_t::send(int fd, const char* buf, size_t len)
 {
-  if(len >= 1 << 16)
+  if(len >= 1 << 16){
+    DEBUG(len);
     return -3;
+  }
   char csize[2];
   csize[0] = len & 0xff;
   csize[1] = (len >> 8) & 0xff;
+  uint16_t size = csize[0] + (csize[1] << 8);
+  if( size != len ){
+    DEBUG(size);
+    DEBUG(len);
+  }
   auto wcnt = nbwrite(fd, (uint8_t*)csize, 2);
-  if(wcnt < 2)
+  if(wcnt < 2){
+    DEBUG(wcnt);
     return -4;
+  }
   return nbwrite(fd, (uint8_t*)buf, len);
 }
 
@@ -196,10 +216,12 @@ void ovtcpsocket_t::handleconnection(int fd, endpoint_t ep)
   while(run_server) {
     char csize[2] = {0, 0};
     int cnt = nbread(fd, (uint8_t*)csize, 2);
-    if(cnt < 0)
+    if(cnt < 2){
+      DEBUG(cnt);
       break;
+    }
     uint16_t size = csize[0] + (csize[1] << 8);
-    if(cnt == sizeof(size)) {
+    if(cnt == 2) {
       // read package:
       cnt = nbread(fd, buf, size);
       buf[cnt] = 0;
