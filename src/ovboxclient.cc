@@ -79,8 +79,6 @@ ovboxclient_t::ovboxclient_t(std::string desthost, port_t destport,
       t_bitrate(std::chrono::high_resolution_clock::now()), cb_seqerr(nullptr),
       cb_seqerr_data(nullptr), msgbuffers(new msgbuf_t[MAX_STAGE_ID])
 {
-  DEBUG(desthost);
-  DEBUG(destport);
   if(peer2peer_)
     mode |= B_PEER2PEER;
   if(receivedownmix_)
@@ -131,7 +129,6 @@ ovboxclient_t::~ovboxclient_t()
   delete[] msgbuffers;
   if(tcp_tunnel)
     delete tcp_tunnel;
-  DEBUG(1);
 }
 
 void ovboxclient_t::set_expedited_forwarding_PHB()

@@ -180,9 +180,7 @@ ssize_t ovtcpsocket_t::send(int fd, const char* buf, size_t len)
 void udpreceive(udpsocket_t* udp, std::atomic_bool* runthread,
                 ovtcpsocket_t* tcp, int fd)
 {
-  DEBUG(1);
   try {
-    DEBUG(1);
     char buf[BUFSIZE];
     endpoint_t eptmp;
     while(*runthread) {
@@ -195,13 +193,11 @@ void udpreceive(udpsocket_t* udp, std::atomic_bool* runthread,
         }
       }
     }
-    DEBUG(1);
   }
   catch(const std::exception& e) {
     std::cerr << "Error in TCP tunnel UDP receiver: " << e.what() << std::endl;
     usleep(500000);
   }
-  DEBUG(1);
 }
 
 void ovtcpsocket_t::handleconnection(int fd, endpoint_t ep)
@@ -218,9 +214,7 @@ void ovtcpsocket_t::handleconnection(int fd, endpoint_t ep)
   udp.set_destination("127.0.0.1");
   uint8_t buf[BUFSIZE];
   std::atomic_bool runthread = true;
-  DEBUG(1);
   std::thread udphandlethread(&udpreceive, &udp, &runthread, this, fd);
-  DEBUG(1);
   try {
     while(run_server) {
       uint8_t csize[4] = {0, 0, 0, 0};
@@ -252,15 +246,11 @@ void ovtcpsocket_t::handleconnection(int fd, endpoint_t ep)
   catch(const std::exception& e) {
     std::cerr << "Error in connection handler: " << e.what() << std::endl;
   }
-  DEBUG(1);
   runthread = false;
   if(udphandlethread.joinable())
     udphandlethread.join();
-  DEBUG(1);
   std::cerr << "closing connection from " << ep2str(ep) << "\n";
-  DEBUG(1);
   ::close(fd);
-  DEBUG(1);
 }
 
 void ovtcpsocket_t::set_timeout_usec(int usec, int fd)
