@@ -81,22 +81,6 @@ ovboxclient_t::ovboxclient_t(std::string desthost, port_t destport,
 {
   DEBUG(desthost);
   DEBUG(destport);
-  if(use_tcp_tunnel && (!peer2peer_)) {
-    tcp_tunnel = new ovtcpsocket_t(0);
-    try {
-      endpoint_t ep = ovgethostbyname(desthost);
-      ep.sin_port = htons(destport);
-      toport = tcp_tunnel->connect(ep, recport);
-      DEBUG(ep2str(ep));
-      DEBUG(recport);
-      desthost = "127.0.0.1";
-      DEBUG(toport);
-    }
-    catch(...) {
-      delete tcp_tunnel;
-      throw;
-    }
-  }
   if(peer2peer_)
     mode |= B_PEER2PEER;
   if(receivedownmix_)
@@ -110,10 +94,25 @@ ovboxclient_t::ovboxclient_t(std::string desthost, port_t destport,
   local_server.set_timeout_usec(10000);
   local_server.set_destination("localhost");
   local_server.bind(recport, true);
+  // setup connection to relay server:
+  endpoint_t ep_tcptunnel = ovgethostbyname(desthost);
+  ep_tcptunnel.sin_port = htons(destport);
+  if(use_tcp_tunnel && (!peer2peer_))
+    desthost = "127.0.0.1";
   remote_server.set_destination(desthost.c_str());
   if(deadline > 0)
     remote_server.set_timeout_usec(1000 * deadline);
-  remote_server.bind(0, false);
+  port_t local_relay_port = remote_server.bind(0, false);
+  if(use_tcp_tunnel && (!peer2peer_)) {
+    tcp_tunnel = new ovtcpsocket_t(0);
+    try {
+      toport = tcp_tunnel->connect(ep_tcptunnel, local_relay_port);
+    }
+    catch(...) {
+      delete tcp_tunnel;
+      throw;
+    }
+  }
   localep = getipaddr();
   localep.sin_port = remote_server.getsockep().sin_port;
   sendthread = std::thread(&ovboxclient_t::sendsrv, this);
@@ -292,7 +291,7 @@ void ovboxclient_t::pingservice()
 {
   while(runsession) {
     std::this_thread::sleep_for(std::chrono::milliseconds(PINGPERIODMS));
-    // send registration to server:
+    // send registration to relay server:
     remote_server.send_registration(mode, toport, localep);
     // send ping to other peers:
     size_t ocid(0);

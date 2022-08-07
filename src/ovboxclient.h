@@ -90,7 +90,7 @@ public:
 
      \param desthost hostname or IP address of relay server
      \param destport port number of relay server
-     \param recport port of local receiver
+     \param recport port of local receiver, for forwarding to peer/server
      \param portoffset offset added to recport for sending
      \param prio thread priority of sending and receiving threads
      \param secret access code of relay server session
