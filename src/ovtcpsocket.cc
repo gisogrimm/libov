@@ -29,17 +29,17 @@ port_t ovtcpsocket_t::connect(endpoint_t ep, port_t targetport_)
 {
   run_server = true;
   int retv = ::connect(sockfd, (const struct sockaddr*)(&ep), sizeof(ep));
-  if( retv != 0 )
-    throw ErrMsg("Connection to "+ep2str(ep)+" failed: ", errno);
+  if(retv != 0)
+    throw ErrMsg("Connection to " + ep2str(ep) + " failed: ", errno);
   binding = true;
   if(retv == 0) {
     targetport = targetport_;
     clienthandler =
         std::thread(&ovtcpsocket_t::handleconnection, this, sockfd, ep);
-    //std::cerr << "Connected to " << ep2str(ep) << ", new target port is "
+    // std::cerr << "Connected to " << ep2str(ep) << ", new target port is "
     //         << targetport << std::endl;
   }
-  while( binding )
+  while(binding)
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
   return connect_receiveport;
 }
@@ -139,7 +139,7 @@ int ovtcpsocket_t::nbwrite(int fd, uint8_t* buf, size_t cnt)
       // no error:
       if(lrcnt > 0) {
         // some bytes were written.
-        if( lrcnt != cnt ){
+        if(lrcnt != cnt) {
           DEBUG(lrcnt);
           DEBUG(cnt);
         }
@@ -158,20 +158,24 @@ int ovtcpsocket_t::nbwrite(int fd, uint8_t* buf, size_t cnt)
 
 ssize_t ovtcpsocket_t::send(int fd, const char* buf, size_t len)
 {
-  if(len >= 1 << 16){
+  if(len >= 1 << 32) {
     DEBUG(len);
     return -3;
   }
-  char csize[2];
+  uint8_t csize[4];
   csize[0] = len & 0xff;
   csize[1] = (len >> 8) & 0xff;
-  uint16_t size = csize[0] + (csize[1] << 8);
-  if( size != len ){
+  csize[2] = (len >> 16) & 0xff;
+  csize[3] = (len >> 24) & 0xff;
+  // for verification:
+  size_t size =
+      csize[0] + (csize[1] << 8) + (csize[2] << 16) + (csize[3] << 24);
+  if(size != len) {
     DEBUG(size);
     DEBUG(len);
   }
-  auto wcnt = nbwrite(fd, (uint8_t*)csize, 2);
-  if(wcnt < 2){
+  auto wcnt = nbwrite(fd, (uint8_t*)csize, 4);
+  if(wcnt < 4) {
     DEBUG(wcnt);
     return -4;
   }
@@ -187,7 +191,7 @@ void udpreceive(udpsocket_t* udp, std::atomic_bool* runthread,
     ssize_t len = 0;
     if((len = udp->recvfrom(buf, 1 << 16, eptmp)) > 0) {
       ssize_t slen = tcp->send(fd, buf, len);
-      if( slen != len ){
+      if(slen != len) {
         DEBUG(len);
         DEBUG(slen);
       }
@@ -214,24 +218,25 @@ void ovtcpsocket_t::handleconnection(int fd, endpoint_t ep)
   std::atomic_bool runthread = true;
   std::thread udphandlethread(&udpreceive, &udp, &runthread, this, fd);
   while(run_server) {
-    char csize[2] = {0, 0};
-    int cnt = nbread(fd, (uint8_t*)csize, 2);
-    if(cnt < 2){
+    char csize[4] = {0, 0, 0, 0};
+    int cnt = nbread(fd, (uint8_t*)csize, 4);
+    if(cnt < 4) {
       DEBUG(cnt);
       break;
     }
-    uint16_t size = csize[0] + (csize[1] << 8);
-    if(cnt == 2) {
+    if(cnt == 4) {
+      size_t size =
+          csize[0] + (csize[1] << 8) + (csize[2] << 16) + (csize[3] << 24);
       // read package:
       cnt = nbread(fd, buf, size);
       buf[cnt] = 0;
       if(cnt == size) {
         udp.send((char*)buf, cnt, targetport);
         std::cerr << "r";
-      }else{
+      } else {
         DEBUG(cnt);
       }
-    }else{
+    } else {
       DEBUG(cnt);
     }
   }
