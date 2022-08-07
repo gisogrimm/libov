@@ -54,7 +54,8 @@ public:
    * Connect socket to a remote server.
    *
    * @param ep Endpoint to connect to.
-   * @param targetport Local UDP target port where incoming messages will be sent to.
+   * @param targetport Local UDP target port where incoming messages will be
+   * sent to.
    */
   port_t connect(endpoint_t ep, port_t targetport);
   /**

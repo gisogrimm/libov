@@ -88,16 +88,22 @@ void ovtcpsocket_t::acceptor()
 {
   std::cerr << "TCP server ready to accept connections.\n";
   while(run_server) {
-    endpoint_t ep;
-    unsigned int len = sizeof(ep);
-    int clientfd = accept(sockfd, (struct sockaddr*)(&ep), &len);
-    if(clientfd >= 0) {
-      if(handlethreads.count(clientfd)) {
-        if(handlethreads[clientfd].joinable())
-          handlethreads[clientfd].join();
+    try {
+      endpoint_t ep;
+      unsigned int len = sizeof(ep);
+      int clientfd = accept(sockfd, (struct sockaddr*)(&ep), &len);
+      if(clientfd >= 0) {
+        if(handlethreads.count(clientfd)) {
+          if(handlethreads[clientfd].joinable())
+            handlethreads[clientfd].join();
+        }
+        handlethreads[clientfd] =
+            std::thread(&ovtcpsocket_t::handleconnection, this, clientfd, ep);
       }
-      handlethreads[clientfd] =
-          std::thread(&ovtcpsocket_t::handleconnection, this, clientfd, ep);
+    }
+    catch(const std::exception& e) {
+      std::cerr << "Error in TCP acceptor: " << e.what() << std::endl;
+      usleep(500000);
     }
   }
   std::cerr << "TCP server closed\n";
@@ -174,17 +180,23 @@ ssize_t ovtcpsocket_t::send(int fd, const char* buf, size_t len)
 void udpreceive(udpsocket_t* udp, std::atomic_bool* runthread,
                 ovtcpsocket_t* tcp, int fd)
 {
-  char buf[BUFSIZE];
-  endpoint_t eptmp;
-  while(*runthread) {
-    ssize_t len = 0;
-    if((len = udp->recvfrom(buf, BUFSIZE, eptmp)) > 0) {
-      ssize_t slen = tcp->send(fd, buf, len);
-      if(slen != len) {
-        DEBUG(len);
-        DEBUG(slen);
+  try {
+    char buf[BUFSIZE];
+    endpoint_t eptmp;
+    while(*runthread) {
+      ssize_t len = 0;
+      if((len = udp->recvfrom(buf, BUFSIZE, eptmp)) > 0) {
+        ssize_t slen = tcp->send(fd, buf, len);
+        if(slen != len) {
+          DEBUG(len);
+          DEBUG(slen);
+        }
       }
     }
+  }
+  catch(const std::exception& e) {
+    std::cerr << "Error in TCP tunnel UDP receiver: " << e.what() << std::endl;
+    usleep(500000);
   }
 }
 
@@ -203,31 +215,36 @@ void ovtcpsocket_t::handleconnection(int fd, endpoint_t ep)
   uint8_t buf[BUFSIZE];
   std::atomic_bool runthread = true;
   std::thread udphandlethread(&udpreceive, &udp, &runthread, this, fd);
-  while(run_server) {
-    uint8_t csize[4] = {0, 0, 0, 0};
-    ssize_t cnt = nbread(fd, csize, 4);
-    if(cnt < 4) {
-      DEBUG(cnt);
-      break;
-    }
-    if(cnt == 4) {
-      size_t size =
-          csize[0] + (csize[1] << 8) + (csize[2] << 16) + (csize[3] << 24);
-      // read package:
-      if( size > BUFSIZE ){
-        std::cerr << "Message is too large to fit into buffer.\n";
+  try {
+    while(run_server) {
+      uint8_t csize[4] = {0, 0, 0, 0};
+      ssize_t cnt = nbread(fd, csize, 4);
+      if(cnt < 4) {
+        DEBUG(cnt);
         break;
       }
-      cnt = nbread(fd, buf, size);
-      buf[cnt] = 0;
-      if(cnt == (ssize_t)size) {
-        udp.send((char*)buf, cnt, targetport);
+      if(cnt == 4) {
+        size_t size =
+            csize[0] + (csize[1] << 8) + (csize[2] << 16) + (csize[3] << 24);
+        // read package:
+        if(size > BUFSIZE) {
+          std::cerr << "Message is too large to fit into buffer.\n";
+          break;
+        }
+        cnt = nbread(fd, buf, size);
+        buf[cnt] = 0;
+        if(cnt == (ssize_t)size) {
+          udp.send((char*)buf, cnt, targetport);
+        } else {
+          DEBUG(cnt);
+        }
       } else {
         DEBUG(cnt);
       }
-    } else {
-      DEBUG(cnt);
     }
+  }
+  catch(const std::exception& e) {
+    std::cerr << "Error in connection handler: " << e.what() << std::endl;
   }
   runthread = false;
   if(udphandlethread.joinable())
