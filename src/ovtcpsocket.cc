@@ -163,14 +163,7 @@ ssize_t ovtcpsocket_t::send(int fd, const char* buf, size_t len)
   csize[1] = (len >> 8) & 0xff;
   csize[2] = (len >> 16) & 0xff;
   csize[3] = (len >> 24) & 0xff;
-  // for verification:
-  size_t size =
-      csize[0] + (csize[1] << 8) + (csize[2] << 16) + (csize[3] << 24);
-  if(size != len) {
-    DEBUG(size);
-    DEBUG(len);
-  }
-  auto wcnt = nbwrite(fd, (uint8_t*)csize, 4);
+  auto wcnt = nbwrite(fd, csize, 4);
   if(wcnt < 4) {
     DEBUG(wcnt);
     return -4;
@@ -191,7 +184,6 @@ void udpreceive(udpsocket_t* udp, std::atomic_bool* runthread,
         DEBUG(len);
         DEBUG(slen);
       }
-      std::cerr << "s";
     }
   }
 }
@@ -204,8 +196,6 @@ void ovtcpsocket_t::handleconnection(int fd, endpoint_t ep)
   connect_receiveport = udpport;
   binding = false;
   udp.set_timeout_usec(10000);
-  DEBUG(udpresponseport);
-  DEBUG(udpport);
   std::cerr << "connection from " << ep2str(ep)
             << " established, UDP listening on port " << udpport
             << ", sending to " << targetport << "\n";
@@ -232,7 +222,6 @@ void ovtcpsocket_t::handleconnection(int fd, endpoint_t ep)
       buf[cnt] = 0;
       if(cnt == (ssize_t)size) {
         udp.send((char*)buf, cnt, targetport);
-        std::cerr << "r";
       } else {
         DEBUG(cnt);
       }
