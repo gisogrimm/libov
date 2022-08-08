@@ -34,6 +34,8 @@ port_t ovtcpsocket_t::connect(endpoint_t ep, port_t targetport_)
   binding = true;
   if(retv == 0) {
     targetport = targetport_;
+    if(clienthandler.joinable())
+      clienthandler.join();
     clienthandler =
         std::thread(&ovtcpsocket_t::handleconnection, this, sockfd, ep);
     // std::cerr << "Connected to " << ep2str(ep) << ", new target port is "
@@ -65,6 +67,8 @@ port_t ovtcpsocket_t::bind(port_t port, bool loopback)
   if(listen(sockfd, 256) < 0)
     throw ErrMsg("Unable to listen to socket: ", errno);
   run_server = true;
+  if( mainthread.joinable() )
+    mainthread.join();
   mainthread = std::thread(&ovtcpsocket_t::acceptor, this);
   socklen_t addrlen(sizeof(endpoint_t));
   getsockname(sockfd, (struct sockaddr*)&my_addr, &addrlen);
@@ -100,6 +104,7 @@ void ovtcpsocket_t::acceptor()
         handlethreads[clientfd] =
             std::thread(&ovtcpsocket_t::handleconnection, this, clientfd, ep);
       }
+      usleep(50000);
     }
     catch(const std::exception& e) {
       std::cerr << "Error in TCP acceptor: " << e.what() << std::endl;
