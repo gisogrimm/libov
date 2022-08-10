@@ -1,4 +1,4 @@
-VERSION=0.18
+VERSION=0.19
 export FULLVERSION:=$(shell ./get_version.sh)
 
 all: tscver build showver lib tscobj tscplug
