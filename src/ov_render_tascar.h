@@ -173,6 +173,9 @@ private:
   std::vector<uint32_t> mczitachannels = {1, 2};
   std::string zitasampleformat = "16bit";
   bool useloudspeaker = false;
+  float echoc_maxdist = 4.0;
+  uint32_t echoc_nrep = 64;
+  float echoc_level = 60.0;
 };
 
 #endif

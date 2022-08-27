@@ -708,9 +708,9 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
       tsccfg::node_set_attribute(e_echoc, "loudspeakerports", spkports);
       tsccfg::node_set_attribute(e_echoc, "micports", micports);
       tsccfg::node_set_attribute(e_echoc, "premax", "16");
-      tsccfg::node_set_attribute(e_echoc, "level", "60");
-      tsccfg::node_set_attribute(e_echoc, "nrep", "64");
-      tsccfg::node_set_attribute(e_echoc, "maxdist", "4");
+      tsccfg::node_set_attribute(e_echoc, "level", TASCAR::to_string(echoc_level));
+      tsccfg::node_set_attribute(e_echoc, "nrep", TASCAR::to_string(echoc_nrep));
+      tsccfg::node_set_attribute(e_echoc, "maxdist", TASCAR::to_string(echoc_maxdist));
     }
   }
 }
@@ -1469,6 +1469,9 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
         //}
         UPDATEVAR_RESTART("render", zitasampleformat);
         UPDATEVAR_RESTART("render", useloudspeaker);
+        UPDATEVAR_RESTART("render", echoc_nrep);
+        UPDATEVAR_RESTART("render", echoc_maxdist);
+        UPDATEVAR_RESTART("render", echoc_level);
       }
       if(xcfg["metronome"].is_object()) {
         metronome_t newmetro(xcfg["metronome"]);
