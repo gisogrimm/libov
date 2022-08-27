@@ -176,6 +176,7 @@ private:
   float echoc_maxdist = 4.0;
   uint32_t echoc_nrep = 64;
   float echoc_level = 60.0;
+  uint32_t echoc_filterlen = 65;
 };
 
 #endif
