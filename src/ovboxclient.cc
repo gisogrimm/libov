@@ -74,8 +74,7 @@ ovboxclient_t::ovboxclient_t(std::string desthost, port_t destport,
                              bool use_tcp_tunnel)
     : prio(prio), remote_server(secret, callerid), toport(destport),
       recport(recport), portoffset(portoffset), callerid(callerid),
-      runsession(true), mode(0), cb_ping(nullptr), cb_ping_data(nullptr),
-      sendlocal(sendlocal_), last_tx(0), last_rx(0),
+      runsession(true), mode(0), sendlocal(sendlocal_), last_tx(0), last_rx(0),
       t_bitrate(std::chrono::high_resolution_clock::now()), cb_seqerr(nullptr),
       cb_seqerr_data(nullptr), msgbuffers(new msgbuf_t[MAX_STAGE_ID])
 {
@@ -160,11 +159,20 @@ void ovboxclient_t::getbitrate(double& txrate, double& rxrate)
 }
 
 void ovboxclient_t::set_ping_callback(
-    std::function<void(stage_device_id_t, double, const endpoint_t&, void*)> f,
+    std::function<void(stage_device_id_t, port_t, double, const endpoint_t&,
+                       void*)>
+        f,
     void* d)
 {
   cb_ping = f;
   cb_ping_data = d;
+}
+
+void ovboxclient_t::set_latreport_callback(latreport_cb_t f, void* d)
+{
+  DEBUG(d);
+  cb_latreport = f;
+  cb_latreport_data = d;
 }
 
 void ovboxclient_t::set_seqerr_callback(
@@ -242,15 +250,27 @@ void ovboxclient_t::announce_latency(stage_device_id_t cid, double, double,
   update_client_stats(cid, client_stats_announce[cid]);
   log(recport, "packages " + std::to_string(cid) + " " +
                    to_string(client_stats_announce[cid].packages));
-  if(client_stats_announce[cid].ping_p2p.received)
+  if(client_stats_announce[cid].ping_p2p.received) {
     log(recport, "lat-p2p " + std::to_string(cid) + " " +
                      to_string(client_stats_announce[cid].ping_p2p));
-  if(client_stats_announce[cid].ping_srv.received)
+    if(cb_latreport)
+      cb_latreport(cid, "p2p", client_stats_announce[cid].ping_p2p,
+                   cb_latreport_data);
+  }
+  if(client_stats_announce[cid].ping_srv.received) {
     log(recport, "lat-srv " + std::to_string(cid) + " " +
                      to_string(client_stats_announce[cid].ping_srv));
-  if(client_stats_announce[cid].ping_loc.received)
+    if(cb_latreport)
+      cb_latreport(cid, "srv", client_stats_announce[cid].ping_srv,
+                   cb_latreport_data);
+  }
+  if(client_stats_announce[cid].ping_loc.received) {
     log(recport, "lat-loc " + std::to_string(cid) + " " +
                      to_string(client_stats_announce[cid].ping_loc));
+    if(cb_latreport)
+      cb_latreport(cid, "loc", client_stats_announce[cid].ping_loc,
+                   cb_latreport_data);
+  }
   double data[6];
   data[0] = cid;
   data[1] = client_stats_announce[cid].ping_p2p.t_min;
@@ -368,14 +388,14 @@ void ovboxclient_t::process_pong_msg(msgbuf_t& msg)
   // DEBUG(tms);
   if(tms > 0) {
     if(cb_ping)
-      cb_ping(msg.cid, tms, msg.sender, cb_ping_data);
+      cb_ping(msg.cid, msg.destport, tms, msg.sender, cb_ping_data);
     switch(msg.destport) {
     case PORT_PONG:
       ping_stat_collecors_p2p[msg.cid].add_value(tms);
       break;
     case PORT_PONG_SRV:
-      tbuf += sizeof(stage_device_id_t);
-      tsize -= sizeof(stage_device_id_t);
+      // tbuf += sizeof(stage_device_id_t);
+      // tsize -= sizeof(stage_device_id_t);
       ping_stat_collecors_srv[msg.cid].add_value(tms);
       break;
     case PORT_PONG_LOCAL:

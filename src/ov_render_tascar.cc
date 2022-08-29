@@ -188,13 +188,32 @@ TASCAR::zyx_euler_t to_tascar(const zyx_euler_t& src)
   return TASCAR::zyx_euler_t(src.z, src.y, src.x);
 }
 
-void sendpinglog(stage_device_id_t cid, double tms, const endpoint_t& ep,
-                 void* addr)
+void sendpinglog(stage_device_id_t cid, port_t port, double tms,
+                 const endpoint_t& ep, void* addr)
 {
   if(addr) {
     lo_send((lo_address)addr, "/ping", "id", cid, tms);
-    lo_send((lo_address)addr, "/pinga", "iiid", cid, ep.sin_addr.s_addr,
-            ep.sin_port, tms);
+    switch(port) {
+    case PORT_PONG:
+      lo_send((lo_address)addr, "/ovboxping/p2p", "id", cid, tms);
+      break;
+    case PORT_PONG_SRV:
+      lo_send((lo_address)addr, "/ovboxping/srv", "id", cid, tms);
+      break;
+    case PORT_PONG_LOCAL:
+      lo_send((lo_address)addr, "/ovboxping/loc", "id", cid, tms);
+      break;
+    }
+  }
+}
+
+void sendlatreport(stage_device_id_t cid, const std::string& prefix,
+                   const ping_stat_t& ps, void* addr)
+{
+  if(addr) {
+    lo_send((lo_address)addr, (std::string("/ovboxlatency/") + prefix).c_str(),
+            "iffffii", cid, ps.t_min, ps.t_med, ps.t_p99, ps.t_mean,
+            (int32_t)ps.received, (int32_t)ps.lost);
   }
 }
 
@@ -708,10 +727,13 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
       tsccfg::node_set_attribute(e_echoc, "loudspeakerports", spkports);
       tsccfg::node_set_attribute(e_echoc, "micports", micports);
       tsccfg::node_set_attribute(e_echoc, "premax", "16");
-      tsccfg::node_set_attribute(e_echoc, "level", TASCAR::to_string(echoc_level));
+      tsccfg::node_set_attribute(e_echoc, "level",
+                                 TASCAR::to_string(echoc_level));
       tsccfg::node_set_attribute(e_echoc, "nrep", std::to_string(echoc_nrep));
-      tsccfg::node_set_attribute(e_echoc, "maxdist", TASCAR::to_string(echoc_maxdist));
-      tsccfg::node_set_attribute(e_echoc, "filterlen", std::to_string(echoc_filterlen));
+      tsccfg::node_set_attribute(e_echoc, "maxdist",
+                                 TASCAR::to_string(echoc_maxdist));
+      tsccfg::node_set_attribute(e_echoc, "filterlen",
+                                 std::to_string(echoc_filterlen));
     }
   }
 }
@@ -1002,8 +1024,12 @@ void ov_render_tascar_t::start_session()
     for(auto p : stage.rendersettings.xrecport)
       ovboxclient->add_receiverport(p, p);
     ovboxclient->add_receiverport(9870, 9871);
-    if(pinglogaddr)
+    if(pinglogaddr) {
+      DEBUG(1);
       ovboxclient->set_ping_callback(sendpinglog, pinglogaddr);
+      ovboxclient->set_latreport_callback(sendlatreport, pinglogaddr);
+      DEBUG(2);
+    }
     for(auto proxyclient : proxyclients) {
       ovboxclient->add_proxy_client(proxyclient.first, proxyclient.second);
     }

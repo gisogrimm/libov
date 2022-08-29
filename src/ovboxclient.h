@@ -77,6 +77,10 @@ private:
   std::map<stage_device_id_t, message_stat_t> stat;
 };
 
+typedef std::function<void(stage_device_id_t, const std::string&,
+                           const ping_stat_t&, void*)>
+    latreport_cb_t;
+
 /**
    Main communication between ovboxclient and relay server.
 
@@ -127,10 +131,11 @@ public:
    */
   void add_proxy_client(stage_device_id_t cid, const std::string& host);
   void add_receiverport(port_t srcport_t, port_t destport_t);
-  void set_ping_callback(
-      std::function<void(stage_device_id_t, double, const endpoint_t&, void*)>
-          f,
-      void* d);
+  void set_ping_callback(std::function<void(stage_device_id_t, port_t, double,
+                                            const endpoint_t&, void*)>
+                             f,
+                         void* d);
+  void set_latreport_callback(latreport_cb_t f, void* d);
   void getbitrate(double& txrate, double& rxrate);
   void set_seqerr_callback(std::function<void(stage_device_id_t, sequence_t,
                                               sequence_t, port_t, void*)>
@@ -190,9 +195,13 @@ private:
   std::vector<std::thread> xrecthread;
   epmode_t mode;
   endpoint_t localep;
-  std::function<void(stage_device_id_t, double, const endpoint_t&, void*)>
-      cb_ping;
-  void* cb_ping_data;
+  // callback which will be called for each incoming ping response:
+  std::function<void(stage_device_id_t, port_t, double, const endpoint_t&,
+                     void*)>
+      cb_ping = nullptr;
+  void* cb_ping_data = nullptr;
+  latreport_cb_t cb_latreport = nullptr;
+  void* cb_latreport_data = nullptr;
   bool sendlocal;
   size_t last_tx;
   size_t last_rx;
