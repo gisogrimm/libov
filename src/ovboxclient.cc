@@ -170,7 +170,6 @@ void ovboxclient_t::set_ping_callback(
 
 void ovboxclient_t::set_latreport_callback(latreport_cb_t f, void* d)
 {
-  DEBUG(d);
   cb_latreport = f;
   cb_latreport_data = d;
 }
@@ -377,7 +376,6 @@ void ovboxclient_t::process_ping_msg(msgbuf_t& msg)
 
 void ovboxclient_t::process_pong_msg(msgbuf_t& msg)
 {
-  // DEBUG(msg.destport);
   char* tbuf(msg.msg);
   size_t tsize(msg.size);
   if(msg.destport == PORT_PONG_SRV) {
@@ -385,7 +383,6 @@ void ovboxclient_t::process_pong_msg(msgbuf_t& msg)
     tsize -= sizeof(stage_device_id_t);
   }
   double tms(get_pingtime(tbuf, tsize));
-  // DEBUG(tms);
   if(tms > 0) {
     if(cb_ping)
       cb_ping(msg.cid, msg.destport, tms, msg.sender, cb_ping_data);
@@ -394,8 +391,6 @@ void ovboxclient_t::process_pong_msg(msgbuf_t& msg)
       ping_stat_collecors_p2p[msg.cid].add_value(tms);
       break;
     case PORT_PONG_SRV:
-      // tbuf += sizeof(stage_device_id_t);
-      // tsize -= sizeof(stage_device_id_t);
       ping_stat_collecors_srv[msg.cid].add_value(tms);
       break;
     case PORT_PONG_LOCAL:

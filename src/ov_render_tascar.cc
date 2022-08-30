@@ -1025,10 +1025,8 @@ void ov_render_tascar_t::start_session()
       ovboxclient->add_receiverport(p, p);
     ovboxclient->add_receiverport(9870, 9871);
     if(pinglogaddr) {
-      DEBUG(1);
       ovboxclient->set_ping_callback(sendpinglog, pinglogaddr);
       ovboxclient->set_latreport_callback(sendlatreport, pinglogaddr);
-      DEBUG(2);
     }
     for(auto proxyclient : proxyclients) {
       ovboxclient->add_proxy_client(proxyclient.first, proxyclient.second);
