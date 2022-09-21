@@ -355,8 +355,13 @@ stage_device_t get_stage_dev(nlohmann::json& dev)
     if(channels.is_array())
       for(auto ch : channels) {
         device_channel_t devchannel;
-        devchannel.id = stagedev.label + "_" + std::to_string(stagedev.id) +
-                        "_c" + std::to_string(chcnt++);
+        devchannel.name = my_js_value(ch, "name", std::string(""));
+        if(devchannel.name.empty())
+          devchannel.id = stagedev.label + "_" + std::to_string(stagedev.id) +
+                          "_c" + std::to_string(chcnt++);
+        else
+          devchannel.id = stagedev.label + "_" + std::to_string(stagedev.id) +
+                          "_" + devchannel.name;
         devchannel.sourceport = my_js_value(ch, "sourceport", std::string(""));
         devchannel.gain = my_js_value(ch, "gain", 1.0);
         nlohmann::json chpos(ch["position"]);
@@ -365,8 +370,6 @@ stage_device_t get_stage_dev(nlohmann::json& dev)
         devchannel.position.z = my_js_value(chpos, "z", 0.0);
         devchannel.directivity =
             my_js_value(ch, "directivity", std::string("omni"));
-        devchannel.name =
-            my_js_value(ch, "name", std::string(""));
         devchannel.update_plugin_cfg(ch["plugins"].dump());
         stagedev.channels.push_back(devchannel);
       }
