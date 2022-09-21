@@ -126,6 +126,8 @@ public:
   std::string directivity;
   /// audio plugins:
   std::vector<channel_plugin_t> plugins;
+  /// channel name:
+  std::string name;
 };
 
 bool operator!=(const device_channel_t& a, const device_channel_t& b);

@@ -420,6 +420,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
                (M_PI / 180.0));
     az = az * (M_PI / 180.0) - 0.5 * daz;
     double radius(1.2);
+    ego_source_names.clear();
     // create sound sources:
     for(auto stagemember : stage.stage) {
       if(stagemember.second.channels.size()) {
@@ -483,6 +484,15 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
             tsccfg::node_set_attribute(e_snd, "x", TASCAR::to_string(chpos.x));
             tsccfg::node_set_attribute(e_snd, "y", TASCAR::to_string(chpos.y));
             tsccfg::node_set_attribute(e_snd, "z", TASCAR::to_string(chpos.z));
+            if(ch.name.size()) {
+              tsccfg::node_set_attribute(e_snd, "name", ch.name);
+              if(stagemember.second.id == thisdev.id)
+                ego_source_names.push_back("ego." + ch.name + ".0");
+            } else {
+              if(stagemember.second.id == thisdev.id)
+                ego_source_names.push_back("ego." + std::to_string(kch - 1) +
+                                           ".0");
+            }
             if(ch.directivity == "omni")
               tsccfg::node_set_attribute(e_snd, "type", "omni");
             if(ch.directivity == "cardioid")
@@ -633,10 +643,10 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
       session_add_connect(e_session, stage.thisdeviceid + ".metronome:out.0",
                           stage.thisdeviceid + "_sender:in_" +
                               std::to_string(chn));
-      if(stage.rendersettings.receive)
+      if(stage.rendersettings.receive && (chn - 1 < (int)(ego_source_names.size())))
         session_add_connect(e_session, stage.thisdeviceid + ".metronome:out.1",
-                            "render." + stage.thisdeviceid + ":ego." +
-                                std::to_string(chn - 1) + ".0");
+                            "render." + stage.thisdeviceid + ":" +
+                                ego_source_names[chn - 1]);
       waitports.push_back(stage.thisdeviceid + "_sender:in_" +
                           std::to_string(chn));
     }

@@ -130,7 +130,7 @@ bool operator!=(const device_channel_t& a, const device_channel_t& b)
   }
   return (a.sourceport != b.sourceport) || (a.gain != b.gain) ||
          (a.position != b.position) || (a.directivity != b.directivity) ||
-         (!(a.plugins == b.plugins));
+         (a.name != b.name) || (!(a.plugins == b.plugins));
 }
 
 bool operator!=(const std::vector<device_channel_t>& a,

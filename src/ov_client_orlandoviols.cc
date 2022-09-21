@@ -365,6 +365,8 @@ stage_device_t get_stage_dev(nlohmann::json& dev)
         devchannel.position.z = my_js_value(chpos, "z", 0.0);
         devchannel.directivity =
             my_js_value(ch, "directivity", std::string("omni"));
+        devchannel.name =
+            my_js_value(ch, "name", std::string(""));
         devchannel.update_plugin_cfg(ch["plugins"].dump());
         stagedev.channels.push_back(devchannel);
       }
