@@ -128,41 +128,44 @@ void ov_render_tascar_t::get_session_gains(
     float& outputgain, float& egogain, float& reverbgain,
     std::map<std::string, std::vector<float>>& othergains)
 {
-  const stage_device_t& thisdev = stage.stage[stage.thisstagedeviceid];
-  egogain = stage.rendersettings.egogain;
-  reverbgain = stage.rendersettings.reverbgain;
-  outputgain = stage.rendersettings.outputgain;
-  if(tascar) {
-    // gain calculation: G_device * G_channel * (this: G_self | (!distancelaw:
-    // 0.6 | 1.0) )
-    for(auto stagemember : stage.stage) {
-      std::vector<float> gains;
-      for(auto ch : stagemember.second.channels)
-        gains.push_back(tascar->sound_by_id(ch.id).get_gain() /
-                        (ch.gain * stagemember.second.gain));
-      if(stagemember.second.id == thisdev.id) {
-        if(gains.size())
-          egogain = gains[0];
-      } else {
-        if(!stage.rendersettings.distancelaw)
-          for(auto& g : gains)
-            // if not self-monitor then decrease gain:
-            g /= 0.6f;
-        othergains[stagemember.second.uid] = gains;
-      }
-    }
-  }
-  {
-    auto ports =
-        tascar->find_audio_ports({"/" + stage.thisdeviceid + "/reverb"});
-    if(ports.size())
-      reverbgain = ports[0]->get_gain();
-  }
-  {
-    auto ports = tascar->find_audio_ports({"/" + stage.thisdeviceid + "/main"});
-    if(ports.size())
-      outputgain = ports[0]->get_gain();
-  }
+  // const stage_device_t& thisdev = stage.stage[stage.thisstagedeviceid];
+  // egogain = stage.rendersettings.egogain;
+  // reverbgain = stage.rendersettings.reverbgain;
+  // outputgain = stage.rendersettings.outputgain;
+  // if(tascar) {
+  //  // gain calculation: G_device * G_channel * (this: G_self | (!distancelaw:
+  //  // 0.6 | 1.0) )
+  //  for(auto stagemember : stage.stage) {
+  //    std::vector<float> gains;
+  //    for(auto ch : stagemember.second.channels){
+  //      DEBUG(ch.id);
+  //      gains.push_back(tascar->audioport_by_id(ch.id).get_gain() /
+  //                      (ch.gain * stagemember.second.gain));
+  //      DEBUG(1);
+  //    }
+  //    if(stagemember.second.id == thisdev.id) {
+  //      if(gains.size())
+  //        egogain = gains[0];
+  //    } else {
+  //      if(!stage.rendersettings.distancelaw)
+  //        for(auto& g : gains)
+  //          // if not self-monitor then decrease gain:
+  //          g /= 0.6f;
+  //      othergains[stagemember.second.uid] = gains;
+  //    }
+  //  }
+  //}
+  //{
+  //  auto ports =
+  //      tascar->find_audio_ports({"/" + stage.thisdeviceid + "/reverb"});
+  //  if(ports.size())
+  //    reverbgain = ports[0]->get_gain();
+  //}
+  //{
+  //  auto ports = tascar->find_audio_ports({"/" + stage.thisdeviceid +
+  //  "/main"}); if(ports.size())
+  //    outputgain = ports[0]->get_gain();
+  //}
 }
 
 bool file_exists(const std::string& fname)
@@ -366,11 +369,18 @@ void ov_render_tascar_t::add_network_receiver(
     } else {
       // not in raw mode:
       // create connections:
+      size_t portnamenumber = 0;
       for(size_t c = 0; c < stagemember.channels.size(); ++c) {
         if(stage.thisstagedeviceid != stagemember.id) {
           std::string srcport(n2jclientname + ":out_" + std::to_string(c + 1));
-          std::string destport("render." + stage.thisdeviceid + ":" +
-                               clientname + "." + std::to_string(c) + ".0");
+          std::string destport;
+          if(stagemember.channels[c].name.empty()) {
+            destport = "render." + stage.thisdeviceid + ":" + clientname + "." +
+                       std::to_string(portnamenumber) + ".0";
+            ++portnamenumber;
+          } else
+            destport = "render." + stage.thisdeviceid + ":" + clientname + "." +
+                       stagemember.channels[c].name + ".0";
           waitports.push_back(srcport);
           session_add_connect(e_session, srcport, destport);
         }
@@ -643,7 +653,8 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
       session_add_connect(e_session, stage.thisdeviceid + ".metronome:out.0",
                           stage.thisdeviceid + "_sender:in_" +
                               std::to_string(chn));
-      if(stage.rendersettings.receive && (chn - 1 < (int)(ego_source_names.size())))
+      if(stage.rendersettings.receive &&
+         (chn - 1 < (int)(ego_source_names.size())))
         session_add_connect(e_session, stage.thisdeviceid + ".metronome:out.1",
                             "render." + stage.thisdeviceid + ":" +
                                 ego_source_names[chn - 1]);
@@ -1361,8 +1372,16 @@ void ov_render_tascar_t::set_stage_device_channel_gain(
 {
   ov_render_base_t::set_stage_device_channel_gain(stagedeviceid,
                                                   channeldeviceid, gain);
-  if(is_session_active() && tascar)
-    tascar->sound_by_id(channeldeviceid).set_gain_lin(gain);
+  DEBUG(stagedeviceid);
+  DEBUG(channeldeviceid);
+  // try {
+  //  if(is_session_active() && tascar)
+  //    tascar->audioport_by_id(channeldeviceid).set_gain_lin(gain);
+  //}
+  // catch(const std::exception& e) {
+  //  std::cerr << "Error: " << e.what()
+  //            << "\n(in ov_render_tascar_t::set_stage_device_channel_gain)\n";
+  //}
 }
 
 void ov_render_tascar_t::set_stage_device_channel_position(
@@ -1372,12 +1391,21 @@ void ov_render_tascar_t::set_stage_device_channel_position(
 {
   ov_render_base_t::set_stage_device_channel_position(
       stagedeviceid, channeldeviceid, position, orientation);
-  if(is_session_active() && tascar) {
-    tascar->sound_by_id(channeldeviceid).local_position =
-        TASCAR::pos_t(position.x, position.y, position.z);
-    tascar->sound_by_id(channeldeviceid).local_orientation =
-        TASCAR::zyx_euler_t(orientation.z, orientation.y, orientation.x);
-  }
+  DEBUG(stagedeviceid);
+  DEBUG(channeldeviceid);
+  // try {
+  //  if(is_session_active() && tascar) {
+  //    tascar->sound_by_id(channeldeviceid).local_position =
+  //        TASCAR::pos_t(position.x, position.y, position.z);
+  //    tascar->sound_by_id(channeldeviceid).local_orientation =
+  //        TASCAR::zyx_euler_t(orientation.z, orientation.y, orientation.x);
+  //  }
+  //}
+  // catch(const std::exception& e) {
+  //  std::cerr
+  //      << "Error: " << e.what()
+  //      << "\n(in ov_render_tascar_t::set_stage_device_channel_position)\n";
+  //}
 }
 
 void ov_render_tascar_t::set_render_settings(

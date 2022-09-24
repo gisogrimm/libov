@@ -324,21 +324,21 @@ void ov_client_orlandoviols_t::upload_plugin_settings()
 
 void ov_client_orlandoviols_t::upload_session_gains()
 {
-  if(backend.is_session_active() && backend.in_room()) {
-    float outputgain = 1.0f;
-    float egogain = 1.0f;
-    float reverbgain = 1.0f;
-    std::map<std::string, std::vector<float>> othergains;
-    backend.get_session_gains(outputgain, egogain, reverbgain, othergains);
-    std::cout << __FILE__ << ":" << __LINE__ << ": upload "
-              << TASCAR::to_string(TASCAR::lin2db(outputgain), "main %1.1f dB ")
-              << TASCAR::to_string(TASCAR::lin2db(egogain), "ego %1.1f dB ")
-              << TASCAR::to_string(TASCAR::lin2db(reverbgain), "rvb %1.1f dB ")
-              << std::endl;
-    for(const auto& g : othergains) {
-      std::cerr << "  " << g.first << ": " << g.second << std::endl;
-    }
-  }
+  //if(backend.is_session_active() && backend.in_room()) {
+  //  float outputgain = 1.0f;
+  //  float egogain = 1.0f;
+  //  float reverbgain = 1.0f;
+  //  std::map<std::string, std::vector<float>> othergains;
+  //  backend.get_session_gains(outputgain, egogain, reverbgain, othergains);
+  //  std::cout << __FILE__ << ":" << __LINE__ << ": upload "
+  //            << TASCAR::to_string(TASCAR::lin2db(outputgain), "main %1.1f dB ")
+  //            << TASCAR::to_string(TASCAR::lin2db(egogain), "ego %1.1f dB ")
+  //            << TASCAR::to_string(TASCAR::lin2db(reverbgain), "rvb %1.1f dB ")
+  //            << std::endl;
+  //  for(const auto& g : othergains) {
+  //    std::cerr << "  " << g.first << ": " << g.second << std::endl;
+  //  }
+  //}
 }
 
 stage_device_t get_stage_dev(nlohmann::json& dev)
