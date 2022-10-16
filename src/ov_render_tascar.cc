@@ -23,6 +23,12 @@
 #include <iostream>
 #include <jack/jack.h>
 
+port_t get_zitaport_(stage_device_id_t deviceid, port_t offset,
+                     port_t xoffset = 0)
+{
+  return port_t(4464 + 2 * deviceid) + offset + xoffset;
+}
+
 std::string get_channel_source(const device_channel_t& ch)
 {
   return std::string("bus.") + ch.id + ":out.0";
@@ -221,7 +227,7 @@ void sendlatreport(stage_device_id_t cid, const std::string& prefix,
 }
 
 ov_render_tascar_t::ov_render_tascar_t(const std::string& deviceid,
-                                       port_t pinglogport_)
+                                       port_t pinglogport_, bool secondary_)
     : ov_render_base_t(deviceid), h_jack(NULL), h_webmixer(NULL), tascar(NULL),
       ovboxclient(NULL), pinglogport(pinglogport_), pinglogaddr(nullptr),
       inputports({"system:capture_1", "system:capture_2"}),
@@ -229,7 +235,7 @@ ov_render_tascar_t::ov_render_tascar_t(const std::string& deviceid,
       use_proxy(false), cb_seqerr(nullptr), cb_seqerr_data(nullptr),
       sorter_deadline(5.0), expedited_forwarding_PHB(false),
       render_soundscape(true), jackrec_fileformat("WAV"),
-      jackrec_sampleformat("PCM_16")
+      jackrec_sampleformat("PCM_16"), secondary(secondary_)
 {
 #ifdef SHOWDEBUG
   std::cout << "ov_render_tascar_t::ov_render_tascar_t" << std::endl;
@@ -241,6 +247,11 @@ ov_render_tascar_t::ov_render_tascar_t(const std::string& deviceid,
     pinglogaddr =
         lo_address_new("localhost", std::to_string(pinglogport_).c_str());
   localip = ep2ipstr(getipaddr());
+  if(secondary) {
+    portoffset = 64;
+    dist_to_other_tascarport += portoffset;
+    my_tascarport += portoffset;
+  }
 }
 
 ov_render_tascar_t::~ov_render_tascar_t()
@@ -277,7 +288,7 @@ void ov_render_tascar_t::add_secondary_bus(const stage_device_t& stagemember,
       zitapath + "ovzita-n2j --chan " + chanlist + " --jname " + netclientname +
           "." + stage.thisdeviceid + " --buf " +
           TASCAR::to_string(stage.rendersettings.secrec + buff) + " 0.0.0.0 " +
-          TASCAR::to_string(4464 + 2 * stagemember.id + 100));
+          TASCAR::to_string(get_zitaport_(stagemember.id, portoffset, 100)));
   // tsccfg::node_set_attribute(e_sys, "onunload", "killall ovzita-n2j");
   // create also a route with correct gain settings:
   tsccfg::node_t e_route(tsccfg::node_add_child(e_mods, "route"));
@@ -334,7 +345,7 @@ void ov_render_tascar_t::add_network_receiver(
         e_sys, "command",
         zitapath + "ovzita-n2j --chan " + chanlist + " --jname " +
             n2jclientname + " --buf " + TASCAR::to_string(buff) + " 0.0.0.0 " +
-            TASCAR::to_string(4464 + 2 * stagemember.id));
+            TASCAR::to_string(get_zitaport_(stagemember.id, portoffset)));
     // tsccfg::node_set_attribute(e_sys, "onunload", "killall ovzita-n2j");
     if(stage.rendersettings.rawmode || stage.thisdevice.receivedownmix) {
       // create additional route for gain control:
@@ -642,7 +653,8 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
         zitapath + "ovzita-j2n --chan " +
             std::to_string(thisdev.channels.size()) + " --jname " +
             stage.thisdeviceid + "_sender --" + zitasampleformat +
-            " 127.0.0.1 " + std::to_string(4464 + 2 * stage.thisstagedeviceid));
+            " 127.0.0.1 " +
+            std::to_string(get_zitaport_(stage.thisstagedeviceid, portoffset)));
     // tsccfg::node_set_attribute(e_sys, "onunload", "killall ovzita-j2n");
     int chn(0);
     for(auto ch : thisdev.channels) {
@@ -671,7 +683,8 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
         e_sys, "command",
         zitapath + "ovzita-j2n --chan " + std::to_string(2) + " --jname " +
             stage.thisdeviceid + "_sender --" + zitasampleformat +
-            " 127.0.0.1 " + std::to_string(4464 + 2 * stage.thisstagedeviceid));
+            " 127.0.0.1 " +
+            std::to_string(get_zitaport_(stage.thisstagedeviceid, portoffset)));
     // tsccfg::node_set_attribute(e_sys, "onunload", "killall ovzita-j2n");
     session_add_connect(e_session, "render." + stage.thisdeviceid + ":main_l",
                         stage.thisdeviceid + "_sender:in_1");
@@ -703,7 +716,10 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
     if(stage.rendersettings.headtrackingrotsrc) {
       // control local and remote sound source:
       actor.push_back("/" + stage.thisdeviceid + "/ego");
-      tsccfg::node_set_attribute(e_head, "roturl", "osc.udp://localhost:9870/");
+      tsccfg::node_set_attribute(
+          e_head, "roturl",
+          "osc.udp://localhost:" + std::to_string(dist_to_other_tascarport) +
+              "/");
       tsccfg::node_set_attribute(e_head, "rotpath",
                                  "/*/" + get_stagedev_name(thisdev.id) +
                                      "/zyxeuler");
@@ -828,7 +844,8 @@ void ov_render_tascar_t::create_raw_dev(tsccfg::node_t e_session)
         zitapath + "ovzita-j2n --chan " +
             std::to_string(thisdev.channels.size()) + " --jname " +
             stage.thisdeviceid + "_sender --" + zitasampleformat +
-            " 127.0.0.1 " + std::to_string(4464 + 2 * stage.thisstagedeviceid));
+            " 127.0.0.1 " +
+            std::to_string(get_zitaport_(stage.thisstagedeviceid, portoffset)));
     // tsccfg::node_set_attribute(e_sys, "onunload", "killall ovzita-j2n");
     int chn(0);
     for(auto ch : thisdev.channels) {
@@ -910,7 +927,8 @@ void ov_render_tascar_t::start_session()
   // default TASCAR session settings:
   tsccfg::node_set_name(tsc.root(), "session");
   tsccfg::node_t e_session(tsc.root());
-  tsccfg::node_set_attribute(e_session, "srv_port", "9871");
+  tsccfg::node_set_attribute(e_session, "srv_port",
+                             std::to_string(my_tascarport));
   tsccfg::node_set_attribute(e_session, "duration", "36000");
   tsccfg::node_set_attribute(e_session, "name", stage.thisdeviceid);
   tsccfg::node_set_attribute(e_session, "license", "CC0");
@@ -1031,7 +1049,8 @@ void ov_render_tascar_t::start_session()
     session_add_connect(e_session, xport.first, xport.second);
   if(!stage.host.empty()) {
     ovboxclient = new ovboxclient_t(
-        stage.host, stage.port, 4464 + 2 * stage.thisstagedeviceid, 0, 30,
+        stage.host, stage.port,
+        get_zitaport_(stage.thisstagedeviceid, portoffset), portoffset, 30,
         stage.pin, stage.thisstagedeviceid, stage.rendersettings.peer2peer,
         use_proxy || (!stage.rendersettings.receive),
         stage.thisdevice.receivedownmix,
@@ -1044,7 +1063,7 @@ void ov_render_tascar_t::start_session()
       ovboxclient->add_extraport(100);
     for(auto p : stage.rendersettings.xrecport)
       ovboxclient->add_receiverport(p, p);
-    ovboxclient->add_receiverport(9870, 9871);
+    ovboxclient->add_receiverport(dist_to_other_tascarport, other_tascarport);
     if(pinglogaddr) {
       ovboxclient->set_ping_callback(sendpinglog, pinglogaddr);
       ovboxclient->set_latreport_callback(sendlatreport, pinglogaddr);

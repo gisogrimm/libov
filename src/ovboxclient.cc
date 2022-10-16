@@ -65,6 +65,20 @@
  * network, see ovboxclient_t::process_msg().
  */
 
+/**
+ * @defgroup secondarydev Secondary client on same device
+ *
+ * Start ov-client as secondary client on a device.
+ *
+ * Creating a secondary client can be useful for routing signals from
+ * one session into another session. Starting multiple instances of
+ * ov-client requires to shift all UDP ports by an offset. This needs
+ * to be compensated for in ovboxclient_t, to allow communication with
+ * other clients. Specifically, the offset is added to the port number
+ * for all incoming messages, and subtracted for all outgoing
+ * messages.
+ */
+
 ovboxclient_t::ovboxclient_t(std::string desthost, port_t destport,
                              port_t recport, port_t portoffset, int prio,
                              secret_t secret, stage_device_id_t callerid,
@@ -410,6 +424,7 @@ void ovboxclient_t::process_msg(msgbuf_t& msg)
   // clients:
   if(msg.destport > MAXSPECIALPORT) {
     if(msg.destport + portoffset != recport)
+      // forward to local UDP receivers (zita etc.), add portoffset:
       local_server.send(msg.msg, msg.size, msg.destport + portoffset);
     for(auto xd : xdest)
       if(msg.destport + xd != recport)
@@ -464,7 +479,9 @@ void ovboxclient_t::recsrv()
     while(runsession) {
       ssize_t n = local_server.recvfrom(buffer, BUFSIZE, sender_endpoint);
       if(n > 0) {
-        size_t un = remote_server.packmsg(msg, BUFSIZE, recport, buffer, n);
+        // subtract port offset before forwarding to remote peers:
+        size_t un = remote_server.packmsg(msg, BUFSIZE, recport - portoffset,
+                                          buffer, n);
         bool sendtoserver(!(mode & B_PEER2PEER));
         if(mode & B_PEER2PEER) {
           // we are in peer-to-peer mode.

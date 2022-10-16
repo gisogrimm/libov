@@ -32,7 +32,8 @@
 
 class ov_render_tascar_t : public ov_render_base_t {
 public:
-  ov_render_tascar_t(const std::string& deviceid, port_t pinglogport_);
+  ov_render_tascar_t(const std::string& deviceid, port_t pinglogport_,
+                     bool secondary_);
   ~ov_render_tascar_t();
   void start_session();
   void end_session();
@@ -178,6 +179,11 @@ private:
   float echoc_level = 60.0;
   uint32_t echoc_filterlen = 65;
   std::vector<std::string> ego_source_names;
+  bool secondary = false;
+  port_t dist_to_other_tascarport = 9870;
+  port_t my_tascarport = 9871;
+  port_t other_tascarport = 9871;
+  port_t portoffset = 0;
 };
 
 #endif

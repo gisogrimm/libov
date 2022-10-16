@@ -67,7 +67,7 @@ port_t ovtcpsocket_t::bind(port_t port, bool loopback)
   if(listen(sockfd, 256) < 0)
     throw ErrMsg("Unable to listen to socket: ", errno);
   run_server = true;
-  if( mainthread.joinable() )
+  if(mainthread.joinable())
     mainthread.join();
   mainthread = std::thread(&ovtcpsocket_t::acceptor, this);
   socklen_t addrlen(sizeof(endpoint_t));

@@ -185,7 +185,7 @@ private:
   port_t recport;
   // port offset for primary port, added to nominal port, e.g., in case of local
   // setup:
-  port_t portoffset;
+  port_t portoffset = 0;
   // client/caller identification (aka 'chair' in the lobby system):
   stage_device_id_t callerid;
   bool runsession;
