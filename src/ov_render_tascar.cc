@@ -595,12 +595,14 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
   }
   // configure extra modules:
   tsccfg::node_t e_mods(tsccfg::node_add_child(e_session, "modules"));
-  tsccfg::node_t e_jackrec(tsccfg::node_add_child(e_mods, "jackrec"));
-  tsccfg::node_set_attribute(e_jackrec, "url", "osc.udp://localhost:9000/");
-  tsccfg::node_set_attribute(e_jackrec, "sampleformat", jackrec_sampleformat);
-  tsccfg::node_set_attribute(e_jackrec, "fileformat", jackrec_fileformat);
-  tsccfg::node_set_attribute(e_jackrec, "pattern", "rec*.*");
-  tsccfg::node_add_child(e_mods, "touchosc");
+  if(!secondary) {
+    tsccfg::node_t e_jackrec(tsccfg::node_add_child(e_mods, "jackrec"));
+    tsccfg::node_set_attribute(e_jackrec, "url", "osc.udp://localhost:9000/");
+    tsccfg::node_set_attribute(e_jackrec, "sampleformat", jackrec_sampleformat);
+    tsccfg::node_set_attribute(e_jackrec, "fileformat", jackrec_fileformat);
+    tsccfg::node_set_attribute(e_jackrec, "pattern", "rec*.*");
+    tsccfg::node_add_child(e_mods, "touchosc");
+  }
   // create zita-n2j receivers:
   // this variable holds the path to zita
   // binaries, or empty (default) for system installed:
@@ -1168,23 +1170,25 @@ void ov_render_tascar_t::start_session()
     throw ErrMsg(err);
   }
 #ifndef GUI
-  // add web mixer tools (node-js server and touchosc interface):
-  std::string command;
-  std::string ipaddr(ep2ipstr(getipaddr()));
-  ipaddr += " '";
-  ipaddr += stage.thisdeviceid + " (" + stage.thisdevice.label + ")'";
-  if(file_exists("/usr/share/ovclient/webmixer.js")) {
-    command = "node /usr/share/ovclient/webmixer.js " + ipaddr;
-  }
-  if(file_exists(bindir + "/webmixer.js")) {
-    command = "node " + bindir + "/webmixer.js " + ipaddr;
-  }
-  if(file_exists("webmixer.js")) {
-    command = "node webmixer.js " + ipaddr;
-  }
-  if(!command.empty()) {
-    h_webmixer = new TASCAR::spawn_process_t(command, false);
-    usleep(10000);
+  if(!secondary) {
+    // add web mixer tools (node-js server and touchosc interface):
+    std::string command;
+    std::string ipaddr(ep2ipstr(getipaddr()));
+    ipaddr += " '";
+    ipaddr += stage.thisdeviceid + " (" + stage.thisdevice.label + ")'";
+    if(file_exists("/usr/share/ovclient/webmixer.js")) {
+      command = "node /usr/share/ovclient/webmixer.js " + ipaddr;
+    }
+    if(file_exists(bindir + "/webmixer.js")) {
+      command = "node " + bindir + "/webmixer.js " + ipaddr;
+    }
+    if(file_exists("webmixer.js")) {
+      command = "node webmixer.js " + ipaddr;
+    }
+    if(!command.empty()) {
+      h_webmixer = new TASCAR::spawn_process_t(command, false);
+      usleep(10000);
+    }
   }
 #endif
   session_ready = true;
