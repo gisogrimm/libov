@@ -265,12 +265,12 @@ void ov_render_base_t::stop_audiobackend()
   audio_active = false;
 }
 
-const bool ov_render_base_t::is_session_active() const
+bool ov_render_base_t::is_session_active() const
 {
   return session_active;
 }
 
-const bool ov_render_base_t::is_audio_active() const
+bool ov_render_base_t::is_audio_active() const
 {
   return audio_active;
 }
@@ -370,7 +370,7 @@ void ov_render_base_t::set_relay_server(const std::string& host, port_t port,
   }
 }
 
-const bool ov_render_base_t::need_restart() const
+bool ov_render_base_t::need_restart() const
 {
   return restart_needed;
 }

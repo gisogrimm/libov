@@ -413,8 +413,8 @@ public:
      @note Make sure that the session is ended before stopping the audio backend
    */
   virtual void stop_audiobackend();
-  const bool is_session_active() const;
-  const bool is_audio_active() const;
+  bool is_session_active() const;
+  bool is_audio_active() const;
   const std::string& get_deviceid() const;
   virtual void getbitrate(double& txrate, double& rxrate);
   virtual float get_load() const { return 0; };
@@ -447,7 +447,7 @@ public:
    * Indicate if a session restart is needed
    * @return true if restart is needed
    */
-  const bool need_restart() const;
+  bool need_restart() const;
   /**
    * Set session restart flag to true
    */
