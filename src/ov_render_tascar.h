@@ -172,6 +172,7 @@ private:
   std::string mczitadevice = "";
   uint32_t mczitabuffer = 10;
   std::vector<uint32_t> mczitachannels = {1, 2};
+  bool mczita_autoconnect_rec = false;
   std::string zitasampleformat = "16bit";
   bool useloudspeaker = false;
   float echoc_maxdist = 4.0;
@@ -184,6 +185,7 @@ private:
   port_t my_tascarport = 9871;
   port_t other_tascarport = 9871;
   port_t portoffset = 0;
+  bool emptysessionismonitor = false;
 };
 
 #endif
