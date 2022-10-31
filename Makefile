@@ -1,15 +1,17 @@
 VERSION=0.19
 export FULLVERSION:=$(shell ./get_version.sh)
 
-all: tscver build showver lib tscobj tscplug
+all: tascarplugins lib
 
-tscplug: tscobj
-
-lib: showver tscver tscobj
-
-showver: build
-
-build: tscver
+#tscver build showver lib tscobj tascarplugins
+#
+#tascarplugins: tscobj
+#
+#lib: showver tscver tscobj
+#
+#showver: build
+#
+#build: tscver
 
 BASEOBJ = ov_types errmsg common udpsocket ovtcpsocket callerlist	\
 	ov_tools MACAddressUtility
@@ -33,7 +35,7 @@ BUILD_OBJ_SERVER = $(patsubst %,build/%.o,$(BASEOBJ))
 
 CXXFLAGS += -DOVBOXVERSION="\"$(FULLVERSION)\""
 
-$(BUILD_OBJ): tscobj
+$(BUILD_OBJ): build/tscobj
 
 ifeq "$(ARCH)" "x86_64"
 CXXFLAGS += -msse -msse2 -mfpmath=sse -ffast-math
@@ -66,7 +68,7 @@ LDFLAGS += -Ltascar/libtascar/build
 #LDLIBS += -lov
 #LDFLAGS += -Llibov/build
 
-HEADER := $(wildcard src/*.h) $(wildcard libov/src/*.h) tscver
+HEADER := $(wildcard src/*.h) $(wildcard libov/src/*.h) build/tscver
 
 CXXFLAGS += -Itascar/libtascar/build
 
@@ -152,7 +154,7 @@ dist:
 tascar/Makefile:
 	git submodule init && git submodule update
 
-lib: build/libov.a
+lib: build build/libov.a
 
 libovserver: EXTERNALS=libcurl
 libovserver: build/libovserver.a
@@ -168,25 +170,25 @@ build/libovserver.a: $(BUILD_OBJ_SERVER)
 build: build/.directory
 
 %/.directory:
-	mkdir -p $*
-	touch $@
+	mkdir -p $* && touch $@
 
 build/%.o: src/%.cc $(wildcard src/*.h)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-tscbuild:
-	$(MAKE) -C tascar/libtascar build
+build/tscbuild:
+	$(MAKE) -C tascar/libtascar build && mkdir -p build && touch $@
 
 #$(patsubst %,tascar/libtascar/build/%,$(TASCAROBJECTS)): tscobj
 
-tscver: tscbuild
-	$(MAKE) -C tascar/libtascar ver
+build/tscver: build/tscbuild
+	$(MAKE) -C tascar/libtascar ver && mkdir -p build && touch $@
 
-tscobj: tscver
-	$(MAKE) -C tascar/libtascar PLUGINPREFIX=ovclient TSCCXXFLAGS=-DPLUGINPREFIX='\"ovclient\"' all
-#$(patsubst %,build/%,$(TASCAROBJECTS))  $(patsubst %,build/%,$(TASCARDMXOBJECTS))
+build/tscobj: build/tscver
+	$(MAKE) -C tascar/libtascar PLUGINPREFIX=ovclient TSCCXXFLAGS=-DPLUGINPREFIX='\"ovclient\"' all && mkdir -p build && touch $@
 
-tscplug: tscver tscobj
+#&& touch $@
+
+tascarplugins: build/tscver build/tscobj
 	 $(MAKE) -C tascar/plugins PLUGINPREFIX=ovclient RECEIVERS="$(TASCARRECEIVERS)" SOURCES="$(TASCARSOURCE)" TASCARMODS="$(TASCARMODULS)" TASCARMODSGUI="$(TASCARMODULSGUI)" AUDIOPLUGINS="$(TASCARAUDIOPLUGS)" GLABSENSORS= TASCARLIB="-lovclienttascar" TASCARDMXLIB="-lovclienttascardmx"
 
 clangformat:
