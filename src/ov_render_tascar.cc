@@ -547,7 +547,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
               // connect self-monitoring source ports:
               if(selfmonitor_active && (!useloudspeaker))
                 tsccfg::node_set_attribute(e_snd, "connect",
-                                           get_channel_source(ch));
+                                           "'" + get_channel_source(ch) + "'");
               gain *= stage.rendersettings.egogain;
             } else {
               if(!stage.rendersettings.distancelaw)
@@ -976,7 +976,7 @@ void ov_render_tascar_t::start_session()
       tsccfg::node_t e_bus(tsccfg::node_add_child(e_mods, "route"));
       tsccfg::node_set_attribute(e_bus, "name", std::string("bus.") + ch.id);
       tsccfg::node_set_attribute(e_bus, "channels", "1");
-      tsccfg::node_set_attribute(e_bus, "connect", ch.sourceport);
+      tsccfg::node_set_attribute(e_bus, "connect", "'" + ch.sourceport + "'");
       if(!ch.plugins.empty()) {
         tsccfg::node_t e_plugs(tsccfg::node_add_child(e_bus, "plugins"));
         for(auto plug : ch.plugins) {
@@ -1062,7 +1062,7 @@ void ov_render_tascar_t::start_session()
             float gain(ch.gain);
             // connect self-monitoring source ports:
             tsccfg::node_set_attribute(e_snd, "connect",
-                                       get_channel_source(ch));
+                                       "'" + get_channel_source(ch) + "'");
             gain *= stage.rendersettings.egogain;
             tsccfg::node_set_attribute(e_snd, "gain",
                                        TASCAR::to_string(20.0f * log10f(gain)));
