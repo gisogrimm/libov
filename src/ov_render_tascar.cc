@@ -58,7 +58,7 @@ std::vector<std::string> get_jack_input_ports(jack_client_t* jc,
     const char** p(pp_ports);
     while(*p) {
       std::string port = *p;
-      if(!ends_with(port, ".sync_out"))
+      if(!ends_with(port, ":sync_out"))
         if(!starts_with(port, "render." + deviceid))
           if(!(starts_with(port, "bus.") && ends_with(port, ":out.0")))
             if(!starts_with(port, "system:midi_"))
