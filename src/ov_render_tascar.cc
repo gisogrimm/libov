@@ -60,9 +60,15 @@ std::vector<std::string> get_jack_input_ports(jack_client_t* jc,
       std::string port = *p;
       if(!ends_with(port, ":sync_out"))
         if(!starts_with(port, "render." + deviceid))
-          if(!(starts_with(port, "bus.") && ends_with(port, ":out.0")))
-            if(!starts_with(port, "system:midi_"))
-              ports.push_back(port);
+          if(!starts_with(port, deviceid + ".metronome"))
+            if(!ends_with(port, "." + deviceid + ":out_1"))
+              if(!ends_with(port, "." + deviceid + ":out_2"))
+                if(!ends_with(port, "." + deviceid + ":out_3"))
+                  if(!ends_with(port, "." + deviceid + ":out_4"))
+                    if(!(starts_with(port, "bus.") &&
+                         ends_with(port, ":out.0")))
+                      if(!starts_with(port, "system:midi_"))
+                        ports.push_back(port);
       ++p;
     }
     jack_free(pp_ports);
@@ -611,6 +617,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
       tsccfg::node_set_attribute(
           e_rvb, "volumetric",
           TASCAR::to_string(to_tascar(stage.rendersettings.roomsize)));
+      tsccfg::node_set_attribute(e_rvb, "gainmethod", "original");
       tsccfg::node_set_attribute(e_rvb, "image", "false");
       tsccfg::node_set_attribute(e_rvb, "fdnorder", "5");
       tsccfg::node_set_attribute(e_rvb, "dw", "60");
