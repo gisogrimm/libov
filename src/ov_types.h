@@ -159,6 +159,8 @@ struct stage_device_t {
   bool receivedownmix;
   /// send session mix:
   bool senddownmix;
+  /// do not use zita-njbridge:
+  bool nozita;
 };
 
 bool operator!=(const std::vector<device_channel_t>& a,

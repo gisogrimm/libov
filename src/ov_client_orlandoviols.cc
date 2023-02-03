@@ -352,6 +352,7 @@ stage_device_t get_stage_dev(nlohmann::json& dev)
     stagedev.label = my_js_value(dev, "label", std::string(""));
     stagedev.receivedownmix = my_js_value(dev, "receivedownmix", false);
     stagedev.senddownmix = my_js_value(dev, "senddownmix", false);
+    stagedev.nozita = my_js_value(dev, "nozita", false);
     nlohmann::json channels(dev["channels"]);
     size_t chcnt(0);
     if(channels.is_array())
