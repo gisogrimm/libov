@@ -1184,15 +1184,14 @@ void ov_render_tascar_t::start_session()
       chlist += std::to_string(ch.first) + ",";
       if(mczita_autoconnect_rec)
         conn_str += "--conn system:playback_" + std::to_string(ch.second) + " ";
-      waitports.push_back("n2j_" + stage.thisdeviceid + "_mc:out_" +
-                          std::to_string(ch.first));
+      waitports.push_back("mc:out_" + std::to_string(ch.first));
     }
     if(chlist.size())
       chlist.erase(chlist.size() - 1, 1);
     std::string cmd = zitapath + "ovzita-n2j --chan " + chlist + " --buff " +
-                      std::to_string(mczitabuffer) + " --jname " + "n2j_" +
-                      stage.thisdeviceid + "_mc " + conn_str + mczitaaddr +
-                      " " + std::to_string(mczitaport) + " " + mczitadevice;
+                      std::to_string(mczitabuffer) + " --jname " + "mc " +
+                      conn_str + mczitaaddr + " " + std::to_string(mczitaport) +
+                      " " + mczitadevice;
     tsccfg::node_set_attribute(e_zit, "command", cmd);
     // tsccfg::node_set_attribute(e_zit, "onunload", "killall ovzita-n2j");
     tsccfg::node_set_attribute(e_zit, "relaunch", "true");
