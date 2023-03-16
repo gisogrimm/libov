@@ -775,7 +775,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
                                waitports, true);
   // head tracking:
   if(stage.rendersettings.headtracking && stage.rendersettings.receive) {
-    tsccfg::node_t e_head = tsccfg::node_add_child(e_mods, "ovheadtracker");
+    tsccfg::node_t e_head = tsccfg::node_add_child(e_mods, "oscheadtracker");
     // enable data logging and/or OSC distribution:
     if(stage.rendersettings.headtrackingport > 0)
       tsccfg::node_set_attribute(
@@ -809,12 +809,12 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
     tsccfg::node_set_attribute(e_head, "autoref_zonly",
                                headtrack_autorefzonly ? "true" : "false");
     tsccfg::node_set_attribute(e_head, "smooth", "0.01");
-    tsccfg::node_set_attribute(e_head, "tilturl", headtrack_tilturl);
-    tsccfg::node_set_attribute(e_head, "tiltpath", headtrack_tiltpath);
-    tsccfg::node_set_attribute(e_head, "tiltmap", headtrack_tiltmap);
-    tsccfg::node_set_attribute(e_head, "levelpattern", "/*/ego/*");
+    // tsccfg::node_set_attribute(e_head, "tilturl", headtrack_tilturl);
+    // tsccfg::node_set_attribute(e_head, "tiltpath", headtrack_tiltpath);
+    // tsccfg::node_set_attribute(e_head, "tiltmap", headtrack_tiltmap);
+    // tsccfg::node_set_attribute(e_head, "levelpattern", "/*/ego/*");
     tsccfg::node_set_attribute(e_head, "name", stage.thisdeviceid);
-    tsccfg::node_set_attribute(e_head, "send_only_quaternion", "true");
+    // tsccfg::node_set_attribute(e_head, "send_only_quaternion", "true");
     if(stage.rendersettings.headtrackingrotrec ||
        stage.rendersettings.headtrackingrotsrc)
       tsccfg::node_set_attribute(e_head, "apply_rot", "true");
