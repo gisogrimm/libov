@@ -116,9 +116,8 @@ private:
   lo_address pinglogaddr;
   std::vector<std::string> inputports;
   float headtrack_tauref;
-  std::string headtrack_tilturl;
-  std::string headtrack_tiltpath;
-  std::string headtrack_tiltmap;
+  // EOG data logging path:
+  std::string headtrack_eogpath;
   bool headtrack_autorefzonly = false;
   // self-monitor delay in milliseconds:
   float selfmonitor_delay = 0.0f;

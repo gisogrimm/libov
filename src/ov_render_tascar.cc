@@ -810,7 +810,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
                                headtrack_autorefzonly ? "true" : "false");
     tsccfg::node_set_attribute(e_head, "smooth", "0.01");
     // tsccfg::node_set_attribute(e_head, "tilturl", headtrack_tilturl);
-    // tsccfg::node_set_attribute(e_head, "tiltpath", headtrack_tiltpath);
+    tsccfg::node_set_attribute(e_head, "eogpath", headtrack_eogpath);
     // tsccfg::node_set_attribute(e_head, "tiltmap", headtrack_tiltmap);
     // tsccfg::node_set_attribute(e_head, "levelpattern", "/*/ego/*");
     tsccfg::node_set_attribute(e_head, "name", stage.thisdeviceid);
@@ -1616,12 +1616,14 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
       }
       if(xcfg["headtrack"].is_object()) {
         headtrack_tauref = my_js_value(xcfg["headtrack"], "tauref", 33.315);
-        headtrack_tilturl =
-            my_js_value(xcfg["headtrack"], "tilturl", std::string(""));
-        headtrack_tiltpath =
-            my_js_value(xcfg["headtrack"], "tiltpath", std::string("/tilt"));
-        headtrack_tiltmap = my_js_value(xcfg["headtrack"], "tiltmap",
-                                        std::string("0 0 180 180"));
+        //headtrack_tilturl =
+        //    my_js_value(xcfg["headtrack"], "tilturl", std::string(""));
+        //headtrack_tiltpath =
+        //    my_js_value(xcfg["headtrack"], "tiltpath", std::string("/tilt"));
+        //headtrack_tiltmap = my_js_value(xcfg["headtrack"], "tiltmap",
+        //                                std::string("0 0 180 180"));
+        headtrack_eogpath =
+            my_js_value(xcfg["headtrack"], "eogpath", std::string(""));
         headtrack_autorefzonly =
             my_js_value(xcfg["headtrack"], "autorefzonly", true);
       }
