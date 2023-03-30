@@ -978,6 +978,12 @@ void ov_render_tascar_t::start_session()
 {
   //#ifdef SHOWDEBUG
   std::cout << "ov_render_tascar_t::start_session" << std::endl;
+  if(!stage.host.empty()) {
+    for(auto dev : stage.stage) {
+      std::cerr << "stageid:" << (int)dev.first << " uid:" << dev.second.uid
+                << " label:" << dev.second.label << std::endl;
+    }
+  }
   //#endif
   // do whatever needs to be done in base class:
   ov_render_base_t::start_session();
