@@ -353,6 +353,7 @@ stage_device_t get_stage_dev(nlohmann::json& dev)
     stagedev.receivedownmix = my_js_value(dev, "receivedownmix", false);
     stagedev.senddownmix = my_js_value(dev, "senddownmix", false);
     stagedev.nozita = my_js_value(dev, "nozita", false);
+    stagedev.hiresping = my_js_value(dev, "hiresping", false);
     nlohmann::json channels(dev["channels"]);
     size_t chcnt(0);
     if(channels.is_array())
@@ -489,8 +490,9 @@ void ov_client_orlandoviols_t::service()
               }
             }
             nlohmann::json js_rendersettings(js_stagecfg["rendersettings"]);
-            if(!js_rendersettings.is_null())
+            if(!js_rendersettings.is_null()){
               backend.set_thisdev(get_stage_dev(js_rendersettings));
+            }
             nlohmann::json js_stage(js_stagecfg["room"]);
             if(js_stage.is_object()) {
               std::string stagehost(

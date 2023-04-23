@@ -24,7 +24,7 @@
 #include <thread>
 
 // ping period time in milliseconds:
-#define PINGPERIODMS 100
+static int pingperiodms = 100;
 // period time of ping statistic loggin, in ping periods:
 #define STATLOGPERIOD 600
 // timeout of caller actvity, in ping periods:

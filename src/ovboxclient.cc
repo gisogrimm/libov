@@ -320,7 +320,7 @@ void ovboxclient_t::handle_endpoint_list_update(stage_device_id_t cid,
 void ovboxclient_t::pingservice()
 {
   while(runsession) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(PINGPERIODMS));
+    std::this_thread::sleep_for(std::chrono::milliseconds(pingperiodms));
     // send registration to relay server:
     remote_server.send_registration(mode, toport, localep);
     // send ping to other peers:

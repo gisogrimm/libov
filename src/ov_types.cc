@@ -69,7 +69,8 @@ stage_device_t default_device = {
     true,        // bool sendlocal;
     false,       // bool receivedownmix;
     false,       // bool senddownmix;
-    false,       // bool nozita
+    false,       // bool nozita:
+    false,       // bool hiresping;
 };
 
 stage_t default_stage = {
@@ -166,7 +167,8 @@ bool operator!=(const stage_device_t& a, const stage_device_t& b)
          (a.receiverjitter != b.receiverjitter) ||
          (a.sendlocal != b.sendlocal) ||
          (a.receivedownmix != b.receivedownmix) ||
-         (a.senddownmix != b.senddownmix) || (a.nozita != b.nozita);
+         (a.senddownmix != b.senddownmix) || (a.nozita != b.nozita) ||
+         (a.hiresping != b.hiresping);
 }
 
 bool operator!=(const render_settings_t& a, const render_settings_t& b)

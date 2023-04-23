@@ -92,7 +92,7 @@ void endpoint_list_t::checkstatus()
 {
   uint32_t statlogcnt(STATLOGPERIOD);
   while(runthread) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(PINGPERIODMS));
+    std::this_thread::sleep_for(std::chrono::milliseconds(pingperiodms));
     for(stage_device_id_t ep = 0; ep != MAX_STAGE_ID; ++ep) {
       if(endpoints[ep].timeout) {
         // bookkeeping of connected endpoints:

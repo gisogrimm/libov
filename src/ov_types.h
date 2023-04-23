@@ -161,6 +161,8 @@ struct stage_device_t {
   bool senddownmix;
   /// do not use zita-njbridge:
   bool nozita;
+  /// use high-resolution ping frequency:
+  bool hiresping;
 };
 
 bool operator!=(const std::vector<device_channel_t>& a,
