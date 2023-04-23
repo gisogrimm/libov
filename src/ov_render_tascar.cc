@@ -1002,10 +1002,8 @@ void ov_render_tascar_t::start_session()
   tsccfg::node_set_attribute(e_session, "levelmeter_weight",
                              stage.rendersettings.lmeterfw);
   // update ping timimng:
-  //if(stage.thisdevice.hiresping)
-  //  pingperiodms = 100;
-  //else
-  //  pingperiodms = 2000;
+  if(ovboxclient)
+    ovboxclient->set_hiresping(stage.thisdevice.hiresping);
   // create a virtual acoustics "scene":
   tsccfg::node_t e_scene(tsccfg::node_add_child(e_session, "scene"));
   tsccfg::node_set_attribute(e_scene, "name", stage.thisdeviceid);
@@ -1627,11 +1625,11 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
       }
       if(xcfg["headtrack"].is_object()) {
         headtrack_tauref = my_js_value(xcfg["headtrack"], "tauref", 33.315);
-        //headtrack_tilturl =
+        // headtrack_tilturl =
         //    my_js_value(xcfg["headtrack"], "tilturl", std::string(""));
-        //headtrack_tiltpath =
+        // headtrack_tiltpath =
         //    my_js_value(xcfg["headtrack"], "tiltpath", std::string("/tilt"));
-        //headtrack_tiltmap = my_js_value(xcfg["headtrack"], "tiltmap",
+        // headtrack_tiltmap = my_js_value(xcfg["headtrack"], "tiltmap",
         //                                std::string("0 0 180 180"));
         headtrack_eogpath =
             my_js_value(xcfg["headtrack"], "eogpath", std::string(""));
