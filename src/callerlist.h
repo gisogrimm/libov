@@ -24,9 +24,9 @@
 #include <thread>
 
 // ping period time in milliseconds:
-static int pingperiodms = 100;
+//static int pingperiodms = 100;
 // period time of ping statistic loggin, in ping periods:
-#define STATLOGPERIOD 600
+//#define STATLOGPERIOD 600
 // timeout of caller actvity, in ping periods:
 #define CALLERLIST_TIMEOUT 120
 
@@ -65,7 +65,9 @@ protected:
                     const std::string& rver);
   void cid_setlocalip(stage_device_id_t cid, const endpoint_t& ep);
   uint32_t get_num_clients();
+  void set_hiresping(bool hr);
   std::vector<ep_desc_t> endpoints;
+  int pingperiodms = 2000;
 
 private:
   void checkstatus();

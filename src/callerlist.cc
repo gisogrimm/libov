@@ -88,9 +88,17 @@ void endpoint_list_t::cid_setpingtime(stage_device_id_t cid, double pingtime)
   }
 }
 
+void endpoint_list_t::set_hiresping(bool hr)
+{
+  if(hr)
+    pingperiodms = 100;
+  else
+    pingperiodms = 2000;
+}
+
 void endpoint_list_t::checkstatus()
 {
-  uint32_t statlogcnt(STATLOGPERIOD);
+  uint32_t statlogcnt(60000/pingperiodms);
   while(runthread) {
     std::this_thread::sleep_for(std::chrono::milliseconds(pingperiodms));
     for(stage_device_id_t ep = 0; ep != MAX_STAGE_ID; ++ep) {
@@ -111,7 +119,7 @@ void endpoint_list_t::checkstatus()
     }
     if(!statlogcnt) {
       // logging of ping statistics:
-      statlogcnt = STATLOGPERIOD;
+      statlogcnt = 60000/pingperiodms;
       std::lock_guard<std::mutex> lk(mstat);
       for(stage_device_id_t ep = 0; ep != MAX_STAGE_ID; ++ep) {
         if(endpoints[ep].timeout) {
