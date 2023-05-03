@@ -1040,6 +1040,9 @@ void ov_render_tascar_t::start_session()
         tsccfg::node_set_attribute(e_rec, "angle", "110");
         tsccfg::node_set_attribute(e_rec, "broadband", "true");
       }
+      if(stage.rendersettings.rectype == "hrtf") {
+        tsccfg::node_set_attribute(e_rec, "prewarpingmode", "2");
+      }
       if(stage.rendersettings.decorr > 0) {
         tsccfg::node_set_attribute(e_rec, "decorr", "true");
         tsccfg::node_set_attribute(
