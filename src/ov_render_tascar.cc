@@ -1124,6 +1124,31 @@ void ov_render_tascar_t::start_session()
             if(selfmonitor_onlyreverb)
               tsccfg::node_set_attribute(e_snd, "layers", "2");
           }
+          if(stage.rendersettings.renderreverb) {
+            // create reverb engine:
+            tsccfg::node_t e_rvb(tsccfg::node_add_child(e_scene, "reverb"));
+            tsccfg::node_set_attribute(e_rvb, "name", "reverb");
+            tsccfg::node_set_attribute(e_rvb, "type", "simplefdn");
+            tsccfg::node_set_attribute(
+                e_rvb, "volumetric",
+                TASCAR::to_string(to_tascar(stage.rendersettings.roomsize)));
+            tsccfg::node_set_attribute(e_rvb, "gainmethod", "original");
+            tsccfg::node_set_attribute(e_rvb, "image", "false");
+            tsccfg::node_set_attribute(e_rvb, "fdnorder", "5");
+            tsccfg::node_set_attribute(e_rvb, "dw", "60");
+            tsccfg::node_set_attribute(
+                e_rvb, "absorption",
+                TASCAR::to_string(stage.rendersettings.absorption));
+            tsccfg::node_set_attribute(
+                e_rvb, "damping",
+                TASCAR::to_string(stage.rendersettings.damping));
+            tsccfg::node_set_attribute(
+                e_rvb, "gain",
+                TASCAR::to_string(20.0f *
+                                  log10f(stage.rendersettings.reverbgain)));
+            tsccfg::node_set_attribute(e_rvb, "volumetricgainwithdistance",
+                                       "true");
+          }
         } else {
           // the stage is empty, which means we play an announcement only.
           tsccfg::node_t e_src(tsccfg::node_add_child(e_scene, "source"));
