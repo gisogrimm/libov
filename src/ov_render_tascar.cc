@@ -176,7 +176,7 @@ std::string ov_render_tascar_t::get_objmixcfg_as_json()
 {
   if(!tascar)
     return "{}";
-  std::string cfg = "{channels:[";
+  std::string cfg = "{\"channels\":[";
   size_t k = 0;
   for(auto ch : stage.thisdevice.channels) {
     try {
@@ -184,11 +184,11 @@ std::string ov_render_tascar_t::get_objmixcfg_as_json()
       if(k)
         cfg += ",";
       cfg += "{";
-      cfg += "name:'" + ch.name +
-             "',x:" + TASCAR::to_string(snd.local_position.x) +
-             ",y:" + TASCAR::to_string(snd.local_position.y) +
-             ",z:" + TASCAR::to_string(snd.local_position.z) +
-             ",gain:" + TASCAR::to_string(snd.get_gain());
+      cfg += "\"name\":\"" + ch.name +
+             "\",\"x\":" + TASCAR::to_string(snd.local_position.x) +
+             ",\"y\":" + TASCAR::to_string(snd.local_position.y) +
+             ",\"z\":" + TASCAR::to_string(snd.local_position.z) +
+             ",\"gain\":" + TASCAR::to_string(snd.get_gain());
       cfg += "}";
       ++k;
     }
@@ -201,10 +201,11 @@ std::string ov_render_tascar_t::get_objmixcfg_as_json()
     std::string pattern = "/";
     pattern += get_deviceid();
     pattern += "/reverb";
-    auto rev =
-      tascar->find_audio_ports(std::vector<std::string>(1,pattern));
-    if( rev.size() ){
-      cfg+=",reverbgain:"+TASCAR::to_string(rev[0]->get_gain());
+    auto rev = tascar->find_audio_ports(std::vector<std::string>(1, pattern));
+    if(rev.size()) {
+      cfg += ",\"reverbgain\":" +
+             TASCAR::to_string(rev[0]->get_gain() /
+                               stage.rendersettings.reverbgainroom);
     }
   }
   catch(const std::exception& e) {

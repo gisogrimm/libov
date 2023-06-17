@@ -64,6 +64,7 @@ ov_client_orlandoviols_t::ov_client_orlandoviols_t(ov_render_base_t& backend,
     : ov_client_base_t(backend), runservice(true), lobby(lobby),
       quitrequest_(false), isovbox(is_ovbox())
 {
+  std::lock_guard<std::mutex> lock(curlmtx);
   curl = curl_easy_init();
   if(!curl)
     throw ErrMsg("Unable to initialize curl");
@@ -101,6 +102,7 @@ bool ov_client_orlandoviols_t::report_error(std::string url,
       (char*)malloc(1); /* will be grown as needed by the realloc above */
   chunk.size = 0;       /* no data at this point */
   url += "?ovclientmsg=" + device;
+  std::lock_guard<std::mutex> lock(curlmtx);
   curl_easy_reset(curl);
   curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
   curl_easy_setopt(curl, CURLOPT_USERPWD, "device:device");
@@ -149,6 +151,7 @@ bool ov_client_orlandoviols_t::download_file(const std::string& url,
   chunk.memory =
       (char*)malloc(1); /* will be grown as needed by the realloc above */
   chunk.size = 0;       /* no data at this point */
+  std::lock_guard<std::mutex> lock(curlmtx);
   curl_easy_reset(curl);
   curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
   curl_easy_setopt(curl, CURLOPT_USERPWD, "device:device");
@@ -218,18 +221,21 @@ std::string ov_client_orlandoviols_t::device_update(std::string url,
   url += "?ovclient2=" + device + "&hash=" + hash;
   if(hostname.size() > 0)
     url += "&host=" + hostname;
-  curl_easy_reset(curl);
-  curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-  curl_easy_setopt(curl, CURLOPT_USERPWD, "device:device");
-  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, webCURL::WriteMemoryCallback);
-  curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&chunk);
-  curl_easy_setopt(curl, CURLOPT_USERAGENT, "libcurl-agent/1.0");
-  curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
-  curl_easy_setopt(curl, CURLOPT_POSTFIELDS, curlstrdevice.c_str());
-  res = curl_easy_perform(curl);
-  if(res == CURLE_OK)
-    retv.insert(0, chunk.memory, chunk.size);
-  free(chunk.memory);
+  {
+    std::lock_guard<std::mutex> lock(curlmtx);
+    curl_easy_reset(curl);
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_USERPWD, "device:device");
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, webCURL::WriteMemoryCallback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&chunk);
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "libcurl-agent/1.0");
+    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, curlstrdevice.c_str());
+    res = curl_easy_perform(curl);
+    if(res == CURLE_OK)
+      retv.insert(0, chunk.memory, chunk.size);
+    free(chunk.memory);
+  }
   std::stringstream ss(retv);
   std::string to;
   bool first(true);
@@ -261,13 +267,18 @@ void ov_client_orlandoviols_t::register_device(std::string url,
       (char*)malloc(1); /* will be grown as needed by the realloc above */
   chunk.size = 0;       /* no data at this point */
   url += "?setver=" + device + "&ver=ovclient-" + OVBOXVERSION;
-  curl_easy_reset(curl);
-  curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-  curl_easy_setopt(curl, CURLOPT_USERPWD, "device:device");
-  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, webCURL::WriteMemoryCallback);
-  curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&chunk);
-  curl_easy_setopt(curl, CURLOPT_USERAGENT, "libcurl-agent/1.0");
-  if(curl_easy_perform(curl) != CURLE_OK) {
+  int err = CURLE_OK;
+  {
+    std::lock_guard<std::mutex> lock(curlmtx);
+    curl_easy_reset(curl);
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_USERPWD, "device:device");
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, webCURL::WriteMemoryCallback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&chunk);
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "libcurl-agent/1.0");
+    err = curl_easy_perform(curl);
+  }
+  if(err != CURLE_OK) {
     free(chunk.memory);
     throw TASCAR::ErrMsg("Unable to register device with url \"" + url + "\".");
   }
@@ -302,17 +313,20 @@ void ov_client_orlandoviols_t::upload_plugin_settings()
             (char*)malloc(1); /* will be grown as needed by the realloc above */
         chunk.size = 0;       /* no data at this point */
         std::string url = lobby + "?pluginscfg=" + backend.get_deviceid();
-        curl_easy_reset(curl);
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-        curl_easy_setopt(curl, CURLOPT_USERPWD, "device:device");
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,
-                         webCURL::WriteMemoryCallback);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&chunk);
-        curl_easy_setopt(curl, CURLOPT_USERAGENT, "libcurl-agent/1.0");
-        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, curlpost.c_str());
-        curl_easy_perform(curl);
-        free(chunk.memory);
+        {
+          std::lock_guard<std::mutex> lock(curlmtx);
+          curl_easy_reset(curl);
+          curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+          curl_easy_setopt(curl, CURLOPT_USERPWD, "device:device");
+          curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,
+                           webCURL::WriteMemoryCallback);
+          curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&chunk);
+          curl_easy_setopt(curl, CURLOPT_USERAGENT, "libcurl-agent/1.0");
+          curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
+          curl_easy_setopt(curl, CURLOPT_POSTFIELDS, curlpost.c_str());
+          curl_easy_perform(curl);
+          free(chunk.memory);
+        }
       }
     }
     catch(const std::exception& e) {
@@ -345,9 +359,30 @@ void ov_client_orlandoviols_t::upload_session_gains()
 
 void ov_client_orlandoviols_t::upload_objmix()
 {
-  if(backend.is_session_active()){
-    std::string objmixscfg = backend.get_objmixcfg_as_json();
-    DEBUG(objmixscfg);
+  if(backend.is_session_active()) {
+    std::string objmixcfg = backend.get_objmixcfg_as_json();
+    if(objmixcfg != "{}") {
+      std::string retv;
+      struct webCURL::MemoryStruct chunk;
+      chunk.memory =
+          (char*)malloc(1); /* will be grown as needed by the realloc above */
+      chunk.size = 0;       /* no data at this point */
+      std::string url = lobby + "?objmixcfg=" + backend.get_deviceid();
+      {
+        std::lock_guard<std::mutex> lock(curlmtx);
+        curl_easy_reset(curl);
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl, CURLOPT_USERPWD, "device:device");
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,
+                         webCURL::WriteMemoryCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&chunk);
+        curl_easy_setopt(curl, CURLOPT_USERAGENT, "libcurl-agent/1.0");
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, objmixcfg.c_str());
+        curl_easy_perform(curl);
+      }
+      free(chunk.memory);
+    }
   }
 }
 
@@ -498,7 +533,7 @@ void ov_client_orlandoviols_t::service()
               }
             }
             nlohmann::json js_rendersettings(js_stagecfg["rendersettings"]);
-            if(!js_rendersettings.is_null()){
+            if(!js_rendersettings.is_null()) {
               backend.set_thisdev(get_stage_dev(js_rendersettings));
             }
             nlohmann::json js_stage(js_stagecfg["room"]);
@@ -519,6 +554,8 @@ void ov_client_orlandoviols_t::service()
                   my_js_value(js_reverb, "absorption", 0.6f);
               rendersettings.damping = my_js_value(js_reverb, "damping", 0.7f);
               rendersettings.reverbgain = my_js_value(js_reverb, "gain", 0.4f);
+              rendersettings.reverbgainroom = my_js_value(js_reverb, "roomgain", 0.4f);
+              rendersettings.reverbgaindev = my_js_value(js_reverb, "devgain", 1.0f);
               GETJS(rendersettings, renderreverb);
               GETJS(rendersettings, renderism);
               GETJS(rendersettings, distancelaw);

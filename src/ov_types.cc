@@ -175,14 +175,17 @@ bool operator!=(const render_settings_t& a, const render_settings_t& b)
 {
   return (a.id != b.id) || (a.roomsize != b.roomsize) ||
          (a.absorption != b.absorption) || (a.damping != b.damping) ||
-         (a.reverbgain != b.reverbgain) || (a.renderreverb != b.renderreverb) ||
-         (a.renderism != b.renderism) || (a.distancelaw != b.distancelaw) ||
-         (a.rawmode != b.rawmode) || (a.receive != b.receive) ||
-         (a.rectype != b.rectype) || (a.egogain != b.egogain) ||
-         (a.outputgain != b.outputgain) || (a.peer2peer != b.peer2peer) ||
-         (a.outputport1 != b.outputport1) || (a.outputport2 != b.outputport2) ||
-         (a.secrec != b.secrec) || (a.xports != b.xports) ||
-         (a.xrecport != b.xrecport) || (a.headtracking != b.headtracking) ||
+         (a.reverbgain != b.reverbgain) ||
+         (a.reverbgainroom != b.reverbgainroom) ||
+         (a.reverbgaindev != b.reverbgaindev) ||
+         (a.renderreverb != b.renderreverb) || (a.renderism != b.renderism) ||
+         (a.distancelaw != b.distancelaw) || (a.rawmode != b.rawmode) ||
+         (a.receive != b.receive) || (a.rectype != b.rectype) ||
+         (a.egogain != b.egogain) || (a.outputgain != b.outputgain) ||
+         (a.peer2peer != b.peer2peer) || (a.outputport1 != b.outputport1) ||
+         (a.outputport2 != b.outputport2) || (a.secrec != b.secrec) ||
+         (a.xports != b.xports) || (a.xrecport != b.xrecport) ||
+         (a.headtracking != b.headtracking) ||
          (a.headtrackingrotrec != b.headtrackingrotrec) ||
          (a.headtrackingrotsrc != b.headtrackingrotsrc) ||
          (a.headtrackingport != b.headtrackingport) ||
@@ -198,6 +201,8 @@ render_settings_t::render_settings_t()
       absorption(0.6),                    // double absorption;
       damping(0.7),                       // double damping;
       reverbgain(1.0),                    // double reverbgain;
+      reverbgainroom(1.0),                // double reverbgain;
+      reverbgaindev(1.0),                 // double reverbgain;
       renderreverb(true),                 // bool renderreverb;
       renderism(false),                   // bool renderism;
       distancelaw(false), rawmode(false), // bool rawmode;

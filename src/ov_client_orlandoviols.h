@@ -22,6 +22,7 @@
 
 #include "ov_types.h"
 #include <atomic>
+#include <mutex>
 #include <thread>
 
 class ov_client_orlandoviols_t : public ov_client_base_t {
@@ -51,6 +52,7 @@ private:
   bool isovbox;
   std::string owner;
   std::string refplugcfg;
+  std::mutex curlmtx;
 };
 
 #endif

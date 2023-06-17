@@ -190,6 +190,10 @@ public:
   float damping;
   /// linear gain of reverberation:
   float reverbgain;
+  /// linear gain of reverberation, room specific:
+  float reverbgainroom;
+  /// linear gain of reverberation, device specific:
+  float reverbgaindev;
   /// flag wether rendering of reverb is required or not:
   bool renderreverb;
   /// flag wether rendering of image source model (ISM) or not:
