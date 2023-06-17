@@ -23,6 +23,8 @@
 #include <iostream>
 #include <jack/jack.h>
 
+//#define SHOWDEBUG
+
 port_t get_zitaport_(stage_device_id_t deviceid, port_t offset,
                      port_t xoffset = 0)
 {
@@ -212,6 +214,21 @@ std::string ov_render_tascar_t::get_objmixcfg_as_json()
   catch(const std::exception& e) {
     std::cerr << e.what() << std::endl;
   }
+  try {
+    std::string pattern = "/";
+    pattern += get_deviceid();
+    pattern += "/main";
+    auto rev = tascar->find_audio_ports(std::vector<std::string>(1, pattern));
+    if(rev.size()) {
+      float g = rev[0]->get_gain();
+      if(in_room())
+        g /= stage.rendersettings.reverbgainroom;
+      cfg += ",\"main\":" + TASCAR::to_string(g);
+    }
+  }
+  catch(const std::exception& e) {
+    std::cerr << e.what() << std::endl;
+  }
   cfg += "}";
   return cfg;
 }
@@ -228,7 +245,7 @@ std::string ov_render_tascar_t::get_current_plugincfg_as_json(size_t channel)
     r += "\"" + plug.name + "\":";
     std::string prefix = std::string("/bus.") + thisdev.channels[channel].id +
                          "/ap" + std::to_string(pcnt) + "/" + plug.name;
-    r += tascar->get_vars_as_json(prefix, true) + ",";
+    r += tascar->get_vars_as_json(prefix, false) + ",";
     ++pcnt;
   }
   if(r[r.size() - 1] == ',')
@@ -1630,8 +1647,8 @@ void ov_render_tascar_t::set_render_settings(
     stage_device_id_t thisstagedeviceid)
 {
 #ifdef SHOWDEBUG
-  std::cout << "ov_render_tascar_t::set_render_settings " << rendersettings.id
-            << ", thisstagedeviceId: " << thisstagedeviceid << std::endl;
+  std::cout << "ov_render_tascar_t::set_render_settings " << (int)(rendersettings.id)
+            << ", thisstagedeviceId: " << (int)(thisstagedeviceid) << std::endl;
 #endif
   if((rendersettings != stage.rendersettings) ||
      (thisstagedeviceid != stage.thisstagedeviceid)) {

@@ -356,6 +356,8 @@ void ov_render_base_t::configure_audio_backend(
 
 void ov_render_base_t::set_thisdev(const stage_device_t& stagedevice)
 {
+  if(stagedevice != stage.thisdevice)
+     require_session_restart();
   stage.thisdevice = stagedevice;
 }
 
