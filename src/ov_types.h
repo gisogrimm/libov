@@ -21,12 +21,12 @@
 #ifndef OV_TYPES
 #define OV_TYPES
 
+#include <cstdint>
 #include <iostream>
 #include <map>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <cstdint>
 
 /**
     cartesian coordinates in meters, e.g., for room positions.
@@ -472,6 +472,10 @@ public:
   {
     return "{}";
   };
+  virtual std::string get_objmixcfg_as_json()
+  {
+    return "{}";
+  };
   void update_plugincfg(const std::string& cfg, size_t channel);
   /**
    * Return  current configuration of all input channel effect plugins
@@ -542,6 +546,7 @@ public:
    */
   virtual void upload_plugin_settings(){};
   virtual void upload_session_gains(){};
+  virtual void upload_objmix(){};
 
 protected:
   ov_render_base_t& backend;

@@ -68,12 +68,14 @@ public:
   std::string get_zita_path();
   std::string get_current_plugincfg_as_json(size_t channel);
   std::string get_all_current_plugincfg_as_json();
+  std::string get_objmixcfg_as_json();
   void get_session_gains(float& outputgain, float& egogain, float& reverbgain,
                          std::map<std::string, std::vector<float>>&);
   void set_zita_path(const std::string& path);
   void set_allow_systemmods(bool);
   void upload_plugin_settings();
   void upload_session_gains();
+  void upload_objmix();
   class metronome_t {
   public:
     metronome_t();

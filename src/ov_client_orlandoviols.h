@@ -34,6 +34,7 @@ public:
   std::string get_owner() const { return owner; };
   void upload_plugin_settings();
   void upload_session_gains();
+  void upload_objmix();
 
 private:
   void service();

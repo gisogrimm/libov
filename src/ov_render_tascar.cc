@@ -172,6 +172,48 @@ std::string ov_render_tascar_t::get_all_current_plugincfg_as_json()
   return currenteffectplugincfg;
 }
 
+std::string ov_render_tascar_t::get_objmixcfg_as_json()
+{
+  if(!tascar)
+    return "{}";
+  std::string cfg = "{channels:[";
+  size_t k = 0;
+  for(auto ch : stage.thisdevice.channels) {
+    try {
+      auto& snd = tascar->sound_by_id(ch.id);
+      if(k)
+        cfg += ",";
+      cfg += "{";
+      cfg += "name:'" + ch.name +
+             "',x:" + TASCAR::to_string(snd.local_position.x) +
+             ",y:" + TASCAR::to_string(snd.local_position.y) +
+             ",z:" + TASCAR::to_string(snd.local_position.z) +
+             ",gain:" + TASCAR::to_string(snd.get_gain());
+      cfg += "}";
+      ++k;
+    }
+    catch(const std::exception& e) {
+      std::cerr << e.what() << std::endl;
+    }
+  }
+  cfg += "]";
+  try {
+    std::string pattern = "/";
+    pattern += get_deviceid();
+    pattern += "/reverb";
+    auto rev =
+      tascar->find_audio_ports(std::vector<std::string>(1,pattern));
+    if( rev.size() ){
+      cfg+=",reverbgain:"+TASCAR::to_string(rev[0]->get_gain());
+    }
+  }
+  catch(const std::exception& e) {
+    std::cerr << e.what() << std::endl;
+  }
+  cfg += "}";
+  return cfg;
+}
+
 std::string ov_render_tascar_t::get_current_plugincfg_as_json(size_t channel)
 {
   stage_device_t& thisdev = stage.stage[stage.thisstagedeviceid];
@@ -201,7 +243,8 @@ void ov_render_tascar_t::get_session_gains(
   // reverbgain = stage.rendersettings.reverbgain;
   // outputgain = stage.rendersettings.outputgain;
   // if(tascar) {
-  //  // gain calculation: G_device * G_channel * (this: G_self | (!distancelaw:
+  //  // gain calculation: G_device * G_channel * (this: G_self |
+  //  (!distancelaw:
   //  // 0.6 | 1.0) )
   //  for(auto stagemember : stage.stage) {
   //    std::vector<float> gains;
@@ -628,6 +671,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
       // create reverb engine:
       tsccfg::node_t e_rvb(tsccfg::node_add_child(e_scene, "reverb"));
       tsccfg::node_set_attribute(e_rvb, "name", "reverb");
+      tsccfg::node_set_attribute(e_rvb, "id", "reverb");
       tsccfg::node_set_attribute(e_rvb, "type", "simplefdn");
       tsccfg::node_set_attribute(
           e_rvb, "volumetric",
@@ -968,10 +1012,27 @@ int osc_upload_session_gains(const char* path, const char* types, lo_arg** argv,
   return 1;
 }
 
+int osc_upload_objmix(const char* path, const char* types, lo_arg** argv,
+                      int argc, lo_message msg, void* user_data)
+{
+  if(user_data) {
+    ov_render_tascar_t* tsc(reinterpret_cast<ov_render_tascar_t*>(user_data));
+    tsc->upload_objmix();
+  }
+  return 1;
+}
+
 void ov_render_tascar_t::upload_session_gains()
 {
   if(client)
     client->upload_session_gains();
+}
+
+void ov_render_tascar_t::upload_objmix()
+{
+  if(client) {
+    client->upload_objmix();
+  }
 }
 
 void ov_render_tascar_t::start_session()
@@ -1128,6 +1189,7 @@ void ov_render_tascar_t::start_session()
             // create reverb engine:
             tsccfg::node_t e_rvb(tsccfg::node_add_child(e_scene, "reverb"));
             tsccfg::node_set_attribute(e_rvb, "name", "reverb");
+            tsccfg::node_set_attribute(e_rvb, "id", "reverb");
             tsccfg::node_set_attribute(e_rvb, "type", "simplefdn");
             tsccfg::node_set_attribute(
                 e_rvb, "volumetric",
@@ -1296,6 +1358,7 @@ void ov_render_tascar_t::start_session()
                        this);
     tascar->add_method("/uploadsessiongains", "", &osc_upload_session_gains,
                        this);
+    tascar->add_method("/uploadobjmix", "", &osc_upload_objmix, this);
   }
   catch(const std::exception& e) {
     DEBUG(e.what());
@@ -1531,7 +1594,8 @@ void ov_render_tascar_t::set_stage_device_channel_gain(
   //}
   // catch(const std::exception& e) {
   //  std::cerr << "Error: " << e.what()
-  //            << "\n(in ov_render_tascar_t::set_stage_device_channel_gain)\n";
+  //            << "\n(in
+  //            ov_render_tascar_t::set_stage_device_channel_gain)\n";
   //}
 }
 
@@ -1656,7 +1720,8 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
         // headtrack_tilturl =
         //    my_js_value(xcfg["headtrack"], "tilturl", std::string(""));
         // headtrack_tiltpath =
-        //    my_js_value(xcfg["headtrack"], "tiltpath", std::string("/tilt"));
+        //    my_js_value(xcfg["headtrack"], "tiltpath",
+        //    std::string("/tilt"));
         // headtrack_tiltmap = my_js_value(xcfg["headtrack"], "tiltmap",
         //                                std::string("0 0 180 180"));
         headtrack_eogpath =

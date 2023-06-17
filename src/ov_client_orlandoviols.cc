@@ -343,6 +343,14 @@ void ov_client_orlandoviols_t::upload_session_gains()
   //}
 }
 
+void ov_client_orlandoviols_t::upload_objmix()
+{
+  if(backend.is_session_active()){
+    std::string objmixscfg = backend.get_objmixcfg_as_json();
+    DEBUG(objmixscfg);
+  }
+}
+
 stage_device_t get_stage_dev(nlohmann::json& dev)
 {
   try {
