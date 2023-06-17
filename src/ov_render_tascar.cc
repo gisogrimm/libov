@@ -164,7 +164,7 @@ std::string ov_render_tascar_t::get_all_current_plugincfg_as_json()
 {
   std::string currenteffectplugincfg = "[";
   for(size_t ch = 0; ch < get_num_inputs(); ++ch) {
-    currenteffectplugincfg += get_current_plugincfg_as_json(ch);
+    currenteffectplugincfg += get_current_plugincfg_as_json(ch) + ",";
   }
   if(currenteffectplugincfg[currenteffectplugincfg.size() - 1] == ',')
     currenteffectplugincfg.erase(currenteffectplugincfg.size() - 1);
@@ -203,9 +203,10 @@ std::string ov_render_tascar_t::get_objmixcfg_as_json()
     pattern += "/reverb";
     auto rev = tascar->find_audio_ports(std::vector<std::string>(1, pattern));
     if(rev.size()) {
-      cfg += ",\"reverbgain\":" +
-             TASCAR::to_string(rev[0]->get_gain() /
-                               stage.rendersettings.reverbgainroom);
+      float g = rev[0]->get_gain();
+      if(in_room())
+        g /= stage.rendersettings.reverbgainroom;
+      cfg += ",\"reverbgain\":" + TASCAR::to_string(g);
     }
   }
   catch(const std::exception& e) {
@@ -217,7 +218,8 @@ std::string ov_render_tascar_t::get_objmixcfg_as_json()
 
 std::string ov_render_tascar_t::get_current_plugincfg_as_json(size_t channel)
 {
-  stage_device_t& thisdev = stage.stage[stage.thisstagedeviceid];
+  //stage_device_t& thisdev = stage.stage[stage.thisstagedeviceid];
+  stage_device_t& thisdev = stage.thisdevice;
   if((!tascar) || (channel >= thisdev.channels.size()))
     return "{}";
   std::string r = "{";
@@ -1555,7 +1557,6 @@ void ov_render_tascar_t::set_stage(
 void ov_render_tascar_t::set_stage_device_gain(
     const stage_device_id_t& stagedeviceid, float gain)
 {
-  DEBUG(gain);
   ov_render_base_t::set_stage_device_gain(stagedeviceid, gain);
   if(is_session_active() && tascar) {
     uint32_t k = 0;

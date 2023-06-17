@@ -22,6 +22,8 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
+//#define SHOWDEBUG
+
 #ifndef DEBUG
 #define DEBUG(x)                                                               \
   std::cerr << __FILE__ << ":" << __LINE__ << ": " << __PRETTY_FUNCTION__      \
@@ -98,9 +100,19 @@ bool operator!=(const zyx_euler_t& a, const zyx_euler_t& b)
 
 bool operator!=(const audio_device_t& a, const audio_device_t& b)
 {
-  return (a.drivername != b.drivername) || (a.devicename != b.devicename) ||
-         (a.srate != b.srate) || (a.periodsize != b.periodsize) ||
-         (a.numperiods != b.numperiods);
+  if((a.drivername != b.drivername) || (a.devicename != b.devicename) ||
+     (a.srate != b.srate) || (a.periodsize != b.periodsize) ||
+     (a.numperiods != b.numperiods)) {
+#ifdef SHOWDEBUG
+    DEBUGNEQ(a.drivername, b.drivername);
+    DEBUGNEQ(a.devicename, b.devicename);
+    DEBUGNEQ(a.srate, b.srate);
+    DEBUGNEQ(a.periodsize, b.periodsize);
+    DEBUGNEQ(a.numperiods, b.numperiods);
+#endif
+    return true;
+  }
+  return false;
 }
 
 bool operator==(const channel_plugin_t& a, const channel_plugin_t& b)
@@ -138,11 +150,19 @@ bool operator!=(const device_channel_t& a, const device_channel_t& b)
 bool operator!=(const std::vector<device_channel_t>& a,
                 const std::vector<device_channel_t>& b)
 {
-  if(a.size() != b.size())
+  if(a.size() != b.size()) {
+#ifdef SHOWDEBUG
+    DEBUGNEQ(a.size(), b.size());
+#endif
     return true;
+  }
   for(size_t k = 0; k < a.size(); ++k)
-    if(a[k] != b[k])
+    if(a[k] != b[k]) {
+#ifdef SHOWDEBUG
+      DEBUGNEQ2(a[k], b[k]);
+#endif
       return true;
+    }
   return false;
 }
 
@@ -173,26 +193,35 @@ bool operator!=(const stage_device_t& a, const stage_device_t& b)
 
 bool operator!=(const render_settings_t& a, const render_settings_t& b)
 {
-  return (a.id != b.id) || (a.roomsize != b.roomsize) ||
-         (a.absorption != b.absorption) || (a.damping != b.damping) ||
-         (a.reverbgain != b.reverbgain) ||
-         (a.reverbgainroom != b.reverbgainroom) ||
-         (a.reverbgaindev != b.reverbgaindev) ||
-         (a.renderreverb != b.renderreverb) || (a.renderism != b.renderism) ||
-         (a.distancelaw != b.distancelaw) || (a.rawmode != b.rawmode) ||
-         (a.receive != b.receive) || (a.rectype != b.rectype) ||
-         (a.egogain != b.egogain) || (a.outputgain != b.outputgain) ||
-         (a.peer2peer != b.peer2peer) || (a.outputport1 != b.outputport1) ||
-         (a.outputport2 != b.outputport2) || (a.secrec != b.secrec) ||
-         (a.xports != b.xports) || (a.xrecport != b.xrecport) ||
-         (a.headtracking != b.headtracking) ||
-         (a.headtrackingrotrec != b.headtrackingrotrec) ||
-         (a.headtrackingrotsrc != b.headtrackingrotsrc) ||
-         (a.headtrackingport != b.headtrackingport) ||
-         (a.ambientsound != b.ambientsound) ||
-         (a.ambientlevel != b.ambientlevel) || (a.lmetertc != b.lmetertc) ||
-         (a.lmeterfw != b.lmeterfw) || (a.delaycomp != b.delaycomp) ||
-         (a.decorr != b.decorr) || (a.usetcptunnel != b.usetcptunnel);
+  if((a.id != b.id) || (a.roomsize != b.roomsize) ||
+     (a.absorption != b.absorption) || (a.damping != b.damping) ||
+     (a.reverbgain != b.reverbgain) || (a.reverbgainroom != b.reverbgainroom) ||
+     (a.reverbgaindev != b.reverbgaindev) ||
+     (a.renderreverb != b.renderreverb) || (a.renderism != b.renderism) ||
+     (a.distancelaw != b.distancelaw) || (a.rawmode != b.rawmode) ||
+     (a.receive != b.receive) || (a.rectype != b.rectype) ||
+     (a.egogain != b.egogain) || (a.outputgain != b.outputgain) ||
+     (a.peer2peer != b.peer2peer) || (a.outputport1 != b.outputport1) ||
+     (a.outputport2 != b.outputport2) || (a.secrec != b.secrec) ||
+     (a.xports != b.xports) || (a.xrecport != b.xrecport) ||
+     (a.headtracking != b.headtracking) ||
+     (a.headtrackingrotrec != b.headtrackingrotrec) ||
+     (a.headtrackingrotsrc != b.headtrackingrotsrc) ||
+     (a.headtrackingport != b.headtrackingport) ||
+     (a.ambientsound != b.ambientsound) || (a.ambientlevel != b.ambientlevel) ||
+     (a.lmetertc != b.lmetertc) || (a.lmeterfw != b.lmeterfw) ||
+     (a.delaycomp != b.delaycomp) || (a.decorr != b.decorr) ||
+     (a.usetcptunnel != b.usetcptunnel)) {
+#ifdef SHOWDEBUG
+    DEBUGNEQ(a.id, b.id);
+    DEBUGNEQ2(a.roomsize, b.roomsize);
+    DEBUGNEQ(a.reverbgain, b.reverbgain);
+    DEBUGNEQ(a.reverbgainroom, b.reverbgainroom);
+    DEBUGNEQ(a.reverbgaindev, b.reverbgaindev);
+#endif
+    return true;
+  }
+  return false;
 }
 
 render_settings_t::render_settings_t()
@@ -292,8 +321,9 @@ void ov_render_base_t::update_plugincfg(const std::string& cfg, size_t channel)
 {
   if(channel < get_num_inputs()) {
     stage.thisdevice.channels[channel].update_plugin_cfg(cfg);
-    stage.stage[stage.thisstagedeviceid].channels[channel].update_plugin_cfg(
-        cfg);
+    if(stage.stage.size() > stage.thisstagedeviceid)
+      stage.stage[stage.thisstagedeviceid].channels[channel].update_plugin_cfg(
+          cfg);
   }
 }
 
@@ -307,9 +337,12 @@ void ov_render_base_t::configure_audio_backend(
 {
   // audio backend changed or was not active before:
   if((audiodevice != audiodevice_) || (!audio_active)) {
+    // ignore other parameters if set to "manual":
+    bool no_restart = (audiodevice.devicename == "manual") &&
+                      (audiodevice_.devicename == "manual");
     audiodevice = audiodevice_;
     // audio was active before, so we need to restart:
-    if(audio_active) {
+    if((!no_restart) && audio_active) {
       if(session_active) {
         require_session_restart();
         end_session();

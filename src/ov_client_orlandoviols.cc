@@ -32,6 +32,8 @@
 
 CURL* curl;
 
+bool nocancelwait = true;
+
 namespace webCURL {
 
   struct MemoryStruct {
@@ -292,7 +294,7 @@ void ov_client_orlandoviols_t::register_device(std::string url,
 void ov_client_orlandoviols_t::upload_plugin_settings()
 {
   nlohmann::json pluginscfg;
-  if(backend.is_session_active() && backend.in_room()) {
+  if(backend.is_session_active()) {
     std::string currenteffectplugincfg =
         backend.get_all_current_plugincfg_as_json();
     try {
@@ -327,6 +329,7 @@ void ov_client_orlandoviols_t::upload_plugin_settings()
           curl_easy_perform(curl);
           free(chunk.memory);
         }
+        nocancelwait = false;
       }
     }
     catch(const std::exception& e) {
@@ -383,6 +386,7 @@ void ov_client_orlandoviols_t::upload_objmix()
       }
       free(chunk.memory);
     }
+    nocancelwait = false;
   }
 }
 
@@ -554,8 +558,10 @@ void ov_client_orlandoviols_t::service()
                   my_js_value(js_reverb, "absorption", 0.6f);
               rendersettings.damping = my_js_value(js_reverb, "damping", 0.7f);
               rendersettings.reverbgain = my_js_value(js_reverb, "gain", 0.4f);
-              rendersettings.reverbgainroom = my_js_value(js_reverb, "roomgain", 0.4f);
-              rendersettings.reverbgaindev = my_js_value(js_reverb, "devgain", 1.0f);
+              rendersettings.reverbgainroom =
+                  my_js_value(js_reverb, "roomgain", 0.4f);
+              rendersettings.reverbgaindev =
+                  my_js_value(js_reverb, "devgain", 1.0f);
               GETJS(rendersettings, renderreverb);
               GETJS(rendersettings, renderism);
               GETJS(rendersettings, distancelaw);
@@ -673,10 +679,11 @@ void ov_client_orlandoviols_t::service()
         }
       }
       double t(0);
-      while((t < gracetime) && runservice) {
+      while((t < gracetime) && runservice && nocancelwait) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
         t += 0.001;
       }
+      nocancelwait = true;
     }
     catch(const std::exception& e) {
       std::cerr << "Error: " << e.what() << std::endl;
