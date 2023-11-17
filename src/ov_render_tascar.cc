@@ -235,7 +235,7 @@ std::string ov_render_tascar_t::get_objmixcfg_as_json()
 
 std::string ov_render_tascar_t::get_current_plugincfg_as_json(size_t channel)
 {
-  //stage_device_t& thisdev = stage.stage[stage.thisstagedeviceid];
+  // stage_device_t& thisdev = stage.stage[stage.thisstagedeviceid];
   stage_device_t& thisdev = stage.thisdevice;
   if((!tascar) || (channel >= thisdev.channels.size()))
     return "{}";
@@ -696,6 +696,8 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
       tsccfg::node_set_attribute(
           e_rvb, "volumetric",
           TASCAR::to_string(to_tascar(stage.rendersettings.roomsize)));
+      tsccfg::node_set_attribute(e_rvb, "forwardstages",
+                                 TASCAR::to_string(fdnforwardstages));
       tsccfg::node_set_attribute(e_rvb, "gainmethod", "original");
       tsccfg::node_set_attribute(e_rvb, "image", "false");
       tsccfg::node_set_attribute(e_rvb, "fdnorder", "5");
@@ -1362,6 +1364,14 @@ void ov_render_tascar_t::start_session()
     // std::ofstream ofh(stage.thisdeviceid + ".itsc");
     // ofh << tscinclude;
   }
+  if(mhaconfig.size()) {
+    tsccfg::node_t e_sys(tsccfg::node_add_child(e_mods, "system"));
+    tsccfg::node_set_attribute(
+        e_sys, "command",
+        std::string("mha ?read:" + stage.thisdeviceid + ".mhacfg"));
+    std::ofstream ofh(stage.thisdeviceid + ".mhacfg");
+    ofh << mhaconfig;
+  }
   tsc.save(folder + "ovbox_debugsession.tsc");
   tascar = new TASCAR::session_t(tsc.save_to_string(),
                                  TASCAR::session_t::LOAD_STRING, "");
@@ -1647,7 +1657,8 @@ void ov_render_tascar_t::set_render_settings(
     stage_device_id_t thisstagedeviceid)
 {
 #ifdef SHOWDEBUG
-  std::cout << "ov_render_tascar_t::set_render_settings " << (int)(rendersettings.id)
+  std::cout << "ov_render_tascar_t::set_render_settings "
+            << (int)(rendersettings.id)
             << ", thisstagedeviceId: " << (int)(thisstagedeviceid) << std::endl;
 #endif
   if((rendersettings != stage.rendersettings) ||
@@ -1718,6 +1729,10 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
       tscinclude = my_js_value(xcfg, "tscinclude", tscinclude);
       if(prev_tscinclude != tscinclude)
         restart_session = true;
+      std::string prev_mhaconfig(mhaconfig);
+      mhaconfig = my_js_value(xcfg, "mhaconfig", mhaconfig);
+      if(prev_mhaconfig != mhaconfig)
+        restart_session = true;
       if(xcfg["network"].is_object()) {
         double new_deadline =
             my_js_value(xcfg["network"], "deadline", sorter_deadline);
@@ -1769,6 +1784,7 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
           restart_session = true;
         UPDATEVAR_RESTART("render", zitasampleformat);
         UPDATEVAR_RESTART("render", useloudspeaker);
+        UPDATEVAR_RESTART("render", fdnforwardstages);
         UPDATEVAR_RESTART("render", echoc_nrep);
         UPDATEVAR_RESTART("render", echoc_maxdist);
         UPDATEVAR_RESTART("render", echoc_level);

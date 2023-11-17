@@ -176,6 +176,7 @@ private:
   bool mczita_autoconnect_rec = false;
   std::string zitasampleformat = "16bit";
   bool useloudspeaker = false;
+  uint32_t fdnforwardstages = 0u;
   float echoc_maxdist = 4.0;
   uint32_t echoc_nrep = 64;
   float echoc_level = 60.0;
@@ -187,6 +188,8 @@ private:
   port_t other_tascarport = 9871;
   port_t portoffset = 0;
   bool emptysessionismonitor = false;
+  // user provided MHA configuration:
+  std::string mhaconfig;
 };
 
 #endif

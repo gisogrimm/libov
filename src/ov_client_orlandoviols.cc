@@ -497,6 +497,10 @@ void ov_client_orlandoviols_t::service()
             std::ofstream ofh(folder + "ov-client.usedevversion");
             quitrequest_ = true;
           }
+          if(my_js_value(js_stagecfg, "installopenmha", false)) {
+            std::ofstream ofh(folder + "ov-client.installopenmha");
+            quitrequest_ = true;
+          }
           std::string hifiberry =
               my_js_value(js_stagecfg, "usehifiberry", std::string(""));
           if(hifiberry.size()) {
