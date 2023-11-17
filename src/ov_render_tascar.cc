@@ -701,6 +701,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
       tsccfg::node_set_attribute(e_rvb, "gainmethod", "original");
       tsccfg::node_set_attribute(e_rvb, "image", "false");
       tsccfg::node_set_attribute(e_rvb, "fdnorder", "5");
+      tsccfg::node_set_attribute(e_rvb, "lowcut", "125");
       tsccfg::node_set_attribute(e_rvb, "dw", "60");
       tsccfg::node_set_attribute(
           e_rvb, "absorption",
@@ -1216,9 +1217,12 @@ void ov_render_tascar_t::start_session()
             tsccfg::node_set_attribute(
                 e_rvb, "volumetric",
                 TASCAR::to_string(to_tascar(stage.rendersettings.roomsize)));
+            tsccfg::node_set_attribute(e_rvb, "forwardstages",
+                                       TASCAR::to_string(fdnforwardstages));
             tsccfg::node_set_attribute(e_rvb, "gainmethod", "original");
             tsccfg::node_set_attribute(e_rvb, "image", "false");
             tsccfg::node_set_attribute(e_rvb, "fdnorder", "5");
+            tsccfg::node_set_attribute(e_rvb, "lowcut", "125");
             tsccfg::node_set_attribute(e_rvb, "dw", "60");
             tsccfg::node_set_attribute(
                 e_rvb, "absorption",
