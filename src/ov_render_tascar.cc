@@ -547,6 +547,34 @@ void ov_render_tascar_t::add_network_receiver(
   }
 }
 
+tsccfg::node_t ov_render_tascar_t::configure_simplefdn(tsccfg::node_t e_scene)
+{
+  // create reverb engine:
+  tsccfg::node_t e_rvb(tsccfg::node_add_child(e_scene, "reverb"));
+  tsccfg::node_set_attribute(e_rvb, "name", "reverb");
+  tsccfg::node_set_attribute(e_rvb, "id", "reverb");
+  tsccfg::node_set_attribute(e_rvb, "type", "simplefdn");
+  tsccfg::node_set_attribute(
+      e_rvb, "volumetric",
+      TASCAR::to_string(to_tascar(stage.rendersettings.roomsize)));
+  tsccfg::node_set_attribute(e_rvb, "forwardstages",
+                             TASCAR::to_string(fdnforwardstages));
+  tsccfg::node_set_attribute(e_rvb, "gainmethod", "original");
+  tsccfg::node_set_attribute(e_rvb, "image", "false");
+  tsccfg::node_set_attribute(e_rvb, "fdnorder", TASCAR::to_string(fdnorder));
+  tsccfg::node_set_attribute(e_rvb, "lowcut", "125");
+  tsccfg::node_set_attribute(e_rvb, "truncate_forward", "true");
+  tsccfg::node_set_attribute(e_rvb, "dw", "60");
+  tsccfg::node_set_attribute(
+      e_rvb, "absorption", TASCAR::to_string(stage.rendersettings.absorption));
+  tsccfg::node_set_attribute(e_rvb, "damping",
+                             TASCAR::to_string(stage.rendersettings.damping));
+  tsccfg::node_set_attribute(
+      e_rvb, "gain",
+      TASCAR::to_string(20.0f * log10f(stage.rendersettings.reverbgain)));
+  return e_rvb;
+}
+
 void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
                                                   tsccfg::node_t e_rec,
                                                   tsccfg::node_t e_scene)
@@ -688,29 +716,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
           e_rvb, "damping", TASCAR::to_string(stage.rendersettings.damping));
     }
     if(stage.rendersettings.renderreverb) {
-      // create reverb engine:
-      tsccfg::node_t e_rvb(tsccfg::node_add_child(e_scene, "reverb"));
-      tsccfg::node_set_attribute(e_rvb, "name", "reverb");
-      tsccfg::node_set_attribute(e_rvb, "id", "reverb");
-      tsccfg::node_set_attribute(e_rvb, "type", "simplefdn");
-      tsccfg::node_set_attribute(
-          e_rvb, "volumetric",
-          TASCAR::to_string(to_tascar(stage.rendersettings.roomsize)));
-      tsccfg::node_set_attribute(e_rvb, "forwardstages",
-                                 TASCAR::to_string(fdnforwardstages));
-      tsccfg::node_set_attribute(e_rvb, "gainmethod", "original");
-      tsccfg::node_set_attribute(e_rvb, "image", "false");
-      tsccfg::node_set_attribute(e_rvb, "fdnorder", "5");
-      tsccfg::node_set_attribute(e_rvb, "lowcut", "125");
-      tsccfg::node_set_attribute(e_rvb, "dw", "60");
-      tsccfg::node_set_attribute(
-          e_rvb, "absorption",
-          TASCAR::to_string(stage.rendersettings.absorption));
-      tsccfg::node_set_attribute(
-          e_rvb, "damping", TASCAR::to_string(stage.rendersettings.damping));
-      tsccfg::node_set_attribute(
-          e_rvb, "gain",
-          TASCAR::to_string(20.0f * log10f(stage.rendersettings.reverbgain)));
+      configure_simplefdn(e_scene);
     }
     // ambient sounds:
     if(stage.rendersettings.ambientsound.size() && render_soundscape) {
@@ -1209,31 +1215,7 @@ void ov_render_tascar_t::start_session()
               tsccfg::node_set_attribute(e_snd, "layers", "2");
           }
           if(stage.rendersettings.renderreverb) {
-            // create reverb engine:
-            tsccfg::node_t e_rvb(tsccfg::node_add_child(e_scene, "reverb"));
-            tsccfg::node_set_attribute(e_rvb, "name", "reverb");
-            tsccfg::node_set_attribute(e_rvb, "id", "reverb");
-            tsccfg::node_set_attribute(e_rvb, "type", "simplefdn");
-            tsccfg::node_set_attribute(
-                e_rvb, "volumetric",
-                TASCAR::to_string(to_tascar(stage.rendersettings.roomsize)));
-            tsccfg::node_set_attribute(e_rvb, "forwardstages",
-                                       TASCAR::to_string(fdnforwardstages));
-            tsccfg::node_set_attribute(e_rvb, "gainmethod", "original");
-            tsccfg::node_set_attribute(e_rvb, "image", "false");
-            tsccfg::node_set_attribute(e_rvb, "fdnorder", "5");
-            tsccfg::node_set_attribute(e_rvb, "lowcut", "125");
-            tsccfg::node_set_attribute(e_rvb, "dw", "60");
-            tsccfg::node_set_attribute(
-                e_rvb, "absorption",
-                TASCAR::to_string(stage.rendersettings.absorption));
-            tsccfg::node_set_attribute(
-                e_rvb, "damping",
-                TASCAR::to_string(stage.rendersettings.damping));
-            tsccfg::node_set_attribute(
-                e_rvb, "gain",
-                TASCAR::to_string(20.0f *
-                                  log10f(stage.rendersettings.reverbgain)));
+            auto e_rvb = configure_simplefdn(e_scene);
             tsccfg::node_set_attribute(e_rvb, "volumetricgainwithdistance",
                                        "true");
           }
@@ -1789,6 +1771,7 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
         UPDATEVAR_RESTART("render", zitasampleformat);
         UPDATEVAR_RESTART("render", useloudspeaker);
         UPDATEVAR_RESTART("render", fdnforwardstages);
+        UPDATEVAR_RESTART("render", fdnorder);
         UPDATEVAR_RESTART("render", echoc_nrep);
         UPDATEVAR_RESTART("render", echoc_maxdist);
         UPDATEVAR_RESTART("render", echoc_level);

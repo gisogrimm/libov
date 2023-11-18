@@ -94,6 +94,8 @@ public:
 private:
   void create_virtual_acoustics(tsccfg::node_t session, tsccfg::node_t e_rec,
                                 tsccfg::node_t e_scene);
+  tsccfg::node_t configure_simplefdn(tsccfg::node_t e_scene);
+
   void create_raw_dev(tsccfg::node_t session);
   void add_secondary_bus(const stage_device_t& stagemember,
                          tsccfg::node_t& e_mods, tsccfg::node_t& e_session,
@@ -177,6 +179,7 @@ private:
   std::string zitasampleformat = "16bit";
   bool useloudspeaker = false;
   uint32_t fdnforwardstages = 0u;
+  uint32_t fdnorder = 5u;
   float echoc_maxdist = 4.0;
   uint32_t echoc_nrep = 64;
   float echoc_level = 60.0;
