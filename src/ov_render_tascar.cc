@@ -716,7 +716,11 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
           e_rvb, "damping", TASCAR::to_string(stage.rendersettings.damping));
     }
     if(stage.rendersettings.renderreverb) {
-      configure_simplefdn(e_scene);
+      //configure_simplefdn(e_scene);
+      auto e_rvb = configure_simplefdn(e_scene);
+      if( stage.thisdevice.channels.size() == 0 )
+        tsccfg::node_set_attribute(e_rvb, "volumetricgainwithdistance",
+                                   "true");
     }
     // ambient sounds:
     if(stage.rendersettings.ambientsound.size() && render_soundscape) {
