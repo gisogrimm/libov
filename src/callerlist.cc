@@ -91,9 +91,9 @@ void endpoint_list_t::cid_setpingtime(stage_device_id_t cid, double pingtime)
 void endpoint_list_t::set_hiresping(bool hr)
 {
   if(hr)
-    pingperiodms = 100;
+    pingperiodms = 50;
   else
-    pingperiodms = 2000;
+    pingperiodms = 500;
 }
 
 void endpoint_list_t::checkstatus()

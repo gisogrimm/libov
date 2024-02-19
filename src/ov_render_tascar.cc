@@ -1095,9 +1095,6 @@ void ov_render_tascar_t::start_session()
                              TASCAR::to_string(stage.rendersettings.lmetertc));
   tsccfg::node_set_attribute(e_session, "levelmeter_weight",
                              stage.rendersettings.lmeterfw);
-  // update ping timimng:
-  if(ovboxclient)
-    ovboxclient->set_hiresping(stage.thisdevice.hiresping);
   // create a virtual acoustics "scene":
   tsccfg::node_t e_scene(tsccfg::node_add_child(e_session, "scene"));
   tsccfg::node_set_attribute(e_scene, "name", stage.thisdeviceid);
@@ -1274,6 +1271,10 @@ void ov_render_tascar_t::start_session()
     for(auto proxyclient : proxyclients) {
       ovboxclient->add_proxy_client(proxyclient.first, proxyclient.second);
     }
+  }
+  // update ping timimng:
+  if(ovboxclient){
+    ovboxclient->set_hiresping(stage.thisdevice.hiresping);
   }
   if(mczita) {
     // tsccfg::node_t e_mods = tsccfg::node_add_child(e_session, "modules");
