@@ -1911,6 +1911,14 @@ std::string ov_render_tascar_t::get_client_stats()
   return jsstat.dump();
 }
 
+size_t ov_render_tascar_t::get_xruns()
+{
+  if( tascar ){
+    return tascar->get_xruns();
+  }
+  return 0;
+}
+
 /*
  * Local Variables:
  * compile-command: "make -C .."

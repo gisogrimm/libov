@@ -213,6 +213,7 @@ std::string ov_client_orlandoviols_t::device_update(std::string url,
   jsdevice["networkdevices"] = getnetworkdevices();
   jsdevice["backendperiodsize"] = backend.get_periodsize();
   jsdevice["backendsrate"] = backend.get_srate();
+  jsdevice["backendxruns"] = backend.get_xruns();
   std::string curlstrdevice(jsdevice.dump());
   CURLcode res;
   std::string retv;

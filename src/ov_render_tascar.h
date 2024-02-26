@@ -76,6 +76,7 @@ public:
   void upload_plugin_settings();
   void upload_session_gains();
   void upload_objmix();
+  size_t get_xruns();
   class metronome_t {
   public:
     metronome_t();

@@ -510,6 +510,10 @@ public:
    * @brief Return current sampling rate in Hz
    */
   virtual size_t get_srate() { return audiodevice.srate; };
+  /**
+   * @brief Return current number of x-runs
+   */
+  virtual size_t get_xruns() { return 0; };
 
 protected:
   audio_device_t audiodevice;
