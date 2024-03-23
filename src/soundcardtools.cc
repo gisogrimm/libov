@@ -21,8 +21,11 @@
 
 #include <iostream>
 
-#ifndef __APPLE__
+#ifdef LINUX
 #include <alsa/asoundlib.h>
+#endif
+#ifdef WIN32
+#include <portaudio.h>
 #endif
 
 #include "common.h"
@@ -30,7 +33,7 @@
 std::vector<snddevname_t> list_sound_devices()
 {
   std::vector<snddevname_t> retv;
-#ifndef __APPLE__
+#ifdef LINUX
   char** hints;
   int err;
   char** n;
@@ -79,14 +82,28 @@ std::vector<snddevname_t> list_sound_devices()
       }
     }
   }
-#else
+#endif
+#ifdef DARWIN
   sound_card_tools_t sndcards;
   auto cards = sndcards.get_sound_devices();
   for(auto card : cards) {
     retv.push_back({card.id, card.name});
   }
 #endif
-  return retv;
+#ifdef WIN32
+  // add code to list valid devices, probably portaudio
+  int numDevices;
+  numDevices = Pa_GetDeviceCount();
+  if(numDevices >= 0)
+
+    const PaDeviceInfo* deviceInfo;
+  for(i = 0; i < numDevices; i++) {
+    deviceInfo = Pa_GetDeviceInfo(i);
+    retv.push_back({deviceInfo.name, deviceInfo.name});
+  }
+}
+#endif
+return retv;
 }
 
 std::string url2localfilename(const std::string& url)

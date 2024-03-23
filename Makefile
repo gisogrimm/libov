@@ -119,7 +119,7 @@ else
 #		endif
 	endif
 	ifeq ($(UNAME_S),Darwin)
-		OSFLAG += -D OSX
+		OSFLAG += -D OSX -D DARWIN
 		LDFLAGS += -framework IOKit -framework CoreFoundation
 		CXXFLAGS += -I`brew --prefix libsoundio`/include
 #		LDLIBS += `brew --prefix libsoundio`

@@ -20,7 +20,7 @@
 #ifndef SOUNDCARDTOOLS_H
 #define SOUNDCARDTOOLS_H
 
-#ifndef LINUX
+#ifdef DARWIN
 #include <soundio/soundio.h>
 #endif
 #include <string>
