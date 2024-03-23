@@ -606,7 +606,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
     double stagewidth(160);
     double az(-0.5 * stagewidth);
     double daz(stagewidth / (stage.stage.size() - (!b_sender)) * DEG2RAD);
-    az = az * (M_PI / 180.0) - 0.5 * daz;
+    az = az * DEG2RAD - 0.5 * daz;
     double radius(1.2);
     ego_source_names.clear();
     // create sound sources:
@@ -624,7 +624,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
             pos.x = radius * cos(az);
             pos.y = -radius * sin(az);
             pos.z = 0;
-            rot.z = (180 / M_PI * (-az + M_PI));
+            rot.z = (RAD2DEG * (-az + TASCAR_PI));
             rot.y = 0;
             rot.x = 0;
           }
