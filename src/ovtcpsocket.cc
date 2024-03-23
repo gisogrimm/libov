@@ -98,7 +98,11 @@ void ovtcpsocket_t::acceptor()
   while(run_server) {
     try {
       endpoint_t ep;
-      unsigned int len = sizeof(ep);
+#ifdef WIN32
+      int len = sizeof(ep);
+#else
+      socketlen_t len = sizeof(ep);
+#endif
       int clientfd = accept(sockfd, (struct sockaddr*)(&ep), &len);
       if(clientfd >= 0) {
         if(handlethreads.count(clientfd)) {
