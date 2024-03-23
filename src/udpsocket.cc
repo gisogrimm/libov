@@ -128,8 +128,10 @@ void udpsocket_t::set_netpriority(int priority)
 void udpsocket_t::set_expedited_forwarding_PHB()
 {
 #ifndef __APPLE__
+#ifndef WIN32
   int iptos = IPTOS_DSCP_EF;
   setsockopt(sockfd, IPPROTO_IP, IP_TOS, &iptos, sizeof(iptos));
+#endif
 #endif
   set_netpriority(6);
 }
@@ -494,6 +496,7 @@ endpoint_t getipaddr()
 std::vector<std::string> getnetworkdevices()
 {
   std::vector<std::string> devices;
+#ifndef WIN32
   struct ifaddrs* addrs;
   getifaddrs(&addrs);
   struct ifaddrs* tmp = addrs;
@@ -503,6 +506,7 @@ std::vector<std::string> getnetworkdevices()
     tmp = tmp->ifa_next;
   }
   freeifaddrs(addrs);
+#endif
   return devices;
 }
 
