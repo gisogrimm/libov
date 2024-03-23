@@ -70,7 +70,11 @@ port_t ovtcpsocket_t::bind(port_t port, bool loopback)
   if(mainthread.joinable())
     mainthread.join();
   mainthread = std::thread(&ovtcpsocket_t::acceptor, this);
+#ifdef WIN32
+  int addrlen(sizeof(endpoint_t));
+#else
   socklen_t addrlen(sizeof(endpoint_t));
+#endif
   getsockname(sockfd, (struct sockaddr*)&my_addr, &addrlen);
   targetport = ntohs(my_addr.sin_port);
   return targetport;
@@ -292,8 +296,10 @@ void ovtcpsocket_t::set_netpriority(int priority)
 void ovtcpsocket_t::set_expedited_forwarding_PHB()
 {
 #ifndef __APPLE__
+#ifndef WIN32
   int iptos = IPTOS_DSCP_EF;
   setsockopt(sockfd, IPPROTO_IP, IP_TOS, &iptos, sizeof(iptos));
+#endif
 #endif
   set_netpriority(6);
 }
