@@ -605,8 +605,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
     // we take positions transferred from database server):
     double stagewidth(160);
     double az(-0.5 * stagewidth);
-    double daz(stagewidth / (stage.stage.size() - (!b_sender)) *
-               (M_PI / 180.0));
+    double daz(stagewidth / (stage.stage.size() - (!b_sender)) * DEG2RAD);
     az = az * (M_PI / 180.0) - 0.5 * daz;
     double radius(1.2);
     ego_source_names.clear();
@@ -716,11 +715,9 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
           e_rvb, "damping", TASCAR::to_string(stage.rendersettings.damping));
     }
     if(stage.rendersettings.renderreverb) {
-      //configure_simplefdn(e_scene);
       auto e_rvb = configure_simplefdn(e_scene);
-      if( stage.thisdevice.channels.size() == 0 )
-        tsccfg::node_set_attribute(e_rvb, "volumetricgainwithdistance",
-                                   "true");
+      if(stage.thisdevice.channels.size() == 0)
+        tsccfg::node_set_attribute(e_rvb, "volumetricgainwithdistance", "true");
     }
     // ambient sounds:
     if(stage.rendersettings.ambientsound.size() && render_soundscape) {
@@ -1273,7 +1270,7 @@ void ov_render_tascar_t::start_session()
     }
   }
   // update ping timimng:
-  if(ovboxclient){
+  if(ovboxclient) {
     ovboxclient->set_hiresping(stage.thisdevice.hiresping);
   }
   if(mczita) {
@@ -1470,14 +1467,22 @@ void ov_render_tascar_t::start_audiobackend()
         if(!devs.empty())
           devname = std::string("plug") + devs.rbegin()->dev;
       }
-#ifndef __APPLE__
+#ifdef LINUX
       setenv("JACK_NO_AUDIO_RESERVATION", "1", 1);
       sprintf(cmd,
               "jackd --sync -P 40 -d alsa -d '%s' "
               "-r %g -p %d -n %d",
               devname.c_str(), audiodevice.srate, audiodevice.periodsize,
               audiodevice.numperiods);
-#else
+#endif
+#ifdef WIN32
+      sprintf(cmd,
+              "jackd --sync -P 40 -d portaudio -d '%s' "
+              "-r %g -p %d -n %d",
+              devname.c_str(), audiodevice.srate, audiodevice.periodsize,
+              audiodevice.numperiods);
+#endif
+#ifdef DARWIN
       bool setdev(true);
       if((devname == "highest") || (devname == "plughighest") ||
          (devname == "hw:1") || (devname == "plughw:1"))
@@ -1913,7 +1918,7 @@ std::string ov_render_tascar_t::get_client_stats()
 
 size_t ov_render_tascar_t::get_xruns()
 {
-  if( tascar ){
+  if(tascar) {
     return tascar->get_xruns();
   }
   return 0;
