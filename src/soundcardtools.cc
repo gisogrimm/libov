@@ -92,18 +92,16 @@ std::vector<snddevname_t> list_sound_devices()
 #endif
 #ifdef WIN32
   // add code to list valid devices, probably portaudio
-  int numDevices;
-  numDevices = Pa_GetDeviceCount();
-  if(numDevices >= 0)
-
+  int numDevices = Pa_GetDeviceCount();
+  if(numDevices >= 0) {
     const PaDeviceInfo* deviceInfo;
-  for(i = 0; i < numDevices; i++) {
-    deviceInfo = Pa_GetDeviceInfo(i);
-    retv.push_back({deviceInfo.name, deviceInfo.name});
+    for(int i = 0; i < numDevices; i++) {
+      deviceInfo = Pa_GetDeviceInfo(i);
+      retv.push_back({deviceInfo->name, deviceInfo->name});
+    }
   }
-}
 #endif
-return retv;
+  return retv;
 }
 
 std::string url2localfilename(const std::string& url)
@@ -126,7 +124,7 @@ std::string url2localfilename(const std::string& url)
   return std::to_string(std::hash<std::string>{}(url)) + extension;
 }
 
-#ifndef LINUX
+#ifdef DARWIN
 
 sound_card_tools_t::sound_card_tools_t()
 {
