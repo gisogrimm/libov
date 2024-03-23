@@ -101,7 +101,7 @@ void ovtcpsocket_t::acceptor()
 #ifdef WIN32
       int len = sizeof(ep);
 #else
-      socketlen_t len = sizeof(ep);
+      socklen_t len = sizeof(ep);
 #endif
       int clientfd = accept(sockfd, (struct sockaddr*)(&ep), &len);
       if(clientfd >= 0) {
