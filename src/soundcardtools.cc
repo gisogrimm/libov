@@ -109,7 +109,7 @@ std::vector<snddevname_t> list_sound_devices()
           std::string devname = deviceInfo->name;
           if(apiinfo)
             devname = std::string(apiinfo->name) + ": " + devname;
-          retv.push_back({TASCAR::to_string(i), devname});
+          retv.push_back({std::to_string(i), devname});
         }
       }
     }
