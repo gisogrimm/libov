@@ -105,10 +105,10 @@ std::vector<snddevname_t> list_sound_devices()
           DEBUG(deviceInfo->name);
           DEBUG(deviceInfo->maxInputChannels);
           DEBUG(deviceInfo->maxOutputChannels);
-          const PaHostApiInfo* = Pa_GetHostApiInfo(deviceInfo->hostApi);
+          const PaHostApiInfo* apiinfo = Pa_GetHostApiInfo(deviceInfo->hostApi);
           std::string devname = deviceInfo->name;
-          if(PaHostApiInfo)
-            devname = std::string(PaHostApiInfo->name) + ": " + devname;
+          if(apiinfo)
+            devname = std::string(apiinfo->name) + ": " + devname;
           retv.push_back({TASCAR::to_string(i), devname});
         }
       }
