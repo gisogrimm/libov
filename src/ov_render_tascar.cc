@@ -1475,8 +1475,9 @@ void ov_render_tascar_t::start_audiobackend()
       setenv("JACK_NO_AUDIO_RESERVATION", "1", 1);
       sprintf(cmd,
               "jackd --sync -P 40 -d alsa -d '%s' "
-              "-r %g -p %d",
-              devname.c_str(), audiodevice.srate, audiodevice.periodsize);
+              "-r %g -p %d -n %d",
+              devname.c_str(), audiodevice.srate, audiodevice.periodsize,
+              audiodevice.numperiods);
 #endif
 #ifdef WIN32
       if( devname.size() > 0 )
@@ -1484,9 +1485,8 @@ void ov_render_tascar_t::start_audiobackend()
       DEBUG(devname);
       sprintf(cmd,
               "jackd --sync -P 40 -d portaudio %s "
-              "-r %g -p %d -n %d",
-              devname.c_str(), audiodevice.srate, audiodevice.periodsize,
-              audiodevice.numperiods);
+              "-r %g -p %d",
+              devname.c_str(), audiodevice.srate, audiodevice.periodsize);
 #endif
 #ifdef DARWIN
       bool setdev(true);
