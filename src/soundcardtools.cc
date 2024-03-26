@@ -92,18 +92,25 @@ std::vector<snddevname_t> list_sound_devices()
 #endif
 #ifdef WIN32
   auto err = Pa_Initialize();
-  if( err == paNoError ){
+  if(err == paNoError) {
     int numDevices = Pa_GetDeviceCount();
     DEBUG(numDevices);
     if(numDevices >= 0) {
       const PaDeviceInfo* deviceInfo;
       for(int i = 0; i < numDevices; i++) {
+
         DEBUG(i);
         deviceInfo = Pa_GetDeviceInfo(i);
-        DEBUG(deviceInfo->name);
-        DEBUG(deviceInfo->maxInputChannels);
-        DEBUG(deviceInfo->maxOutputChannels);
-        retv.push_back({deviceInfo->name, deviceInfo->name});
+        if(deviceInfo->maxInputChannels + deviceInfo->maxOutputChannels > 0) {
+          DEBUG(deviceInfo->name);
+          DEBUG(deviceInfo->maxInputChannels);
+          DEBUG(deviceInfo->maxOutputChannels);
+          const PaHostApiInfo* = Pa_GetHostApiInfo(deviceInfo->hostApi);
+          std::string devname = deviceInfo->name;
+          if(PaHostApiInfo)
+            devname = std::string(PaHostApiInfo->name) + ": " + devname;
+          retv.push_back({TASCAR::to_string(i), devname});
+        }
       }
     }
     Pa_Terminate();
