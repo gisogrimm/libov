@@ -1458,7 +1458,10 @@ void ov_render_tascar_t::start_audiobackend()
         auto devs(list_sound_devices());
         if(!devs.empty())
           devname = devs.rbegin()->dev;
+        else
+          devname = "";
       }
+#ifdef LINUX
       if(audiodevice.devicename == "plughighest") {
         // the device name is not set, use the last one of available
         // devices because this is most likely the one to use (e.g.,
@@ -1467,6 +1470,7 @@ void ov_render_tascar_t::start_audiobackend()
         if(!devs.empty())
           devname = std::string("plug") + devs.rbegin()->dev;
       }
+#end
 #ifdef LINUX
       setenv("JACK_NO_AUDIO_RESERVATION", "1", 1);
       sprintf(cmd,
@@ -1476,8 +1480,11 @@ void ov_render_tascar_t::start_audiobackend()
               audiodevice.numperiods);
 #endif
 #ifdef WIN32
+      if( devname.size() > 0 )
+        devname = "-d '"+devname+"'";
+      DEBUG(devname);
       sprintf(cmd,
-              "jackd --sync -P 40 -d portaudio -d '%s' "
+              "jackd --sync -P 40 -d portaudio %s "
               "-r %g -p %d -n %d",
               devname.c_str(), audiodevice.srate, audiodevice.periodsize,
               audiodevice.numperiods);
