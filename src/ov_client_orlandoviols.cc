@@ -113,7 +113,9 @@ bool ov_client_orlandoviols_t::report_error(std::string url,
   curl_easy_setopt(curl, CURLOPT_USERAGENT, "libcurl-agent/1.0");
   curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
   curl_easy_setopt(curl, CURLOPT_POSTFIELDS, msg.c_str());
-  if(curl_easy_perform(curl) != CURLE_OK) {
+  CURLcode err = CURLE_OK;
+  if((err = curl_easy_perform(curl)) != CURLE_OK) {
+    DEBUG(curl_easy_strerror(err));
     free(chunk.memory);
     return false;
   }
@@ -166,6 +168,8 @@ bool ov_client_orlandoviols_t::download_file(const std::string& url,
     ofh.write(chunk.memory, chunk.size);
     free(chunk.memory);
     return true;
+  } else {
+    DEBUG(curl_easy_strerror(res));
   }
   free(chunk.memory);
   return false;
@@ -235,8 +239,11 @@ std::string ov_client_orlandoviols_t::device_update(std::string url,
     curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, curlstrdevice.c_str());
     res = curl_easy_perform(curl);
-    if(res == CURLE_OK)
+    if(res == CURLE_OK) {
       retv.insert(0, chunk.memory, chunk.size);
+    } else {
+      DEBUG(curl_easy_strerror(res));
+    }
     free(chunk.memory);
   }
   std::stringstream ss(retv);
@@ -270,7 +277,7 @@ void ov_client_orlandoviols_t::register_device(std::string url,
       (char*)malloc(1); /* will be grown as needed by the realloc above */
   chunk.size = 0;       /* no data at this point */
   url += "?setver=" + device + "&ver=ovclient-" + OVBOXVERSION;
-  int err = CURLE_OK;
+  CURLcode err = CURLE_OK;
   {
     std::lock_guard<std::mutex> lock(curlmtx);
     curl_easy_reset(curl);
@@ -283,7 +290,8 @@ void ov_client_orlandoviols_t::register_device(std::string url,
   }
   if(err != CURLE_OK) {
     free(chunk.memory);
-    throw TASCAR::ErrMsg("Unable to register device with url \"" + url + "\".");
+    throw TASCAR::ErrMsg("Unable to register device with url \"" + url +
+                         "\". " + std::string(curl_easy_strerror(err)));
   }
   std::string result;
   result.insert(0, chunk.memory, chunk.size);
