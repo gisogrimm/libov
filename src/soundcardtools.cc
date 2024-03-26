@@ -93,10 +93,13 @@ std::vector<snddevname_t> list_sound_devices()
 #ifdef WIN32
   // add code to list valid devices, probably portaudio
   int numDevices = Pa_GetDeviceCount();
+  DEBUG(numDevices);
   if(numDevices >= 0) {
     const PaDeviceInfo* deviceInfo;
     for(int i = 0; i < numDevices; i++) {
+      DEBUG(i);
       deviceInfo = Pa_GetDeviceInfo(i);
+      DEBUG(deviceInfo->name);
       retv.push_back({deviceInfo->name, deviceInfo->name});
     }
   }
