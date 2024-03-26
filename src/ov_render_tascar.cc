@@ -1470,7 +1470,7 @@ void ov_render_tascar_t::start_audiobackend()
         if(!devs.empty())
           devname = std::string("plug") + devs.rbegin()->dev;
       }
-#end
+#endif
 #ifdef LINUX
       setenv("JACK_NO_AUDIO_RESERVATION", "1", 1);
       sprintf(cmd,
