@@ -94,21 +94,20 @@ std::vector<snddevname_t> list_sound_devices()
   auto err = Pa_Initialize();
   if(err == paNoError) {
     int numDevices = Pa_GetDeviceCount();
-    DEBUG(numDevices);
     if(numDevices >= 0) {
       const PaDeviceInfo* deviceInfo;
       for(int i = 0; i < numDevices; i++) {
-
-        DEBUG(i);
         deviceInfo = Pa_GetDeviceInfo(i);
         if(deviceInfo->maxInputChannels + deviceInfo->maxOutputChannels > 0) {
-          DEBUG(deviceInfo->name);
-          DEBUG(deviceInfo->maxInputChannels);
-          DEBUG(deviceInfo->maxOutputChannels);
           const PaHostApiInfo* apiinfo = Pa_GetHostApiInfo(deviceInfo->hostApi);
           std::string devname = deviceInfo->name;
           if(apiinfo)
             devname = std::string(apiinfo->name) + ": " + devname;
+          devname += " ";
+          if( deviceInfo->maxInputChannels > 0 )
+            devname += std::string(deviceInfo->maxInputChannels)+"i";
+          if( deviceInfo->maxOutputChannels > 0 )
+            devname += std::string(deviceInfo->maxOutputChannels)+"o";
           retv.push_back({std::to_string(i), devname});
         }
       }
