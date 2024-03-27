@@ -1482,7 +1482,6 @@ void ov_render_tascar_t::start_audiobackend()
 #ifdef WIN32
       if( devname.size() > 0 )
         devname = "-d '"+devname+"'";
-      DEBUG(devname);
       sprintf(cmd,
               "jackd --sync -P 40 -d portaudio %s "
               "-r %g -p %d",
