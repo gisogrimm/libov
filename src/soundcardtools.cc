@@ -105,9 +105,9 @@ std::vector<snddevname_t> list_sound_devices()
             devname = std::string(apiinfo->name) + ": " + devname;
           devname += " ";
           if( deviceInfo->maxInputChannels > 0 )
-            devname += std::string((int)(deviceInfo->maxInputChannels))+"i";
+            devname += std::to_string((int)(deviceInfo->maxInputChannels))+"i";
           if( deviceInfo->maxOutputChannels > 0 )
-            devname += std::string((int)(deviceInfo->maxOutputChannels))+"o";
+            devname += std::to_string((int)(deviceInfo->maxOutputChannels))+"o";
           retv.push_back({std::to_string(i), devname});
         }
       }
