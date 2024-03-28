@@ -1480,7 +1480,7 @@ void ov_render_tascar_t::start_audiobackend()
               audiodevice.numperiods);
 #endif
 #ifdef WIN32
-      if(devname.find(" ") != devname.end())
+      if(devname.find(" ") != std::string::npos)
         devname = "\"" + devname + "\"";
       if(devname.size() > 0)
         devname = "-d " + devname + "";
