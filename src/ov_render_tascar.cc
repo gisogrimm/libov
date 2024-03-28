@@ -1480,8 +1480,10 @@ void ov_render_tascar_t::start_audiobackend()
               audiodevice.numperiods);
 #endif
 #ifdef WIN32
-      if( devname.size() > 0 )
-        devname = "-d '"+devname+"'";
+      if(devname.find(" ") != devname.end())
+        devname = "\"" + devname + "\"";
+      if(devname.size() > 0)
+        devname = "-d " + devname + "";
       sprintf(cmd,
               "jackd --sync -P 40 -d portaudio %s "
               "-r %g -p %d",
