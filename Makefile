@@ -89,9 +89,9 @@ TASCARSOURCE = omni cardioidmod
 
 TASCARMODULS = system touchosc waitforjackport route jackrec sleep	\
   epicycles hossustain hoafdnrot matrix savegains granularsynth		\
-  oscserver oscrelay pos2osc echoc oscheadtracker
+  oscserver oscrelay pos2osc echoc oscheadtracker lsl2osc
 
-TASCARMODULSGUI = tracegui
+TASCARMODULSGUI = tracegui datalogging
 
 TASCARAUDIOPLUGS = sndfile delay metronome bandpass filter	\
   loopmachine spksim tubesim feedbackdelay gain sine pink noise flanger
