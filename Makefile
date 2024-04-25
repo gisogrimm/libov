@@ -19,7 +19,7 @@ BASEOBJ = ov_types errmsg common udpsocket ovtcpsocket callerlist	\
 OBJ = $(BASEOBJ) ovboxclient ov_client_orlandoviols	\
   ov_render_tascar soundcardtools
 
-
+HAS_LSL:=$(shell $(mkfile_path)/tascar/check_for_lsl)
 
 
 # please no c++2a or c++20, max 17 for the time being (c++-2a breaks
@@ -89,7 +89,11 @@ TASCARSOURCE = omni cardioidmod
 
 TASCARMODULS = system touchosc waitforjackport route jackrec sleep	\
   epicycles hossustain hoafdnrot matrix savegains granularsynth		\
-  oscserver oscrelay pos2osc echoc oscheadtracker lsl2osc
+  oscserver oscrelay pos2osc echoc oscheadtracker
+
+ifeq "$(HAS_LSL)" "yes"
+TASCARMODULS += lsl2osc
+endif
 
 TASCARMODULSGUI = tracegui datalogging
 
