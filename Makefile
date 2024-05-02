@@ -19,8 +19,7 @@ BASEOBJ = ov_types errmsg common udpsocket ovtcpsocket callerlist	\
 OBJ = $(BASEOBJ) ovboxclient ov_client_orlandoviols	\
   ov_render_tascar soundcardtools
 
-HAS_LSL:=$(shell $(mkfile_path)/tascar/check_for_lsl)
-
+HAS_LSL:=$(shell tascar/check_for_lsl)
 
 # please no c++2a or c++20, max 17 for the time being (c++-2a breaks
 # build on CI pipeline for Ubuntu and arm)
