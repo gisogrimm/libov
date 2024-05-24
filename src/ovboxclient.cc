@@ -18,6 +18,7 @@
  * Version 3 along with ovbox. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
 #include "ovboxclient.h"
 #include <condition_variable>
 #include <string.h>
