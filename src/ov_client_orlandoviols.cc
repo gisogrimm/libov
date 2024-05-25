@@ -27,7 +27,9 @@
 #include <fstream>
 #include <sstream>
 #include <string.h>
+#ifndef WIN32
 #include <sys/utsname.h>
+#endif
 #include <unistd.h>
 //#include <filesystem>
 
@@ -71,12 +73,16 @@ ov_client_orlandoviols_t::ov_client_orlandoviols_t(ov_render_base_t& backend,
   curl = curl_easy_init();
   if(!curl)
     throw ErrMsg("Unable to initialize curl");
+#ifdef WIN32
+  uname_sysname = "WIN32";
+#else
   struct utsname buffer;
   if(uname(&buffer) == 0) {
     uname_sysname = buffer.sysname;
     uname_release = buffer.release;
     uname_machine = buffer.machine;
   }
+#endif
 }
 
 void ov_client_orlandoviols_t::start_service()
