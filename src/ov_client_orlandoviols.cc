@@ -27,6 +27,7 @@
 #include <fstream>
 #include <sstream>
 #include <string.h>
+#include <sys/utsname.h>
 #include <unistd.h>
 //#include <filesystem>
 
@@ -70,6 +71,12 @@ ov_client_orlandoviols_t::ov_client_orlandoviols_t(ov_render_base_t& backend,
   curl = curl_easy_init();
   if(!curl)
     throw ErrMsg("Unable to initialize curl");
+  struct utsname buffer;
+  if(uname(&buffer) == 0) {
+    uname_sysname = buffer.sysname;
+    uname_release = buffer.release;
+    uname_machine = buffer.machine;
+  }
 }
 
 void ov_client_orlandoviols_t::start_service()
@@ -218,6 +225,9 @@ std::string ov_client_orlandoviols_t::device_update(std::string url,
   jsdevice["backendperiodsize"] = backend.get_periodsize();
   jsdevice["backendsrate"] = backend.get_srate();
   jsdevice["backendxruns"] = backend.get_xruns();
+  jsdevice["uname_sysname"] = uname_sysname;
+  jsdevice["uname_release"] = uname_release;
+  jsdevice["uname_machine"] = uname_machine;
   std::string curlstrdevice(jsdevice.dump());
   CURLcode res;
   std::string retv;

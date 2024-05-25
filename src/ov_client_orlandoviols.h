@@ -53,6 +53,10 @@ private:
   std::string owner;
   std::string refplugcfg;
   std::mutex curlmtx;
+  // system information:
+  std::string uname_sysname;
+  std::string uname_release;
+  std::string uname_machine;
 };
 
 #endif
