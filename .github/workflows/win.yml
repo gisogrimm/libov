@@ -25,11 +25,5 @@ jobs:
       run: git submodule init && git submodule update --init --recursive
     - name: lineendings
       run: git config --global core.autocrlf true
-    - name: getlibltc
-      run: git clone https://github.com/x42/libltc -b v1.3.2
-    - name: buildlibltc
-      run: (cd libltc && ./autogen.sh && make)
-    - name: installlibltc
-      run: (cd libltc && make install)
     - name: build
       run: make

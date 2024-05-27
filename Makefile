@@ -88,7 +88,14 @@ TASCARSOURCE = omni cardioidmod
 
 TASCARMODULS = system touchosc waitforjackport route jackrec sleep	\
   epicycles hossustain hoafdnrot matrix savegains granularsynth		\
-  oscserver oscrelay pos2osc echoc oscheadtracker systime ltcgen
+  oscserver oscrelay pos2osc echoc oscheadtracker systime
+
+ifeq ($(UNAME_S),Linux)
+TASCARMODULS += ltcgen
+endif
+ifeq ($(UNAME_S),Darwin)
+TASCARMODULS += ltcgen
+endif
 
 ifeq "$(HAS_LSL)" "yes"
 TASCARMODULS += lsl2osc
