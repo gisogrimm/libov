@@ -96,8 +96,9 @@ endif
 
 TASCARMODULSGUI = tracegui datalogging
 
-TASCARAUDIOPLUGS = sndfile delay metronome bandpass filter	\
-  loopmachine spksim tubesim feedbackdelay gain sine pink noise flanger ringmodulator
+TASCARAUDIOPLUGS = sndfile delay metronome bandpass filter			\
+  loopmachine spksim tubesim feedbackdelay gain sine pink noise	\
+  flanger ringmodulator level2osc level2hsv bandlevel2osc
 
 OSFLAG :=
 ifeq ($(OS),Windows_NT)
