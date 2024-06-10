@@ -91,7 +91,8 @@ TASCARMODULS = system touchosc waitforjackport route jackrec sleep	\
   oscserver oscrelay pos2osc echoc oscheadtracker systime
 
 ifeq ($(UNAME_S),Linux)
-TASCARMODULS += ltcgen
+TASCAROBJECTS += alsamidicc.o
+TASCARMODULS += ltcgen midictl midicc mididispatch
 endif
 ifeq ($(UNAME_S),Darwin)
 TASCARMODULS += ltcgen
