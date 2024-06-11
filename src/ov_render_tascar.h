@@ -194,6 +194,8 @@ private:
   bool emptysessionismonitor = false;
   // user provided MHA configuration:
   std::string mhaconfig;
+  // use BCF2000 with default settings:
+  bool usebcf2000 = false;
 };
 
 #endif

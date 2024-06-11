@@ -190,7 +190,8 @@ std::string ov_render_tascar_t::get_objmixcfg_as_json()
              "\",\"x\":" + TASCAR::to_string(snd.local_position.x) +
              ",\"y\":" + TASCAR::to_string(snd.local_position.y) +
              ",\"z\":" + TASCAR::to_string(snd.local_position.z) +
-             ",\"gain\":" + TASCAR::to_string(snd.get_gain());
+             ",\"gain\":" +
+             TASCAR::to_string(snd.get_gain() / stage.rendersettings.egogain);
       cfg += "}";
       ++k;
     }
@@ -1360,6 +1361,38 @@ void ov_render_tascar_t::start_session()
     std::ofstream ofh(stage.thisdeviceid + ".mhacfg");
     ofh << mhaconfig;
   }
+  if(usebcf2000) {
+    // <midictl name="midictl" connect="BCF2000:0" dumpmsg="true" min="-30"
+    // max="10" controllers="0/7 0/0 0/1 0/2 0/3 0/4 0/5 0/6 0/15 0/8 0/9 0/10
+    // 0/11 0/12 0/13 0/14 0/15" pattern="/*/main /*/ego/mic1 /*/*/mic2"/>
+    tsccfg::node_t e_midi = tsccfg::node_add_child(e_mods, "midictl");
+    tsccfg::node_set_attribute(e_midi, "connect", "BCF2000:0");
+    tsccfg::node_set_attribute(e_midi, "min", "-30");
+    tsccfg::node_set_attribute(e_midi, "max", "10");
+    std::vector<std::string> pattern;
+    std::vector<std::string> gaincontrollers;
+    std::vector<std::string> mutecontrollers;
+    uint32_t k = 0;
+    uint32_t k_name = 0;
+    for(auto ch : stage.thisdevice.channels) {
+      if(k < 7) {
+        auto name = ch.name;
+        if(name.empty())
+          name = TASCAR::to_string(k_name++);
+        pattern.push_back("/*/ego/" + name);
+        gaincontrollers.push_back("0/" + TASCAR::to_string(k));
+        mutecontrollers.push_back("0/" + TASCAR::to_string(k + 8));
+        ++k;
+      }
+    }
+    pattern.push_back("/*/main");
+    gaincontrollers.push_back("0/7");
+    mutecontrollers.push_back("0/15");
+    tsccfg::node_set_attribute(e_midi, "controllers",
+                               TASCAR::vecstr2str(gaincontrollers) + " " +
+                                   TASCAR::vecstr2str(mutecontrollers));
+    tsccfg::node_set_attribute(e_midi, "pattern", TASCAR::vecstr2str(pattern));
+  }
   tsc.save(folder + "ovbox_debugsession.tsc");
   tascar = new TASCAR::session_t(tsc.save_to_string(),
                                  TASCAR::session_t::LOAD_STRING, "");
@@ -1735,6 +1768,10 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
       std::string prev_mhaconfig(mhaconfig);
       mhaconfig = my_js_value(xcfg, "mhaconfig", mhaconfig);
       if(prev_mhaconfig != mhaconfig)
+        restart_session = true;
+      bool prev_usebcf2000 = usebcf2000;
+      usebcf2000 = my_js_value(xcfg["render"], "usebcf2000", false);
+      if(prev_usebcf2000 != usebcf2000)
         restart_session = true;
       if(xcfg["network"].is_object()) {
         double new_deadline =
