@@ -221,6 +221,7 @@ std::string ov_client_orlandoviols_t::device_update(std::string url,
   jsdevice["alsadevs"] = jsalsadevs;
   jsdevice["hwinputchannels"] = jsinchannels;
   jsdevice["cpuload"] = backend.get_load();
+  jsdevice["thermal"] = backend.get_temperature();
   jsdevice["bandwidth"]["tx"] = txrate;
   jsdevice["bandwidth"]["rx"] = rxrate;
   jsdevice["localip"] = ep2ipstr(getipaddr());

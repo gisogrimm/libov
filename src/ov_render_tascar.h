@@ -59,6 +59,7 @@ public:
   void getbitrate(double& txrate, double& rxrate);
   std::vector<std::string> get_input_channel_ids() const;
   float get_load() const;
+  std::vector<float> get_temperature() const;
   void set_extra_config(const std::string&);
   void set_seqerr_callback(std::function<void(stage_device_id_t, sequence_t,
                                               sequence_t, port_t, void*)>

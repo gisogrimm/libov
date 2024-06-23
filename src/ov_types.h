@@ -427,6 +427,10 @@ public:
   const std::string& get_deviceid() const;
   virtual void getbitrate(double& txrate, double& rxrate);
   virtual float get_load() const { return 0; };
+  virtual std::vector<float> get_temperature() const
+  {
+    return std::vector<float>();
+  };
   virtual std::vector<std::string> get_input_channel_ids() const
   {
     return {"system:capture_1", "system:capture_2"};
@@ -476,10 +480,7 @@ public:
   {
     return "{}";
   };
-  virtual std::string get_objmixcfg_as_json()
-  {
-    return "{}";
-  };
+  virtual std::string get_objmixcfg_as_json() { return "{}"; };
   void update_plugincfg(const std::string& cfg, size_t channel);
   /**
    * Return  current configuration of all input channel effect plugins

@@ -1731,6 +1731,28 @@ float ov_render_tascar_t::get_load() const
   return 0.0f;
 }
 
+std::vector<float> ov_render_tascar_t::get_temperature() const
+{
+  std::vector<float> temp;
+  for(uint32_t c = 0; c < 16; ++c) {
+    std::string fname =
+        "/sys/class/thermal/thermal_zone" + TASCAR::to_string(c) + "/temp";
+    if(file_exists(fname)) {
+      try {
+        std::ifstream ifh(fname);
+        float ltemp = -300.0f;
+        ifh >> ltemp;
+        ltemp *= 0.001f;
+        if(ltemp > -273.15f)
+          temp.push_back(ltemp);
+      }
+      catch(...) {
+      }
+    }
+  }
+  return temp;
+}
+
 std::string ov_render_tascar_t::get_zita_path()
 {
   return zitapath;
