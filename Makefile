@@ -201,7 +201,7 @@ build/tscobj: build/tscver
 
 #&& touch $@
 
-tascarplugins: build/tscver build/tscobj
+tascarplugins: build/tscobj
 	 $(MAKE) -C tascar/plugins PLUGINPREFIX=ovclient RECEIVERS="$(TASCARRECEIVERS)" SOURCES="$(TASCARSOURCE)" TASCARMODS="$(TASCARMODULS)" TASCARMODSGUI="$(TASCARMODULSGUI)" AUDIOPLUGINS="$(TASCARAUDIOPLUGS)" GLABSENSORS= TASCARLIB="-lovclienttascar" TASCARGUILIB="-lovclienttascargui" TASCARDMXLIB="-lovclienttascardmx"
 
 clangformat:
