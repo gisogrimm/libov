@@ -188,6 +188,25 @@ bool ov_client_orlandoviols_t::download_file(const std::string& url,
   return false;
 }
 
+unsigned long get_mem_total()
+{
+  std::string token;
+  std::ifstream file("/proc/meminfo");
+  while(file >> token) {
+    if(token == "MemTotal:") {
+      unsigned long mem;
+      if(file >> mem) {
+        return mem;
+      } else {
+        return 0;
+      }
+    }
+    // Ignore the rest of the line
+    file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+  }
+  return 0; // Nothing found
+}
+
 /**
    \brief Pull device configuration.
    \param url Server URL for device REST API, e.g.,
@@ -222,6 +241,7 @@ std::string ov_client_orlandoviols_t::device_update(std::string url,
   jsdevice["hwinputchannels"] = jsinchannels;
   jsdevice["cpuload"] = backend.get_load();
   jsdevice["thermal"] = backend.get_temperature();
+  jsdevice["totalmem"] = get_mem_total();
   jsdevice["bandwidth"]["tx"] = txrate;
   jsdevice["bandwidth"]["rx"] = rxrate;
   jsdevice["localip"] = ep2ipstr(getipaddr());
