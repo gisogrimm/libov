@@ -197,7 +197,7 @@ build/tscver: build/tscbuild
 	$(MAKE) -C tascar/libtascar ver && mkdir -p build && touch $@
 
 build/tscobj: build/tscver
-	$(MAKE) -C tascar/libtascar PLUGINPREFIX=ovclient TSCCXXFLAGS=-DPLUGINPREFIX='\"ovclient\"' all && mkdir -p build && touch $@
+	$(MAKE) -C tascar libmysofa && $(MAKE) -C tascar/libtascar PLUGINPREFIX=ovclient TSCCXXFLAGS=-DPLUGINPREFIX='\"ovclient\"' all && mkdir -p build && touch $@
 
 #&& touch $@
 
