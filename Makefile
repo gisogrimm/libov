@@ -1,4 +1,4 @@
-VERSION=0.24
+VERSION=0.25
 export FULLVERSION:=$(shell ./get_version.sh)
 
 all: tascarplugins lib
@@ -127,6 +127,7 @@ else
 		LDLIBS += -lasound
 		TASCARMODULS += ovheadtracker lightctl midicc2osc
 		TASCARDMXOBJECTS += termsetbaud.o serialport.o dmxdriver.o
+		TASCARAUDIOPLUGS += simplesynth
 #		ifneq ($DISTRO,arch)
 #		TASCARRECEIVERS += itu51
 #		endif
