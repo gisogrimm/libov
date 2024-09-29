@@ -18,8 +18,8 @@
  * Version 3 along with ovbox. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <algorithm>
 #include "ovboxclient.h"
+#include <algorithm>
 #include <condition_variable>
 #include <string.h>
 #include <strings.h>
@@ -326,7 +326,7 @@ void ovboxclient_t::pingservice()
     remote_server.send_registration(mode, toport, localep);
     // send ping to other peers:
     size_t ocid(0);
-    for(auto ep : endpoints) {
+    for(auto& ep : endpoints) {
       if(ep.timeout && (ocid != callerid)) {
         remote_server.send_ping(ep.ep, ocid);
         ++ping_stat_collecors_p2p[ocid].sent;
@@ -345,7 +345,7 @@ void ovboxclient_t::pingservice()
   }
 }
 
-// this thread receives messages from the server:
+// this thread receives messages from the session server and the peers:
 void ovboxclient_t::sendsrv()
 {
   try {
@@ -554,7 +554,7 @@ void ovboxclient_t::xrecsrv(port_t srcport, port_t destport)
         if(mode & B_PEER2PEER) {
           // we are in peer-to-peer mode.
           size_t ocid(0);
-          for(auto ep : endpoints) {
+          for(auto& ep : endpoints) {
             if(ep.timeout) {
               // target is active.
               if(ocid != callerid) {

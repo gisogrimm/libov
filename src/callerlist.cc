@@ -63,6 +63,7 @@ void endpoint_list_t::cid_register(stage_device_id_t cid, const endpoint_t& ep,
     endpoints[scid].mode = mode;
     endpoints[scid].timeout = CALLERLIST_TIMEOUT;
     endpoints[scid].version = rver;
+    DEBUG(1);
   }
 }
 
@@ -149,7 +150,7 @@ void endpoint_list_t::checkstatus()
 uint32_t endpoint_list_t::get_num_clients()
 {
   uint32_t c(0);
-  for(auto ep : endpoints)
+  for(const auto& ep : endpoints)
     c += (ep.timeout > 0);
   return c;
 }
