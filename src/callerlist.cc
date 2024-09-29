@@ -52,6 +52,10 @@ void endpoint_list_t::cid_register(stage_device_id_t cid, const endpoint_t& ep,
                                    epmode_t mode, const std::string& rver)
 {
   if(cid < MAX_STAGE_ID) {
+    DEBUG((int)cid);
+    DEBUG(ep2str(ep));
+    DEBUG((int)mode);
+    DEBUG(endpoints.size());
     endpoints[cid].ep = ep;
     if(mode != endpoints[cid].mode)
       endpoints[cid].announced = false;
