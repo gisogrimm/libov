@@ -135,11 +135,16 @@ ovboxclient_t::ovboxclient_t(std::string desthost, port_t destport,
 ovboxclient_t::~ovboxclient_t()
 {
   runsession = false;
-  sendthread.join();
-  recthread.join();
-  pingthread.join();
-  for(auto th = xrecthread.begin(); th != xrecthread.end(); ++th)
-    th->join();
+  if(sendthread.joinable())
+    sendthread.join();
+  if(recthread.joinable())
+    recthread.join();
+  if(pingthread.joinable())
+    pingthread.join();
+  for(auto& th : xrecthread) {
+    if(th.joinable())
+      th.join();
+  }
   delete[] msgbuffers;
   if(tcp_tunnel)
     delete tcp_tunnel;
@@ -433,7 +438,7 @@ void ovboxclient_t::process_msg(msgbuf_t& msg)
     // is this message from same network?
     if(!is_same_network(msg.sender, localep)) {
       // now send to proxy clients:
-      for(auto client : proxyclients) {
+      for(auto& client : proxyclients) {
         if(msg.cid != client.first) {
           client.second.sin_port = htons((unsigned short)msg.destport);
           remote_server.send(msg.msg, msg.size, client.second);
@@ -487,7 +492,7 @@ void ovboxclient_t::recsrv()
         if(mode & B_PEER2PEER) {
           // we are in peer-to-peer mode.
           size_t ocid(0);
-          for(auto ep : endpoints) {
+          for(auto& ep : endpoints) {
             if(ep.timeout) {
               // endpoint is active.
               if(ocid != callerid) {

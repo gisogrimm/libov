@@ -45,7 +45,8 @@ endpoint_list_t::endpoint_list_t() : runthread(true)
 endpoint_list_t::~endpoint_list_t()
 {
   runthread = false;
-  statusthread.join();
+  if(statusthread.joinable())
+    statusthread.join();
 }
 
 void endpoint_list_t::cid_register(stage_device_id_t cid, const endpoint_t& ep,
