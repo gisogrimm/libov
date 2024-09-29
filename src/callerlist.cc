@@ -52,16 +52,17 @@ void endpoint_list_t::cid_register(stage_device_id_t cid, const endpoint_t& ep,
                                    epmode_t mode, const std::string& rver)
 {
   if(cid < MAX_STAGE_ID) {
-    DEBUG((int)cid);
+    size_t scid = (size_t)cid;
+    DEBUG(scid);
     DEBUG(ep2str(ep));
     DEBUG((int)mode);
     DEBUG(endpoints.size());
-    endpoints[cid].ep = ep;
+    endpoints[scid].ep = ep;
     if(mode != endpoints[cid].mode)
-      endpoints[cid].announced = false;
-    endpoints[cid].mode = mode;
-    endpoints[cid].timeout = CALLERLIST_TIMEOUT;
-    endpoints[cid].version = rver;
+      endpoints[scid].announced = false;
+    endpoints[scid].mode = mode;
+    endpoints[scid].timeout = CALLERLIST_TIMEOUT;
+    endpoints[scid].version = rver;
   }
 }
 
