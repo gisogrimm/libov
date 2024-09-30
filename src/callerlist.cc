@@ -53,18 +53,21 @@ void endpoint_list_t::cid_register(stage_device_id_t cid, const endpoint_t& ep,
                                    epmode_t mode, const std::string& rver)
 {
   if(cid < MAX_STAGE_ID) {
-    size_t scid = (size_t)cid;
-    DEBUG(scid);
-    DEBUG(ep2str(ep));
-    DEBUG((int)mode);
-    DEBUG(endpoints.size());
-    endpoints[scid].ep = ep;
-    if(mode != endpoints[cid].mode)
-      endpoints[scid].announced = false;
-    endpoints[scid].mode = mode;
-    endpoints[scid].timeout = CALLERLIST_TIMEOUT;
-    endpoints[scid].version = rver;
-    DEBUG(1);
+    if(mstat.try_lock()) {
+      size_t scid = (size_t)cid;
+      DEBUG(scid);
+      DEBUG(ep2str(ep));
+      DEBUG((int)mode);
+      DEBUG(endpoints.size());
+      endpoints[scid].ep = ep;
+      if(mode != endpoints[cid].mode)
+        endpoints[scid].announced = false;
+      endpoints[scid].mode = mode;
+      endpoints[scid].timeout = CALLERLIST_TIMEOUT;
+      endpoints[scid].version = rver;
+      DEBUG(1);
+      mstat.unlock();
+    }
   }
 }
 
@@ -105,7 +108,7 @@ void endpoint_list_t::set_hiresping(bool hr)
 
 void endpoint_list_t::checkstatus()
 {
-  uint32_t statlogcnt(60000/pingperiodms);
+  uint32_t statlogcnt(60000 / pingperiodms);
   while(runthread) {
     std::this_thread::sleep_for(std::chrono::milliseconds(pingperiodms));
     for(stage_device_id_t ep = 0; ep != MAX_STAGE_ID; ++ep) {
@@ -126,7 +129,7 @@ void endpoint_list_t::checkstatus()
     }
     if(!statlogcnt) {
       // logging of ping statistics:
-      statlogcnt = 60000/pingperiodms;
+      statlogcnt = 60000 / pingperiodms;
       std::lock_guard<std::mutex> lk(mstat);
       for(stage_device_id_t ep = 0; ep != MAX_STAGE_ID; ++ep) {
         if(endpoints[ep].timeout) {

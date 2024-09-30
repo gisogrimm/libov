@@ -31,16 +31,17 @@ public:
   ep_desc_t();
   endpoint_t ep;
   endpoint_t localep;
-  uint32_t timeout;
-  bool announced;
-  epmode_t mode;
-  double pingt_min;
-  double pingt_max;
-  double pingt_sum;
-  uint32_t pingt_n;
-  uint32_t num_received;
-  uint32_t num_lost;
+  uint32_t timeout = 0;
+  bool announced = false;
+  epmode_t mode = B_PEER2PEER;
+  double pingt_min = 10000.0;
+  double pingt_max = 0.0;
+  double pingt_sum = 0.0;
+  uint32_t pingt_n = 0;
+  uint32_t num_received = 0;
+  uint32_t num_lost = 0;
   std::string version;
+  uint64_t padding = 0;
 };
 
 class endpoint_list_t {
