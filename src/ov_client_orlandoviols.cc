@@ -154,6 +154,10 @@ bool ov_client_orlandoviols_t::download_file(const std::string& url,
     //  std::endl;
     std::ofstream destfile(dest, std::ios::binary);
     destfile << localfile.rdbuf();
+    if(!destfile.good()) {
+      std::cerr << "could not copy \"" << hashname << "\" to \"" << dest
+                << "\", cashed from " << url << std::endl;
+    }
     return true;
     // if( destfile.good() )
     //  return true;
@@ -180,6 +184,9 @@ bool ov_client_orlandoviols_t::download_file(const std::string& url,
     std::ofstream ofh(dest);
     ofh.write(chunk.memory, chunk.size);
     free(chunk.memory);
+    if(!ofh.good()) {
+      std::cerr << "could not write downloaded file to \"" << dest << "\".\n";
+    }
     return true;
   } else {
     DEBUG(curl_easy_strerror(res));
