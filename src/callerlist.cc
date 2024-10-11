@@ -55,17 +55,12 @@ void endpoint_list_t::cid_register(stage_device_id_t cid, const endpoint_t& ep,
   if(cid < MAX_STAGE_ID) {
     if(mstat.try_lock()) {
       size_t scid = (size_t)cid;
-      DEBUG(scid);
-      DEBUG(ep2str(ep));
-      DEBUG((int)mode);
-      DEBUG(endpoints.size());
       endpoints[scid].ep = ep;
       if(mode != endpoints[cid].mode)
         endpoints[scid].announced = false;
       endpoints[scid].mode = mode;
       endpoints[scid].timeout = CALLERLIST_TIMEOUT;
       endpoints[scid].version = rver;
-      DEBUG(1);
       mstat.unlock();
     }
   }

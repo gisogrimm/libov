@@ -87,21 +87,17 @@ ov_client_orlandoviols_t::ov_client_orlandoviols_t(ov_render_base_t& backend,
 
 void ov_client_orlandoviols_t::start_service()
 {
-#ifdef SHOWDEBUG
-  std::cout << "ov_client_orlandoviols_t::start_service " << std::endl;
-#endif
+  TASCAR::console_log("starting ov_client_orlandoviols service.");
   runservice = true;
   servicethread = std::thread(&ov_client_orlandoviols_t::service, this);
 }
 
 void ov_client_orlandoviols_t::stop_service()
 {
-#ifdef SHOWDEBUG
-  std::cout << "ov_client_orlandoviols_t::stop_service " << std::endl;
-#endif
   runservice = false;
   if(servicethread.joinable())
     servicethread.join();
+  TASCAR::console_log("stopped ov_client_orlandoviols service.");
 }
 
 bool ov_client_orlandoviols_t::report_error(std::string url,
@@ -143,30 +139,26 @@ bool ov_client_orlandoviols_t::download_file(const std::string& url,
   std::cout << "ov_client_orlandoviols_t::download_file " << url << " to "
             << dest << std::endl;
 #endif
-  std::string hashname =
-      std::string("/usr/share/ovclient/sounds/") + url2localfilename(url);
-  std::ifstream localfile(hashname, std::ios::binary);
-  if(localfile.good()) {
-    // std::error_code ec;
-    // std::filesystem::copy(hashname,dest,ec);
-    // if( ec )
-    //  std::cerr << "Warning: " << ec.message() << " (" << dest << ")" <<
-    //  std::endl;
-    std::ofstream destfile(dest, std::ios::binary);
-    destfile << localfile.rdbuf();
-    if(!destfile.good()) {
-      std::cerr << "could not copy \"" << hashname << "\" to \"" << dest
-                << "\", cashed from " << url << std::endl;
+  // std::string hashname =
+  //  std::string("/usr/share/ovclient/sounds/") + url2localfilename(url);
+  for(auto hashname :
+      {std::string("/usr/share/ovclient/sounds/") + url2localfilename(url),
+       url2localfilename(url)}) {
+    std::ifstream localfile(hashname, std::ios::binary);
+    if(localfile.good()) {
+      TASCAR::console_log("Using file \"" + hashname + "\" for URL \"" + url +
+                          "\".");
+      std::ofstream destfile(dest, std::ios::binary);
+      destfile << localfile.rdbuf();
+      if(!destfile.good()) {
+        std::cerr << "could not copy \"" << hashname << "\" to \"" << dest
+                  << "\", cashed from " << url << std::endl;
+      }
+      return true;
     }
-    return true;
-    // if( destfile.good() )
-    //  return true;
-    // std::cerr << "could not copy " << hashname << ", downloading from " <<
-    // url << std::endl;
-  } else {
-    std::cerr << "could not open " << hashname << ", downloading from " << url
-              << std::endl;
   }
+  std::cerr << "could not open cashed file, downloading from " << url
+            << std::endl;
   CURLcode res;
   struct webCURL::MemoryStruct chunk;
   chunk.memory =
@@ -726,7 +718,7 @@ void ov_client_orlandoviols_t::service()
               backend.start_audiobackend();
             backend.restart_session_if_needed();
             refplugcfg = backend.get_all_current_plugincfg_as_json();
-            if(backend.is_session_active()){
+            if(backend.is_session_active()) {
               report_error(lobby, backend.get_deviceid(), "");
             }
           }

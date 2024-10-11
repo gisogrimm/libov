@@ -1068,8 +1068,7 @@ void ov_render_tascar_t::upload_objmix()
 
 void ov_render_tascar_t::start_session()
 {
-  //#ifdef SHOWDEBUG
-  std::cout << "ov_render_tascar_t::start_session" << std::endl;
+  TASCAR::console_log("starting TASCAR session");
   if(!stage.host.empty()) {
     for(auto dev : stage.stage) {
       std::cerr << "stageid:" << (int)dev.first << " uid:" << dev.second.uid
@@ -1445,13 +1444,12 @@ void ov_render_tascar_t::start_session()
   }
 #endif
   session_ready = true;
+  TASCAR::console_log("session started.");
 }
 
 void ov_render_tascar_t::end_session()
 {
-#ifdef SHOWDEBUG
-  std::cout << "ov_render_tascar_t::end_session" << std::endl;
-#endif
+  TASCAR::console_log("ending TASCAR session");
   session_ready = false;
   ov_render_base_t::end_session();
   if(h_webmixer)
@@ -1468,10 +1466,12 @@ void ov_render_tascar_t::end_session()
     delete ovboxclient;
     ovboxclient = NULL;
   }
+  TASCAR::console_log("ended TASCAR session.");
 }
 
 void ov_render_tascar_t::start_audiobackend()
 {
+  TASCAR::console_log("starting audio backend "+audiodevice.drivername+"/"+audiodevice.devicename);
 #ifdef SHOWDEBUG
   std::cout << "ov_render_tascar_t::start_audiobackend" << std::endl;
 #endif
@@ -1480,6 +1480,7 @@ void ov_render_tascar_t::start_audiobackend()
      (audiodevice.devicename != "manual")) {
     if(h_jack)
       delete h_jack;
+    h_jack = NULL;
     char cmd[1024];
     if((audiodevice.devicename != "dummy") &&
        (audiodevice.devicename != "plugdummy")) {
@@ -1546,7 +1547,10 @@ void ov_render_tascar_t::start_audiobackend()
     }
     h_jack = new TASCAR::spawn_process_t(cmd, false);
     // replace sleep by testing for jack presence with timeout:
-    sleep(7);
+    while( !test_for_jack_server() )
+      std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    //sleep(7);
   }
   // get list of input ports:
   jack_client_t* jc;
@@ -1561,13 +1565,12 @@ void ov_render_tascar_t::start_audiobackend()
   } else {
     inputports = {"system:capture_1", "system:capture_2"};
   }
+  TASCAR::console_log("started audio backend");
 }
 
 void ov_render_tascar_t::stop_audiobackend()
 {
-#ifdef SHOWDEBUG
-  std::cout << "ov_render_tascar_t::stop_audiobackend" << std::endl;
-#endif
+  TASCAR::console_log("stopping audio backend");
   ov_render_base_t::stop_audiobackend();
   if(h_jack) {
     delete h_jack;
@@ -1575,6 +1578,7 @@ void ov_render_tascar_t::stop_audiobackend()
     // wait for jack to clean up properly:
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
   }
+  TASCAR::console_log("stopped audio backend");
 }
 
 void ov_render_tascar_t::add_stage_device(const stage_device_t& stagedevice)

@@ -111,7 +111,7 @@ private:
   // for the time being we (optionally if jack is chosen as an audio
   // backend) start the jack backend. This will be replaced by a more
   // generic audio backend interface:
-  TASCAR::spawn_process_t* h_jack;
+  TASCAR::spawn_process_t* h_jack = NULL;
   // for the time being we start the webmixer as a local nodejs server
   // on port 8080. This will be replaced (or extended) by a web mixer
   // on the remote configuration interface:
