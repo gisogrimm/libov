@@ -19,6 +19,7 @@
 
 #include "callerlist.h"
 #include <string.h>
+#include "../tascar/libtascar/include/tscconfig.h"
 
 ep_desc_t::ep_desc_t()
 {
@@ -38,6 +39,7 @@ ep_desc_t::ep_desc_t()
 
 endpoint_list_t::endpoint_list_t() : runthread(true)
 {
+  TASCAR::console_log("create endpoint list");
   endpoints.resize(MAX_STAGE_ID);
   statusthread = std::thread(&endpoint_list_t::checkstatus, this);
 }
@@ -47,6 +49,7 @@ endpoint_list_t::~endpoint_list_t()
   runthread = false;
   if(statusthread.joinable())
     statusthread.join();
+  TASCAR::console_log("cleared endpoint list");
 }
 
 void endpoint_list_t::cid_register(stage_device_id_t cid, const endpoint_t& ep,
@@ -103,6 +106,7 @@ void endpoint_list_t::set_hiresping(bool hr)
 
 void endpoint_list_t::checkstatus()
 {
+  TASCAR::console_log("endpoint list status checker started");
   uint32_t statlogcnt(60000 / pingperiodms);
   while(runthread) {
     std::this_thread::sleep_for(std::chrono::milliseconds(pingperiodms));
@@ -144,6 +148,7 @@ void endpoint_list_t::checkstatus()
     }
     --statlogcnt;
   }
+  TASCAR::console_log("endpoint list status checker stopped");
 }
 
 uint32_t endpoint_list_t::get_num_clients()
