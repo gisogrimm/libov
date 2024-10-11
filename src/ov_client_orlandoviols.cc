@@ -510,6 +510,7 @@ stage_device_t get_stage_dev(nlohmann::json& dev)
 // main frontend interface function:
 void ov_client_orlandoviols_t::service()
 {
+  TASCAR::tictoc_t tictoc;
   try {
     register_device(lobby, backend.get_deviceid());
     if(!report_error(lobby, backend.get_deviceid(), ""))
@@ -524,7 +525,7 @@ void ov_client_orlandoviols_t::service()
     return;
   }
   std::string hash;
-  double gracetime(9.0);
+  double gracetime(7.7);
   while(runservice) {
     try {
       std::string stagecfg(device_update(lobby, backend.get_deviceid(), hash));
@@ -725,8 +726,9 @@ void ov_client_orlandoviols_t::service()
               backend.start_audiobackend();
             backend.restart_session_if_needed();
             refplugcfg = backend.get_all_current_plugincfg_as_json();
-            if(backend.is_session_active())
+            if(backend.is_session_active()){
               report_error(lobby, backend.get_deviceid(), "");
+            }
           }
         }
         catch(const std::exception& e) {
@@ -735,12 +737,13 @@ void ov_client_orlandoviols_t::service()
           DEBUG(stagecfg);
         }
       }
-      double t(0);
-      while((t < gracetime) && runservice && nocancelwait) {
+      //      double t(0);
+      while((tictoc.toc() < gracetime) && runservice && nocancelwait) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
-        t += 0.001;
+        // t += 0.001;
       }
       nocancelwait = true;
+      tictoc.tic();
     }
     catch(const std::exception& e) {
       std::cerr << "Error: " << e.what() << std::endl;
