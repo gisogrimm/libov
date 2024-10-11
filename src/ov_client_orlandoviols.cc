@@ -181,7 +181,7 @@ bool ov_client_orlandoviols_t::download_file(const std::string& url,
   curl_easy_setopt(curl, CURLOPT_USERAGENT, "libcurl-agent/1.0");
   res = curl_easy_perform(curl);
   if(res == CURLE_OK) {
-    std::ofstream ofh(dest);
+    std::ofstream ofh(dest, std::ios::binary);
     ofh.write(chunk.memory, chunk.size);
     free(chunk.memory);
     if(!ofh.good()) {
