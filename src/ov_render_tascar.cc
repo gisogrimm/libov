@@ -1437,6 +1437,13 @@ void ov_render_tascar_t::start_session()
     if(file_exists("webmixer.js")) {
       command = "node webmixer.js " + ipaddr;
     }
+    auto homebrewprefix = localgetenv("HOMEBREW_PREFIX");
+    if(homebrewprefix.size()) {
+      DEBUG(homebrewprefix);
+      if(file_exists(homebrewprefix + "/share/ovclient/webmixer.js")) {
+        command = "node /usr/share/ovclient/webmixer.js " + ipaddr;
+      }
+    }
     if(!command.empty()) {
       h_webmixer = new TASCAR::spawn_process_t(command, false);
       usleep(10000);
