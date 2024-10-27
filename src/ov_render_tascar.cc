@@ -1439,9 +1439,8 @@ void ov_render_tascar_t::start_session()
     }
     auto homebrewprefix = localgetenv("HOMEBREW_PREFIX");
     if(homebrewprefix.size()) {
-      DEBUG(homebrewprefix);
       if(file_exists(homebrewprefix + "/share/ovclient/webmixer.js")) {
-        command = "node /usr/share/ovclient/webmixer.js " + ipaddr;
+        command = "node " + homebrewprefix + "/share/ovclient/webmixer.js " + ipaddr;
       }
     }
     if(!command.empty()) {
