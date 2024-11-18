@@ -1,4 +1,4 @@
-VERSION=0.25
+VERSION=0.26
 export FULLVERSION:=$(shell ./get_version.sh)
 
 all: tascarplugins lib
