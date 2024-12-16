@@ -93,6 +93,8 @@ struct audio_device_t {
   unsigned int periodsize;
   /// number of buffers
   unsigned int numperiods;
+  // audio driver priority:
+  unsigned int priority;
 };
 
 bool operator!=(const audio_device_t& a, const audio_device_t& b);

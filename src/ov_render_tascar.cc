@@ -368,7 +368,7 @@ ov_render_tascar_t::ov_render_tascar_t(const std::string& deviceid,
 #endif
   // avoid problems with number format in xml file:
   setlocale(LC_ALL, "C");
-  audiodevice = {"jack", "hw:1", 48000, 96, 2};
+  audiodevice = {"jack", "hw:1", 48000, 96, 2, 40};
   if(pinglogport)
     pinglogaddr =
         lo_address_new("localhost", std::to_string(pinglogport_).c_str());
@@ -1440,7 +1440,8 @@ void ov_render_tascar_t::start_session()
     auto homebrewprefix = localgetenv("HOMEBREW_PREFIX");
     if(homebrewprefix.size()) {
       if(file_exists(homebrewprefix + "/share/ovclient/webmixer.js")) {
-        command = "node " + homebrewprefix + "/share/ovclient/webmixer.js " + ipaddr;
+        command =
+            "node " + homebrewprefix + "/share/ovclient/webmixer.js " + ipaddr;
       }
     }
     if(!command.empty()) {
@@ -1477,7 +1478,8 @@ void ov_render_tascar_t::end_session()
 
 void ov_render_tascar_t::start_audiobackend()
 {
-  TASCAR::console_log("starting audio backend "+audiodevice.drivername+"/"+audiodevice.devicename);
+  TASCAR::console_log("starting audio backend " + audiodevice.drivername + "/" +
+                      audiodevice.devicename);
 #ifdef SHOWDEBUG
   std::cout << "ov_render_tascar_t::start_audiobackend" << std::endl;
 #endif
@@ -1514,10 +1516,10 @@ void ov_render_tascar_t::start_audiobackend()
 #ifdef LINUX
       setenv("JACK_NO_AUDIO_RESERVATION", "1", 1);
       sprintf(cmd,
-              "jackd --sync -P 40 -d alsa -d '%s' "
+              "jackd --sync -P %d -d alsa -d '%s' "
               "-r %g -p %d -n %d",
-              devname.c_str(), audiodevice.srate, audiodevice.periodsize,
-              audiodevice.numperiods);
+              audiodevice.priority, devname.c_str(), audiodevice.srate,
+              audiodevice.periodsize, audiodevice.numperiods);
 #endif
 #ifdef WIN32
       if(devname.find(" ") != std::string::npos)
@@ -1525,9 +1527,10 @@ void ov_render_tascar_t::start_audiobackend()
       if(devname.size() > 0)
         devname = "-d " + devname + "";
       sprintf(cmd,
-              "jackd --sync -P 40 -d portaudio %s "
+              "jackd --sync -P %d -d portaudio %s "
               "-r %g -p %d",
-              devname.c_str(), audiodevice.srate, audiodevice.periodsize);
+              audiodevice.priority, devname.c_str(), audiodevice.srate,
+              audiodevice.periodsize);
 #endif
 #ifdef DARWIN
       bool setdev(true);
@@ -1536,27 +1539,29 @@ void ov_render_tascar_t::start_audiobackend()
         setdev = false;
       if(setdev)
         sprintf(cmd,
-                "jackd --sync -P 40 -d coreaudio "
+                "jackd --sync -P %d -d coreaudio "
                 "-d '%s' -r %g -p %d",
-                devname.c_str(), audiodevice.srate, audiodevice.periodsize);
+                audiodevice.priority, devname.c_str(), audiodevice.srate,
+                audiodevice.periodsize);
       else
         sprintf(cmd,
-                "jackd --sync -P 40 -d coreaudio "
+                "jackd --sync -P %d -d coreaudio "
                 "-r %g -p %d",
-                audiodevice.srate, audiodevice.periodsize);
+                audiodevice.priority, audiodevice.srate,
+                audiodevice.periodsize);
 #endif
     } else {
       sprintf(cmd,
-              "jackd --sync -P 40 -d dummy "
+              "jackd --sync -P %d -d dummy "
               "-r %g -p %d",
-              audiodevice.srate, audiodevice.periodsize);
+              audiodevice.priority, audiodevice.srate, audiodevice.periodsize);
     }
     h_jack = new TASCAR::spawn_process_t(cmd, false);
     // replace sleep by testing for jack presence with timeout:
-    while( !test_for_jack_server() )
+    while(!test_for_jack_server())
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    //sleep(7);
+    // sleep(7);
   }
   // get list of input ports:
   jack_client_t* jc;

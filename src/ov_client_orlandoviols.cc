@@ -575,6 +575,7 @@ void ov_client_orlandoviols_t::service()
               audio.srate = my_js_value(js_audio, "srate", 48000.0);
               audio.periodsize = my_js_value(js_audio, "periodsize", 96);
               audio.numperiods = my_js_value(js_audio, "numperiods", 2);
+              audio.priority = my_js_value(js_audio, "priority", 40);
               backend.configure_audio_backend(audio);
               if(my_js_value(js_audio, "restart", false)) {
                 bool session_was_active(backend.is_session_active());
