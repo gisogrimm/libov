@@ -78,7 +78,7 @@ TASCAROBJECTS = licensehandler.o audiostates.o coordinates.o		\
   jackclient.o delayline.o errorhandling.o osc_scene.o ringbuffer.o	\
   jackiowav.o jackrender.o audioplugin.o levelmeter.o serviceclass.o	\
   speakerarray.o spectrum.o fft.o stft.o ola.o tascar_os.o		\
-  spawn_process.o
+  spawn_process.o tictoctimer.o
 
 TASCARDMXOBJECTS =
 
@@ -178,7 +178,7 @@ build/libov.a: $(BUILD_OBJ)
 
 # $(patsubst %,tascar/libtascar/build/%,$(TASCAROBJECTS)) $(patsubst %,tascar/libtascar/build/%,$(TASCARDMXOBJECTS))
 
-build/libovserver.a: $(BUILD_OBJ_SERVER)
+build/libovserver.a: $(patsubst %,tascar/libtascar/build/%,$(TASCAROBJECTS)) $(BUILD_OBJ_SERVER)
 	ar rcs $@ $^
 
 build: build/.directory
