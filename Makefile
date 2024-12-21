@@ -171,7 +171,7 @@ tascar/Makefile:
 lib: build build/libov.a
 
 libovserver: EXTERNALS=libcurl xerces-c
-libovserver: build/libovserver.a
+libovserver: build/tscobj build/libovserver.a
 
 build/libov.a: $(BUILD_OBJ)
 	ar rcs $@ $^
