@@ -170,7 +170,7 @@ tascar/Makefile:
 
 lib: build build/libov.a
 
-libovserver: EXTERNALS=libcurl
+libovserver: EXTERNALS=libcurl xerces-c
 libovserver: build/libovserver.a
 
 build/libov.a: $(BUILD_OBJ)
