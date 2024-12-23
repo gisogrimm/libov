@@ -54,25 +54,27 @@ std::vector<std::string> get_jack_input_ports(jack_client_t* jc,
                                               const std::string& deviceid)
 {
   std::vector<std::string> ports;
-  const char** pp_ports(
-      jack_get_ports(jc, NULL, NULL, JackPortIsOutput)); // | JackPortIsPhysical
+  // Get the list of output ports:
+  const char** pp_ports =
+      jack_get_ports(jc, nullptr, nullptr, JackPortIsOutput);
   if(pp_ports) {
-    const char** p(pp_ports);
-    while(*p) {
+    // Iterate over the list of ports:
+    for(const char** p = pp_ports; *p; ++p) {
       std::string port = *p;
-      if(!ends_with(port, ":sync_out"))
-        if(!starts_with(port, "render." + deviceid))
-          if(!starts_with(port, deviceid + ".metronome"))
-            if(!ends_with(port, "." + deviceid + ":out_1"))
-              if(!ends_with(port, "." + deviceid + ":out_2"))
-                if(!ends_with(port, "." + deviceid + ":out_3"))
-                  if(!ends_with(port, "." + deviceid + ":out_4"))
-                    if(!(starts_with(port, "bus.") &&
-                         ends_with(port, ":out.0")))
-                      if(!starts_with(port, "system:midi_"))
-                        ports.push_back(port);
-      ++p;
+      // Filter out ports that don't match the desired criteria:
+      if(!(ends_with(port, ":sync_out") ||
+           starts_with(port, "render." + deviceid) ||
+           starts_with(port, deviceid + ".metronome") ||
+           ends_with(port, "." + deviceid + ":out_1") ||
+           ends_with(port, "." + deviceid + ":out_2") ||
+           ends_with(port, "." + deviceid + ":out_3") ||
+           ends_with(port, "." + deviceid + ":out_4") ||
+           (starts_with(port, "bus.") && ends_with(port, ":out.0")) ||
+           starts_with(port, "system:midi_"))) {
+        ports.push_back(port);
+      }
     }
+    // Free the memory allocated by jack_get_ports:
     jack_free(pp_ports);
   }
   return ports;
