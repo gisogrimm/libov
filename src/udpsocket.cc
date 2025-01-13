@@ -450,31 +450,58 @@ endpoint_t getipaddr()
   endpoint_t my_addr;
   memset(&my_addr, 0, sizeof(endpoint_t));
 #if defined(WIN32) || defined(UNDER_CE)
-  DWORD rv, size;
-  PIP_ADAPTER_ADDRESSES adapter_addresses, aa;
-  PIP_ADAPTER_UNICAST_ADDRESS ua;
+  // DWORD rv, size;
+  // PIP_ADAPTER_ADDRESSES adapter_addresses, aa;
+  // PIP_ADAPTER_UNICAST_ADDRESS ua;
+  //
+  // rv = GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, NULL, NULL,
+  //                           &size);
+  // if(rv != ERROR_BUFFER_OVERFLOW) {
+  //   fprintf(stderr, "GetAdaptersAddresses() failed...");
+  //   return my_addr;
+  // }
+  // adapter_addresses = (PIP_ADAPTER_ADDRESSES)malloc(size);
+  //
+  // rv = GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, NULL,
+  //                           adapter_addresses, &size);
+  // if(rv == ERROR_SUCCESS) {
+  //   for(aa = adapter_addresses; aa != NULL; aa = aa->Next) {
+  //     for(ua = aa->FirstUnicastAddress; ua != NULL; ua = ua->Next) {
+  //       // my_addr = ua->Address.lpSockaddr;
+  //       memcpy(&my_addr, ua->Address.lpSockaddr, sizeof(endpoint_t));
+  //       free(adapter_addresses);
+  //       return my_addr;
+  //     }
+  //   }
+  // }
+  // free(adapter_addresses);
 
-  rv = GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, NULL, NULL,
-                            &size);
-  if(rv != ERROR_BUFFER_OVERFLOW) {
-    fprintf(stderr, "GetAdaptersAddresses() failed...");
-    return my_addr;
-  }
-  adapter_addresses = (PIP_ADAPTER_ADDRESSES)malloc(size);
+  SOCKET sock = INVALID_SOCKET;
+  struct sockaddr_in server;
+  char szLocalIP[20];
 
-  rv = GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, NULL,
-                            adapter_addresses, &size);
-  if(rv == ERROR_SUCCESS) {
-    for(aa = adapter_addresses; aa != NULL; aa = aa->Next) {
-      for(ua = aa->FirstUnicastAddress; ua != NULL; ua = ua->Next) {
-        // my_addr = ua->Address.lpSockaddr;
-        memcpy(&my_addr, ua->Address.lpSockaddr, sizeof(endpoint_t));
-        free(adapter_addresses);
-        return my_addr;
-      }
-    }
+  // Initialize Winsock
+  if(WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+    return "WSAStartup failed";
   }
-  free(adapter_addresses);
+
+  // Create a socket
+  sock = socket(AF_INET, SOCK_DGRAM, 0);
+  if(sock == INVALID_SOCKET) {
+    WSACleanup();
+    return "socket failed";
+  }
+
+  // Get local IP address
+  server.sin_family = AF_INET;
+  server.sin_addr.s_addr = INADDR_ANY;
+  getsockname(sock, (struct sockaddr*)&server, sizeof(server));
+  // inet_ntop(AF_INET, &server.sin_addr, szLocalIP, 20);
+  memcpy(&my_addr, server.sin_addr, sizeof(endpoint_t));
+
+  // Clean up
+  closesocket(sock);
+
 #else
   struct ifaddrs* addrs;
   getifaddrs(&addrs);

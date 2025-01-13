@@ -31,7 +31,7 @@
 #include <sys/utsname.h>
 #endif
 #include <unistd.h>
-//#include <filesystem>
+// #include <filesystem>
 
 CURL* curl;
 
@@ -75,6 +75,10 @@ ov_client_orlandoviols_t::ov_client_orlandoviols_t(ov_render_base_t& backend,
     throw ErrMsg("Unable to initialize curl");
 #ifdef WIN32
   uname_sysname = "WIN32";
+
+  if(WSAStartup(MAKEWORD(2, 2), &WSAData) != 0)
+    throw ErrMsg("Unable to initialize WSA");
+
 #else
   struct utsname buffer;
   if(uname(&buffer) == 0) {
@@ -82,6 +86,14 @@ ov_client_orlandoviols_t::ov_client_orlandoviols_t(ov_render_base_t& backend,
     uname_release = buffer.release;
     uname_machine = buffer.machine;
   }
+#endif
+}
+
+ov_client_orlandoviols_t::~ov_client_orlandoviols_t()
+{
+#ifdef WIN32
+  WSACleanup(); // Clean up Winsock
+
 #endif
 }
 

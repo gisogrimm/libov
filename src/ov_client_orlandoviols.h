@@ -25,9 +25,16 @@
 #include <mutex>
 #include <thread>
 
+#ifdef WIN32
+
+#include <winsock2.h>
+
+#end
+
 class ov_client_orlandoviols_t : public ov_client_base_t {
 public:
   ov_client_orlandoviols_t(ov_render_base_t& backend, const std::string& lobby);
+  ~ov_client_orlandoviols_t();
   void start_service();
   void stop_service();
   bool download_file(const std::string& url, const std::string& dest);
@@ -57,6 +64,11 @@ private:
   std::string uname_sysname;
   std::string uname_release;
   std::string uname_machine;
+
+#ifdef WIN32
+  WSADATA WSAData; // Structure to store details of the Windows Sockets
+                   // implementation
+#endif
 };
 
 #endif
