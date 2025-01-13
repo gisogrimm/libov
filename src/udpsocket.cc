@@ -476,31 +476,10 @@ endpoint_t getipaddr()
   // }
   // free(adapter_addresses);
 
-  SOCKET sock = INVALID_SOCKET;
-  struct sockaddr_in server;
-  char szLocalIP[20];
-
-  // Initialize Winsock
-  if(WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-    return "WSAStartup failed";
-  }
-
-  // Create a socket
-  sock = socket(AF_INET, SOCK_DGRAM, 0);
-  if(sock == INVALID_SOCKET) {
-    WSACleanup();
-    return "socket failed";
-  }
-
-  // Get local IP address
-  server.sin_family = AF_INET;
-  server.sin_addr.s_addr = INADDR_ANY;
-  getsockname(sock, (struct sockaddr*)&server, sizeof(server));
-  // inet_ntop(AF_INET, &server.sin_addr, szLocalIP, 20);
-  memcpy(&my_addr, server.sin_addr, sizeof(endpoint_t));
-
-  // Clean up
-  closesocket(sock);
+  char hostname[256];
+  if(gethostname(hostname,sizeof(hostname))==SOCKET_ERROR)
+    throw ErrMsg("Failed to get host name");
+  return ovgethostbyname(hostname);
 
 #else
   struct ifaddrs* addrs;

@@ -29,7 +29,7 @@
 
 #include <winsock2.h>
 
-#end
+#endif
 
 class ov_client_orlandoviols_t : public ov_client_base_t {
 public:
