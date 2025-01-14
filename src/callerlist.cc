@@ -46,6 +46,7 @@ endpoint_list_t::endpoint_list_t() : runthread(true)
 
 endpoint_list_t::~endpoint_list_t()
 {
+  TASCAR::console_log("prepare to clear endpoint list");
   runthread = false;
   if(statusthread.joinable())
     statusthread.join();
@@ -129,6 +130,7 @@ void endpoint_list_t::checkstatus()
     if(!statlogcnt) {
       // logging of ping statistics:
       statlogcnt = 60000 / pingperiodms;
+      TASCAR::console_log("endpoint list stat update");
       std::lock_guard<std::mutex> lk(mstat);
       for(stage_device_id_t ep = 0; ep != MAX_STAGE_ID; ++ep) {
         if(endpoints[ep].timeout) {

@@ -18,6 +18,7 @@
  * Version 3 along with ovbox. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "../tascar/libtascar/include/tscconfig.h"
 #include "ovboxclient.h"
 #include <algorithm>
 #include <condition_variable>
@@ -91,8 +92,9 @@ ovboxclient_t::ovboxclient_t(std::string desthost, port_t destport,
       recport(recport), portoffset(portoffset), callerid(callerid),
       runsession(true), mode(0), sendlocal(sendlocal_), last_tx(0), last_rx(0),
       t_bitrate(std::chrono::high_resolution_clock::now()), cb_seqerr(nullptr),
-      cb_seqerr_data(nullptr), msgbuffers(new msgbuf_t[MAX_STAGE_ID])
+  cb_seqerr_data(nullptr)//, msgbuffers(nullptr)
 {
+  //msgbuffers = new msgbuf_t[MAX_STAGE_ID];
   if(peer2peer_)
     mode |= B_PEER2PEER;
   if(receivedownmix_)
@@ -134,20 +136,32 @@ ovboxclient_t::ovboxclient_t(std::string desthost, port_t destport,
 
 ovboxclient_t::~ovboxclient_t()
 {
+  TASCAR::console_log("ending ovboxclient");
   runsession = false;
   if(sendthread.joinable())
     sendthread.join();
+  TASCAR::console_log("sender thread ended");
   if(recthread.joinable())
     recthread.join();
+  TASCAR::console_log("receiver thread ended");
   if(pingthread.joinable())
     pingthread.join();
-  for(auto& th : xrecthread) {
-    if(th.joinable())
-      th.join();
+  TASCAR::console_log("ping thread ended");
+  if( !xrecthread.empty() ){
+    for(auto& th : xrecthread) {
+      if(th.joinable())
+	th.join();
+    }
+    TASCAR::console_log("extra receiver threads ended");
   }
-  delete[] msgbuffers;
-  if(tcp_tunnel)
+  //TASCAR::console_log("deleting msgbuffers");
+  //delete[] msgbuffers;
+  //TASCAR::console_log("deleted msgbuffers");
+  if(tcp_tunnel){
     delete tcp_tunnel;
+    TASCAR::console_log("TCP tunnel ended");
+  }
+  TASCAR::console_log("ended ovboxclient");
 }
 
 void ovboxclient_t::set_expedited_forwarding_PHB()

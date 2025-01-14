@@ -210,7 +210,7 @@ private:
                      sequence_t received, port_t destport, void* data)>
       cb_seqerr;
   void* cb_seqerr_data;
-  msgbuf_t* msgbuffers;
+  //msgbuf_t* msgbuffers;
   message_sorter_t sorter;
   // std::map<stage_device_id_t, message_stat_t> stats;
   std::map<stage_device_id_t, ping_stat_collecor_t> ping_stat_collecors_p2p;

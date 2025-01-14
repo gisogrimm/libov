@@ -1466,14 +1466,17 @@ void ov_render_tascar_t::end_session()
   h_webmixer = NULL;
   if(tascar) {
     tascar->stop();
+    TASCAR::console_log("stopped TASCAR session");
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
     delete tascar;
     tascar = NULL;
+    TASCAR::console_log("deleted TASCAR session");
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
   }
   if(ovboxclient) {
     delete ovboxclient;
     ovboxclient = NULL;
+    TASCAR::console_log("deleted ovboxclient");
   }
   TASCAR::console_log("ended TASCAR session.");
 }

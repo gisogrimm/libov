@@ -521,6 +521,7 @@ msgbuf_t::msgbuf_t()
       rawbuffer(new char[BUFSIZE]), msg(rawbuffer)
 {
   memset(rawbuffer, 0, BUFSIZE);
+  DEBUG(this);
 }
 
 void msgbuf_t::copy(const msgbuf_t& src)
@@ -536,7 +537,9 @@ void msgbuf_t::copy(const msgbuf_t& src)
 
 msgbuf_t::~msgbuf_t()
 {
+  DEBUG(this);
   delete[] rawbuffer;
+  DEBUG(2);
 }
 
 void msgbuf_t::pack(secret_t secret, stage_device_id_t callerid,
