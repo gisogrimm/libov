@@ -105,6 +105,10 @@ udpsocket_t::udpsocket_t() : tx_bytes(0), rx_bytes(0)
   setsockopt(sockfd, IPPROTO_IP, IP_TOS, &iptos, sizeof(iptos));
 #endif
 #endif
+#ifdef WIN32
+  u_long mode = 1;
+  ioctlsocket(sockfd, FIONBIO, &mode);
+#endif
   set_netpriority(6);
   isopen = true;
   DEBUG(this);
@@ -146,6 +150,8 @@ udpsocket_t::~udpsocket_t()
 
 void udpsocket_t::set_timeout_usec(int usec)
 {
+  DEBUG(this);
+  DEBUG(usec);
   struct timeval tv;
   tv.tv_sec = 0;
   tv.tv_usec = usec;
