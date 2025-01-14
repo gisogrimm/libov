@@ -107,6 +107,7 @@ udpsocket_t::udpsocket_t() : tx_bytes(0), rx_bytes(0)
 #endif
   set_netpriority(6);
   isopen = true;
+  DEBUG(this);
 }
 
 void udpsocket_t::set_netpriority(int priority)
@@ -138,7 +139,9 @@ void udpsocket_t::set_expedited_forwarding_PHB()
 
 udpsocket_t::~udpsocket_t()
 {
+  DEBUG(this);
   close();
+  DEBUG(this);
 }
 
 void udpsocket_t::set_timeout_usec(int usec)
@@ -477,7 +480,7 @@ endpoint_t getipaddr()
   // free(adapter_addresses);
 
   char hostname[256];
-  if(gethostname(hostname,sizeof(hostname))==SOCKET_ERROR)
+  if(gethostname(hostname, sizeof(hostname)) == SOCKET_ERROR)
     throw ErrMsg("Failed to get host name");
   return ovgethostbyname(hostname);
 

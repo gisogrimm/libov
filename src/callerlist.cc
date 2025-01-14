@@ -18,8 +18,8 @@
  */
 
 #include "callerlist.h"
-#include <string.h>
 #include "../tascar/libtascar/include/tscconfig.h"
+#include <string.h>
 
 ep_desc_t::ep_desc_t()
 {

@@ -241,7 +241,8 @@ void ovtcpsocket_t::handleconnection(int fd, endpoint_t ep)
             csize[0] + (csize[1] << 8) + (csize[2] << 16) + (csize[3] << 24);
         // read package:
         if(size > BUFSIZE) {
-          std::cerr << "Message is too large to fit into buffer (" << size << "/" << BUFSIZE << " Bytes).\n";
+          std::cerr << "Message is too large to fit into buffer (" << size
+                    << "/" << BUFSIZE << " Bytes).\n";
           break;
         }
         cnt = nbread(fd, buf, size);

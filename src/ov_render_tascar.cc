@@ -23,7 +23,7 @@
 #include <iostream>
 #include <jack/jack.h>
 
-//#define SHOWDEBUG
+// #define SHOWDEBUG
 
 port_t get_zitaport_(stage_device_id_t deviceid, port_t offset,
                      port_t xoffset = 0)
@@ -1077,8 +1077,8 @@ void ov_render_tascar_t::start_session()
                 << " label:" << dev.second.label << std::endl;
     }
   }
-  //#endif
-  // do whatever needs to be done in base class:
+  // #endif
+  //  do whatever needs to be done in base class:
   ov_render_base_t::start_session();
   // xml code for TASCAR configuration:
   TASCAR::xml_doc_t tsc;

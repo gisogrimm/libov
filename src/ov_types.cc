@@ -22,7 +22,7 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-//#define SHOWDEBUG
+// #define SHOWDEBUG
 
 #ifndef DEBUG
 #define DEBUG(x)                                                               \

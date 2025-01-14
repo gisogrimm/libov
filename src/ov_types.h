@@ -438,7 +438,7 @@ public:
     return {"system:capture_1", "system:capture_2"};
   };
   // provide additional configuration as json string:
-  virtual void set_extra_config(const std::string&){};
+  virtual void set_extra_config(const std::string&) {};
 
   /**
    * Sets the folder, where runtime related files are written and read from.
@@ -496,7 +496,7 @@ public:
    */
   virtual void
   get_session_gains(float& outputgain, float& egogain, float& reverbgain,
-                    std::map<std::string, std::vector<float>>& othergains){};
+                    std::map<std::string, std::vector<float>>& othergains) {};
   virtual size_t get_num_inputs() const
   {
     return stage.thisdevice.channels.size();
@@ -555,9 +555,9 @@ public:
    *
    * This method can be called by the backend.
    */
-  virtual void upload_plugin_settings(){};
-  virtual void upload_session_gains(){};
-  virtual void upload_objmix(){};
+  virtual void upload_plugin_settings() {};
+  virtual void upload_session_gains() {};
+  virtual void upload_objmix() {};
 
 protected:
   ov_render_base_t& backend;

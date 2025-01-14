@@ -53,11 +53,11 @@ public:
 
 protected:
   virtual void announce_new_connection(stage_device_id_t cid,
-                                       const ep_desc_t& ep){};
-  virtual void announce_connection_lost(stage_device_id_t cid){};
+                                       const ep_desc_t& ep) {};
+  virtual void announce_connection_lost(stage_device_id_t cid) {};
   virtual void announce_latency(stage_device_id_t cid, double lmin,
                                 double lmean, double lmax, uint32_t received,
-                                uint32_t lost){};
+                                uint32_t lost) {};
   void cid_setpingtime(stage_device_id_t cid, double pingtime);
   void cid_register(stage_device_id_t cid, const endpoint_t& ep, epmode_t mode,
                     const std::string& rver);
