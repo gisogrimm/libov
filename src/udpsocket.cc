@@ -111,7 +111,6 @@ udpsocket_t::udpsocket_t() : tx_bytes(0), rx_bytes(0)
 #endif
   set_netpriority(6);
   isopen = true;
-  DEBUG(this);
 }
 
 void udpsocket_t::set_netpriority(int priority)
@@ -143,15 +142,11 @@ void udpsocket_t::set_expedited_forwarding_PHB()
 
 udpsocket_t::~udpsocket_t()
 {
-  DEBUG(this);
   close();
-  DEBUG(this);
 }
 
 void udpsocket_t::set_timeout_usec(int usec)
 {
-  DEBUG(this);
-  DEBUG(usec);
   struct timeval tv;
   tv.tv_sec = 0;
   tv.tv_usec = usec;
@@ -530,7 +525,6 @@ msgbuf_t::msgbuf_t()
       rawbuffer(new char[BUFSIZE]), msg(rawbuffer)
 {
   memset(rawbuffer, 0, BUFSIZE);
-  DEBUG(this);
 }
 
 void msgbuf_t::copy(const msgbuf_t& src)
@@ -546,9 +540,7 @@ void msgbuf_t::copy(const msgbuf_t& src)
 
 msgbuf_t::~msgbuf_t()
 {
-  DEBUG(this);
   delete[] rawbuffer;
-  DEBUG(2);
 }
 
 void msgbuf_t::pack(secret_t secret, stage_device_id_t callerid,

@@ -1485,9 +1485,6 @@ void ov_render_tascar_t::start_audiobackend()
 {
   TASCAR::console_log("starting audio backend " + audiodevice.drivername + "/" +
                       audiodevice.devicename);
-#ifdef SHOWDEBUG
-  std::cout << "ov_render_tascar_t::start_audiobackend" << std::endl;
-#endif
   ov_render_base_t::start_audiobackend();
   if((audiodevice.drivername == "jack") &&
      (audiodevice.devicename != "manual")) {
