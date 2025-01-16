@@ -93,6 +93,9 @@ std::vector<snddevname_t> list_sound_devices()
 #ifdef WIN32
   auto err = Pa_Initialize();
   if(err == paNoError) {
+    std::map<std::string,std::vector<std::string>> devices_duplex;
+    std::map<std::string,std::vector<std::string>> devices_input;
+    std::map<std::string,std::vector<std::string>> devices_output;
     int numDevices = Pa_GetDeviceCount();
     if(numDevices >= 0) {
       const PaDeviceInfo* deviceInfo;
@@ -100,21 +103,37 @@ std::vector<snddevname_t> list_sound_devices()
         deviceInfo = Pa_GetDeviceInfo(i);
         if(deviceInfo->maxInputChannels + deviceInfo->maxOutputChannels > 0) {
           const PaHostApiInfo* apiinfo = Pa_GetHostApiInfo(deviceInfo->hostApi);
+          if(apiinfo){
           std::string devname = deviceInfo->name;
-          if(apiinfo)
-            devname = std::string(apiinfo->name) + ": " + devname;
-          devname += " ";
-          if(deviceInfo->maxInputChannels > 0)
-            devname +=
-                std::to_string((int)(deviceInfo->maxInputChannels)) + "i";
-          if(deviceInfo->maxOutputChannels > 0)
-            devname +=
-                std::to_string((int)(deviceInfo->maxOutputChannels)) + "o";
-          retv.push_back({std::to_string(i), devname});
+	  std::string sapiinfo = apiinfo->name;
+	  if( (deviceInfo->maxInputChannels>0) && (deviceInfo->maxOutputChannels>0))
+	    devices_duplex[sapiinfo].push_back(devname);
+	  if( (deviceInfo->maxInputChannels>0) && (deviceInfo->maxOutputChannels==0))
+	    devices_input[sapiinfo].push_back( devname);
+	  if( (deviceInfo->maxInputChannels==0) && (deviceInfo->maxOutputChannels>0))
+	    devices_output[sapiinfo].push_back(devname);
+	  }
+	  //devname = std::string(apiinfo->name) + ": " + devname;
+          //devname += " ";
+          //if(deviceInfo->maxInputChannels > 0)
+          //  devname +=
+          //      std::to_string((int)(deviceInfo->maxInputChannels)) + "i";
+          //if(deviceInfo->maxOutputChannels > 0)
+          //  devname +=
+          //      std::to_string((int)(deviceInfo->maxOutputChannels)) + "o";
+          //retv.push_back({std::to_string(i), devname});
         }
       }
     }
     Pa_Terminate();
+    for(auto devlist : devices_duplex )
+      for(auto dev : devlist.second )
+	retv.push_back({"-d \""+devlist.first+"::"+dev+"\"",devlist.first+": "+dev});
+    for(auto devlist : devices_input )
+      for(auto devi : devlist.second )
+	for(auto devo : devices_output[devlist.first])
+	  retv.push_back({"-C \""+devlist.first+"::"+devi+"\" -P \""+devlist.first+"::"+devo+"\"",devlist.first+": "+devi + "/"+devo});
+    
   }
 #endif
   return retv;
