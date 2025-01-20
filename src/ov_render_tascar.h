@@ -70,6 +70,7 @@ public:
   std::string get_current_plugincfg_as_json(size_t channel);
   std::string get_all_current_plugincfg_as_json();
   std::string get_objmixcfg_as_json();
+  std::string get_level_stat_as_json();
   void get_session_gains(float& outputgain, float& egogain, float& reverbgain,
                          std::map<std::string, std::vector<float>>&);
   void set_zita_path(const std::string& path);
@@ -77,6 +78,8 @@ public:
   void upload_plugin_settings();
   void upload_session_gains();
   void upload_objmix();
+  void update_level_stat(int32_t channel, const std::vector<float>& peak,
+                         const std::vector<float>& ms);
   size_t get_xruns();
   class metronome_t {
   public:
@@ -99,6 +102,8 @@ private:
   tsccfg::node_t configure_simplefdn(tsccfg::node_t e_scene);
 
   void create_raw_dev(tsccfg::node_t session);
+  void create_levelmeter_route(tsccfg::node_t e_session,
+                               tsccfg::node_t e_modules);
   void add_secondary_bus(const stage_device_t& stagemember,
                          tsccfg::node_t& e_mods, tsccfg::node_t& e_session,
                          std::vector<std::string>& waitports,
@@ -197,6 +202,10 @@ private:
   std::string mhaconfig;
   // use BCF2000 with default settings:
   bool usebcf2000 = false;
+  // OSC message for dispatching to trigger level analysis:
+  lo_message msg_level_analysis_trigger;
+  std::map<int32_t, std::vector<float>> level_analysis_peak;
+  std::map<int32_t, std::vector<float>> level_analysis_ms;
 };
 
 #endif

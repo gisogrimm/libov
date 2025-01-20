@@ -257,6 +257,23 @@ std::string ov_render_tascar_t::get_current_plugincfg_as_json(size_t channel)
   return r;
 }
 
+std::string ov_render_tascar_t::get_level_stat_as_json()
+{
+  level_analysis_peak.clear();
+  level_analysis_peak.clear();
+  if(tascar)
+    tascar->dispatch_data_message("/levelanalysis*/trigger",
+                                  msg_level_analysis_trigger);
+  std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  nlohmann::json jsstat;
+  for(size_t ch = 0; ch < get_num_inputs(); ++ch) {
+    jsstat[ch]["peak"] = level_analysis_peak[ch];
+    jsstat[ch]["rms"] = level_analysis_ms[ch];
+  }
+  std::string r = jsstat.dump();
+  return r;
+}
+
 void ov_render_tascar_t::get_session_gains(
     float& outputgain, float& egogain, float& reverbgain,
     std::map<std::string, std::vector<float>>& othergains)
@@ -380,6 +397,7 @@ ov_render_tascar_t::ov_render_tascar_t(const std::string& deviceid,
     dist_to_other_tascarport += portoffset;
     my_tascarport += portoffset;
   }
+  msg_level_analysis_trigger = lo_message_new();
 }
 
 ov_render_tascar_t::~ov_render_tascar_t()
@@ -390,6 +408,7 @@ ov_render_tascar_t::~ov_render_tascar_t()
     stop_audiobackend();
   if(pinglogaddr)
     lo_address_free(pinglogaddr);
+  lo_message_free(msg_level_analysis_trigger);
 }
 
 void ov_render_tascar_t::set_allow_systemmods(bool allow)
@@ -576,6 +595,29 @@ tsccfg::node_t ov_render_tascar_t::configure_simplefdn(tsccfg::node_t e_scene)
       e_rvb, "gain",
       TASCAR::to_string(20.0f * log10f(stage.rendersettings.reverbgain)));
   return e_rvb;
+}
+
+void ov_render_tascar_t::create_levelmeter_route(tsccfg::node_t e_session,
+                                                 tsccfg::node_t e_mods)
+{
+  stage_device_t& thisdev(stage.thisdevice);
+  std::string clientname("levelanalysis." + thisdev.uid);
+  tsccfg::node_t mod = tsccfg::node_add_child(e_mods, "route");
+  tsccfg::node_set_attribute(mod, "name", clientname);
+  tsccfg::node_set_attribute(mod, "channels", std::to_string(get_num_inputs()));
+  tsccfg::node_set_attribute(mod, "caliblevel_in", "93.9794001");
+  tsccfg::node_t e_plugs = tsccfg::node_add_child(mod, "plugins");
+  tsccfg::node_t e_meter = tsccfg::node_add_child(e_plugs, "reclevelanalyzer");
+  tsccfg::node_set_attribute(e_meter, "triggered", "true");
+  tsccfg::node_set_attribute(e_meter, "tau_segment", "0.125");
+  tsccfg::node_set_attribute(e_meter, "tau_analysis", "25.0");
+  tsccfg::node_set_attribute(e_meter, "path", "/reclevelanalyzer");
+  int chn(0);
+  for(auto ch : thisdev.channels) {
+    session_add_connect(e_session, ch.sourceport,
+                        clientname + ":in." + std::to_string(chn));
+    ++chn;
+  }
 }
 
 void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
@@ -1029,6 +1071,31 @@ int osc_upload_plugin_settings(const char* path, const char* types,
   return 1;
 }
 
+int osc_update_level_stat(const char* path, const char* types, lo_arg** argv,
+                          int argc, lo_message msg, void* user_data)
+{
+  if(user_data) {
+    ov_render_tascar_t* tsc(reinterpret_cast<ov_render_tascar_t*>(user_data));
+    tsc->update_level_stat(
+        argv[0]->i,
+        {argv[1]->f, argv[2]->f, argv[3]->f, argv[4]->f, argv[5]->f},
+        {argv[6]->f, argv[7]->f, argv[8]->f, argv[9]->f, argv[10]->f});
+  }
+  return 1;
+}
+
+void ov_render_tascar_t::update_level_stat(int32_t channel,
+                                           const std::vector<float>& peak,
+                                           const std::vector<float>& ms)
+{
+  level_analysis_peak[channel] = peak;
+  level_analysis_ms[channel] = ms;
+  for(auto& v : level_analysis_peak[channel])
+    v = std::max(v, -200.0f);
+  for(auto& v : level_analysis_ms[channel])
+    v = std::max(v, -200.0f);
+}
+
 void ov_render_tascar_t::upload_plugin_settings()
 {
   if(client)
@@ -1070,7 +1137,7 @@ void ov_render_tascar_t::upload_objmix()
 
 void ov_render_tascar_t::start_session()
 {
-  TASCAR::console_log("starting TASCAR session");
+  TASCAR::console_log("creating TASCAR session");
   if(!stage.host.empty()) {
     for(auto dev : stage.stage) {
       std::cerr << "stageid:" << (int)dev.first << " uid:" << dev.second.uid
@@ -1099,6 +1166,9 @@ void ov_render_tascar_t::start_session()
   tsccfg::node_set_attribute(e_scene, "name", stage.thisdeviceid);
   // modules section:
   tsccfg::node_t e_mods(tsccfg::node_add_child(e_session, "modules"));
+  // create a route for level analysis:
+  create_levelmeter_route(e_session, e_mods);
+  // end of level analysis.
   // add effect bus:
   if(!stage.host.empty() || emptysessionismonitor)
     for(auto ch : stage.thisdevice.channels) {
@@ -1403,7 +1473,6 @@ void ov_render_tascar_t::start_session()
     if(v.size())
       throw TASCAR::ErrMsg(v);
     tascar->start();
-    // DEBUG("started");
     inputports = get_jack_input_ports(tascar->jc, stage.thisdeviceid);
 
     tascar->add_method("/uploadpluginsettings", "", &osc_upload_plugin_settings,
@@ -1411,6 +1480,8 @@ void ov_render_tascar_t::start_session()
     tascar->add_method("/uploadsessiongains", "", &osc_upload_session_gains,
                        this);
     tascar->add_method("/uploadobjmix", "", &osc_upload_objmix, this);
+    tascar->add_method("/reclevelanalyzer", "iffffffffff",
+                       &osc_update_level_stat, this);
   }
   catch(const std::exception& e) {
     DEBUG(e.what());

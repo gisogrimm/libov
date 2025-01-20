@@ -266,6 +266,8 @@ std::string ov_client_orlandoviols_t::device_update(std::string url,
   jsdevice["uname_sysname"] = uname_sysname;
   jsdevice["uname_release"] = uname_release;
   jsdevice["uname_machine"] = uname_machine;
+  jsdevice["levelstats"] =
+      nlohmann::json::parse(backend.get_level_stat_as_json());
   std::string curlstrdevice(jsdevice.dump());
   CURLcode res;
   std::string retv;
