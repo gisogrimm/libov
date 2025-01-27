@@ -56,7 +56,6 @@ void endpoint_list_t::cid_register(stage_device_id_t cid, const endpoint_t& ep,
   if(cid < MAX_STAGE_ID) {
     if(mstat.try_lock()) {
       size_t scid = (size_t)cid;
-      //endpoints[scid].ep = ep;
       memcpy(&(endpoints[scid].ep), &ep, sizeof(endpoint_t));
       if(mode != endpoints[cid].mode)
         endpoints[scid].announced = false;
@@ -72,7 +71,7 @@ void endpoint_list_t::cid_setlocalip(stage_device_id_t cid,
                                      const endpoint_t& localep)
 {
   if(cid < MAX_STAGE_ID) {
-    endpoints[cid].localep = localep;
+    memcpy(&(endpoints[cid].localep), &localep, sizeof(endpoint_t));
     // workaround for invalidly packed sockaddr structures when
     // receiving from some systems:
     endpoints[cid].localep.sin_family = AF_INET;
