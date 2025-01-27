@@ -56,7 +56,8 @@ void endpoint_list_t::cid_register(stage_device_id_t cid, const endpoint_t& ep,
   if(cid < MAX_STAGE_ID) {
     if(mstat.try_lock()) {
       size_t scid = (size_t)cid;
-      endpoints[scid].ep = ep;
+      //endpoints[scid].ep = ep;
+      memcpy(&(endpoints[scid].ep), &ep, sizeof(endpoint_t));
       if(mode != endpoints[cid].mode)
         endpoints[scid].announced = false;
       endpoints[scid].mode = mode;
