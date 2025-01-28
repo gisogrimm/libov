@@ -28,7 +28,7 @@
 port_t get_zitaport_(stage_device_id_t deviceid, port_t offset,
                      port_t xoffset = 0)
 {
-  return port_t(4464 + 2 * deviceid) + offset + xoffset;
+  return (port_t)(4464 + 2 * deviceid + offset + xoffset);
 }
 
 bool ends_with(std::string const& fullString, std::string const& ending)
@@ -97,10 +97,10 @@ ov_render_tascar_t::metronome_t::metronome_t()
 }
 
 ov_render_tascar_t::metronome_t::metronome_t(const nlohmann::json& js)
-    : bpb(my_js_value(js, "bpb", 4)), bpm(my_js_value(js, "bpm", 120.0)),
+    : bpb(my_js_value(js, "bpb", 4)), bpm(my_js_value(js, "bpm", 120.0f)),
       bypass(!my_js_value(js, "active", false)),
-      delay(my_js_value(js, "delay", 40.0)),
-      level(my_js_value(js, "level", 65.0))
+      delay(my_js_value(js, "delay", 40.0f)),
+      level(my_js_value(js, "level", 65.0f))
 {
 }
 
@@ -152,7 +152,7 @@ void ov_render_tascar_t::metronome_t::update_osc(TASCAR::osc_server_t* srv,
     srv->dispatch_data_message(
         (std::string("/") + dev + ".metronome/ap*/metronome/bypass").c_str(),
         msg);
-    loarg[0]->f = bpb;
+    loarg[0]->f = (float)bpb;
     srv->dispatch_data_message(
         (std::string("/") + dev + ".metronome/ap*/metronome/bpb").c_str(), msg);
     loarg[0]->f = level;
@@ -266,7 +266,7 @@ std::string ov_render_tascar_t::get_level_stat_as_json()
                                   msg_level_analysis_trigger);
   std::this_thread::sleep_for(std::chrono::milliseconds(1));
   nlohmann::json jsstat;
-  for(size_t ch = 0; ch < get_num_inputs(); ++ch) {
+  for(int ch = 0; ch < (int)get_num_inputs(); ++ch) {
     jsstat[ch]["peak"] = level_analysis_peak[ch];
     jsstat[ch]["rms"] = level_analysis_ms[ch];
   }
@@ -376,7 +376,7 @@ ov_render_tascar_t::ov_render_tascar_t(const std::string& deviceid,
     : ov_render_base_t(deviceid), h_jack(NULL), h_webmixer(NULL), tascar(NULL),
       ovboxclient(NULL), pinglogport(pinglogport_), pinglogaddr(nullptr),
       inputports({"system:capture_1", "system:capture_2"}),
-      headtrack_tauref(33.315), zitapath(ZITAPATH), is_proxy(false),
+      headtrack_tauref(33.315f), zitapath(ZITAPATH), is_proxy(false),
       use_proxy(false), cb_seqerr(nullptr), cb_seqerr_data(nullptr),
       sorter_deadline(5.0), expedited_forwarding_PHB(false),
       render_soundscape(true), jackrec_fileformat("WAV"),
@@ -394,8 +394,8 @@ ov_render_tascar_t::ov_render_tascar_t(const std::string& deviceid,
   localip = ep2ipstr(getipaddr());
   if(secondary) {
     portoffset = 64;
-    dist_to_other_tascarport += portoffset;
-    my_tascarport += portoffset;
+    dist_to_other_tascarport = (port_t)(dist_to_other_tascarport + portoffset);
+    my_tascarport = (port_t)(my_tascarport + portoffset);
   }
   msg_level_analysis_trigger = lo_message_new();
 }
@@ -650,7 +650,8 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
     // we take positions transferred from database server):
     double stagewidth(160);
     double az(-0.5 * stagewidth);
-    double daz(stagewidth / (stage.stage.size() - (!b_sender)) * DEG2RAD);
+    double daz(stagewidth / ((double)(stage.stage.size()) - (!b_sender)) *
+               DEG2RAD);
     az = az * DEG2RAD - 0.5 * daz;
     double radius(1.2);
     ego_source_names.clear();
@@ -708,7 +709,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
             } else {
               if(!stage.rendersettings.distancelaw)
                 // if not self-monitor then decrease gain:
-                gain *= 0.6;
+                gain *= 0.6f;
             }
             tsccfg::node_set_attribute(e_snd, "gain",
                                        TASCAR::to_string(20.0f * log10f(gain)));
@@ -1638,7 +1639,7 @@ void ov_render_tascar_t::start_audiobackend()
   jack_status_t jstat;
   jc = jack_client_open("listchannels", opt, &jstat);
   if(jc) {
-    audiodevice.srate = jack_get_sample_rate(jc);
+    audiodevice.srate = (float)jack_get_sample_rate(jc);
     audiodevice.periodsize = jack_get_buffer_size(jc);
     inputports = get_jack_input_ports(jc, stage.thisdeviceid);
     jack_client_close(jc);
@@ -1713,7 +1714,7 @@ void ov_render_tascar_t::set_stage_device_gain(
         gain *= stage.rendersettings.egogain;
       } else {
         // if not self-monitor then decrease gain:
-        gain *= 0.6;
+        gain *= 0.6f;
       }
       std::string pattern("/" + stage.thisdeviceid + "/" +
                           get_stagedev_name(stagedeviceid) + "/" +
@@ -1880,7 +1881,7 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
       if(prev_usebcf2000 != usebcf2000)
         restart_session = true;
       if(xcfg["network"].is_object()) {
-        double new_deadline =
+        float new_deadline =
             my_js_value(xcfg["network"], "deadline", sorter_deadline);
         if(new_deadline != sorter_deadline) {
           sorter_deadline = new_deadline;
@@ -1896,7 +1897,7 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
         }
       }
       if(xcfg["headtrack"].is_object()) {
-        headtrack_tauref = my_js_value(xcfg["headtrack"], "tauref", 33.315);
+        headtrack_tauref = my_js_value(xcfg["headtrack"], "tauref", 33.315f);
         // headtrack_tilturl =
         //    my_js_value(xcfg["headtrack"], "tilturl", std::string(""));
         // headtrack_tiltpath =
@@ -1910,7 +1911,7 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
             my_js_value(xcfg["headtrack"], "autorefzonly", true);
       }
       if(xcfg["monitor"].is_object()) {
-        selfmonitor_delay = my_js_value(xcfg["monitor"], "delay", 0.0);
+        selfmonitor_delay = my_js_value(xcfg["monitor"], "delay", 0.0f);
         bool new_onlyreverb = my_js_value(xcfg["monitor"], "onlyreverb", false);
         if(new_onlyreverb != selfmonitor_onlyreverb) {
           selfmonitor_onlyreverb = new_onlyreverb;
@@ -1978,7 +1979,7 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
                 my_js_value(proxyclient, "ip", std::string(""));
             if((cfg_proxy_id >= 0) && (cfg_proxy_id < MAX_STAGE_ID) &&
                cfg_proxy_ip.size() && (cfg_proxy_ip != localip))
-              cfg_proxyclients[cfg_proxy_id] = cfg_proxy_ip;
+              cfg_proxyclients[(uint8_t)cfg_proxy_id] = cfg_proxy_ip;
           }
         }
         if((cfg_is_proxy != is_proxy) || (cfg_use_proxy != use_proxy) ||
