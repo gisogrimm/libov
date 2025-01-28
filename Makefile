@@ -245,3 +245,6 @@ execute-unit-tests: $(BUILD_DIR)/unit-test-runner
 unit_tests_test_files = $(wildcard unittests/*.cc)
 $(BUILD_DIR)/unit-test-runner: $(BUILD_DIR)/.directory $(unit_tests_test_files) $(BUILD_OBJ)
 	$(MAKE) gtest && if test -n "$(unit_tests_test_files)"; then $(CXX) $(CXXFLAGS) -I$(BUILD_DIR)/include -I$(SOURCE_DIR) -L$(BUILD_DIR) -L$(BUILD_DIR)/lib -o $@ $(wordlist 2, $(words $^), $^)  $(LDFLAGS) -lov $(LDLIBS) -lgtest_main -lgtest -lpthread; fi
+
+build/test_endianess: src/test_endianess.cc $(BUILD_OBJ)
+	$(CXX) -o $@ $^ $(CXXFLAGS) $(LDFLAGS) $(LDLIBS)
