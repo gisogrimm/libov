@@ -262,6 +262,22 @@ public:
   ovbox_udpsocket_t(secret_t secret, stage_device_id_t id);
   void send_ping(const endpoint_t& ep, stage_device_id_t destid = 0,
                  port_t proto = PORT_PING);
+  double time_since_start() const;
+  /**
+   * @ingroup networkprotocol
+   * Extract time stamp from message and compare with current time to
+   *  get ping time.
+   *
+   * @param msg Start of memory area where the data is extracted. The
+   *   value is incremented by the data needed for the time stamp.
+   * @param msglen Length of memory area to read from. The value is
+   *   decremented by the length of data needed to read the time stamp.
+   *
+   * On success, a positive ping time in Milliseconds is returned. If
+   * the buffer does not contain sufficient data, -1 is returned.
+   */
+  double get_pingtime(char*& msg, size_t& msglen);
+
   void send_registration(epmode_t, port_t port, const endpoint_t& localep);
   /**
    * Receive a message, extract header and validate secret.
@@ -326,6 +342,7 @@ protected:
   secret_t secret;
   stage_device_id_t callerid;
   sequence_map_t seqmap;
+  std::chrono::high_resolution_clock::time_point t_start;
 };
 
 #endif

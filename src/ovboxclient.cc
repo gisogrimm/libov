@@ -405,7 +405,7 @@ void ovboxclient_t::process_pong_msg(msgbuf_t& msg)
     tbuf += sizeof(stage_device_id_t);
     tsize -= sizeof(stage_device_id_t);
   }
-  double tms(get_pingtime(tbuf, tsize));
+  double tms(remote_server.get_pingtime(tbuf, tsize));
   if(tms > 0) {
     if(cb_ping)
       cb_ping(msg.cid, msg.destport, tms, msg.sender, cb_ping_data);

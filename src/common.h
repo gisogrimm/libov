@@ -270,21 +270,6 @@ size_t packmsg(char* destbuf, size_t maxlen, secret_t secret,
 size_t addmsg(char* destbuf, size_t maxlen, size_t currentlen, const char* msg,
               size_t msglen);
 
-/**
- * @ingroup networkprotocol
- * Extract time stamp from message and compare with current time to
- *  get ping time.
- *
- * @param msg Start of memory area where the data is extracted. The
- *   value is incremented by the data needed for the time stamp.
- * @param msglen Length of memory area to read from. The value is
- *   decremented by the length of data needed to read the time stamp.
- *
- * On success, a positive ping time in Milliseconds is returned. If
- * the buffer does not contain sufficient data, -1 is returned.
- */
-double get_pingtime(char*& msg, size_t& msglen);
-
 #endif
 
 /*

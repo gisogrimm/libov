@@ -283,21 +283,42 @@ std::string ep2ipstr(const endpoint_t& ep)
 ovbox_udpsocket_t::ovbox_udpsocket_t(secret_t secret, stage_device_id_t cid)
     : secret(secret), callerid(cid)
 {
+  t_start = std::chrono::high_resolution_clock::now();
+}
+
+double ovbox_udpsocket_t::time_since_start() const
+{
+  std::chrono::duration<double> time_span =
+      std::chrono::duration_cast<std::chrono::duration<double>>(
+          std::chrono::high_resolution_clock::now() - t_start);
+  return time_span.count();
 }
 
 void ovbox_udpsocket_t::send_ping(const endpoint_t& ep,
                                   stage_device_id_t destid, port_t proto)
 {
   char buffer[pingbufsize];
-  std::chrono::high_resolution_clock::time_point t1(
-      std::chrono::high_resolution_clock::now());
   size_t n(0);
   n = packmsg(buffer, pingbufsize, proto, "", 0);
   if(proto == PORT_PING_SRV)
     n = addmsg(buffer, pingbufsize, n, (char*)(&destid), sizeof(destid));
+  double t1 = time_since_start();
   n = addmsg(buffer, pingbufsize, n, (const char*)(&t1), sizeof(t1));
   n = addmsg(buffer, pingbufsize, n, (char*)(&ep), sizeof(ep));
   send(buffer, n, ep);
+}
+
+double ovbox_udpsocket_t::get_pingtime(char*& msg, size_t& msglen)
+{
+  if(msglen >= sizeof(double)) {
+    double t_since_start = time_since_start();
+    double t_send = *(double*)msg;
+    msglen -= sizeof(double);
+    msg += sizeof(double);
+    auto dt = t_since_start - t_send;
+    return (1000.0 * dt);
+  }
+  return -1;
 }
 
 void ovbox_udpsocket_t::send_registration(epmode_t mode, port_t port,
