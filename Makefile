@@ -24,7 +24,8 @@ HAS_LSL:=$(shell tascar/check_for_lsl)
 # please no c++2a or c++20, max 17 for the time being (c++-2a breaks
 # build on CI pipeline for Ubuntu and arm)
 CXXFLAGS = -Wall -Wno-deprecated-declarations -std=c++17 -pthread	\
--ggdb -fno-finite-math-only -fPIC -Wno-psabi
+-ggdb -fno-finite-math-only -fPIC -Wno-psabi -Wconversion -Wextra -Wno-unused-parameter
+#-Werror
 
 EXTERNALS = jack xerces-c liblo sndfile libcurl gsl samplerate fftw3f xerces-c
 

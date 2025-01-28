@@ -126,7 +126,7 @@ public:
    * @param portno Destination port number
    * @return The number of bytes sent, or -1 in case of failure
    */
-  ssize_t send(const char* buf, size_t len, int portno);
+  ssize_t send(const char* buf, size_t len, uint16_t portno);
   /**
    * Send a message to a destination.
    *

@@ -228,18 +228,18 @@ bool operator!=(const render_settings_t& a, const render_settings_t& b)
 render_settings_t::render_settings_t()
     : id(0),                              // stage_device_id_t id;
       roomsize(default_roomsize),         // pos_t roomsize;
-      absorption(0.6),                    // double absorption;
-      damping(0.7),                       // double damping;
-      reverbgain(1.0),                    // double reverbgain;
-      reverbgainroom(1.0),                // double reverbgain;
-      reverbgaindev(1.0),                 // double reverbgain;
+      absorption(0.6f),                   // float absorption;
+      damping(0.7f),                      // float damping;
+      reverbgain(1.0f),                   // float reverbgain;
+      reverbgainroom(1.0),                // float reverbgain;
+      reverbgaindev(1.0),                 // float reverbgain;
       renderreverb(true),                 // bool renderreverb;
       renderism(false),                   // bool renderism;
       distancelaw(false), rawmode(false), // bool rawmode;
       receive(true),                      // bool receive
       rectype("hrtf"),                    // std::string rectype;
-      egogain(1.0),                       // double egogain;
-      outputgain(1.0),                    // double outputgain;
+      egogain(1.0),                       // float egogain;
+      outputgain(1.0),                    // float outputgain;
       peer2peer(true),                    // bool peer2peer;
       outputport1(""),                    // std::string outputport1;
       outputport2(""),                    // std::string outputport2;
@@ -248,23 +248,23 @@ render_settings_t::render_settings_t()
                              std::string>()), // std::unordered_map<std::string,
       // std::string> xports;
       xrecport(std::vector<port_t>()), // std::vector<port_t> xrecport;
-      secrec(0),                       // double secrec;
+      secrec(0),                       // float secrec;
       headtracking(false),             // bool headtracking;
       headtrackingrotrec(true),        // bool headtrackingrotrec;
       headtrackingrotsrc(true),        // bool headtrackingrotsrc;
       headtrackingport(0),             // port_t headtrackingport;
       ambientsound(""),                // std::string ambientsound;
-      ambientlevel(50),                // double ambientlevel;
-      lmetertc(0.5),                   // double levelmeter_tc;
+      ambientlevel(50),                // float ambientlevel;
+      lmetertc(0.5),                   // float levelmeter_tc;
       lmeterfw("Z"),                   // std::string lmeterfw;
-      delaycomp(2.4),                  // double delaycomp;
-      decorr(0.0),                     // double decorr;
+      delaycomp(2.4f),                 // float delaycomp;
+      decorr(0.0),                     // float decorr;
       usetcptunnel(false)              // bool usetcptunnel;
 {
 }
 
 ov_render_base_t::ov_render_base_t(const std::string& deviceid)
-    : audiodevice({"", "", 48000, 96, 2}), stage(default_stage),
+    : audiodevice({"", "", 48000, 96, 2, 40}), stage(default_stage),
       session_active(false), audio_active(false), restart_needed(false)
 {
   stage.thisdeviceid = deviceid;

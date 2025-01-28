@@ -453,7 +453,7 @@ stage_device_t get_stage_dev(nlohmann::json& dev)
 {
   try {
     stage_device_t stagedev;
-    stagedev.id = my_js_value(dev, "id", -1);
+    stagedev.id = (stage_device_id_t)(my_js_value(dev, "id", -1));
     stagedev.uid = my_js_value(dev, "deviceid", std::string(""));
     stagedev.label = my_js_value(dev, "label", std::string(""));
     stagedev.receivedownmix = my_js_value(dev, "receivedownmix", false);
@@ -473,11 +473,11 @@ stage_device_t get_stage_dev(nlohmann::json& dev)
           devchannel.id = stagedev.label + "_" + std::to_string(stagedev.id) +
                           "_" + devchannel.name;
         devchannel.sourceport = my_js_value(ch, "sourceport", std::string(""));
-        devchannel.gain = my_js_value(ch, "gain", 1.0);
+        devchannel.gain = my_js_value(ch, "gain", 1.0f);
         nlohmann::json chpos(ch["position"]);
-        devchannel.position.x = my_js_value(chpos, "x", 0.0);
-        devchannel.position.y = my_js_value(chpos, "y", 0.0);
-        devchannel.position.z = my_js_value(chpos, "z", 0.0);
+        devchannel.position.x = my_js_value(chpos, "x", 0.0f);
+        devchannel.position.y = my_js_value(chpos, "y", 0.0f);
+        devchannel.position.z = my_js_value(chpos, "z", 0.0f);
         devchannel.directivity =
             my_js_value(ch, "directivity", std::string("omni"));
         devchannel.update_plugin_cfg(ch["plugins"].dump());
@@ -485,22 +485,22 @@ stage_device_t get_stage_dev(nlohmann::json& dev)
       }
     /// Position of the stage device in the virtual space:
     nlohmann::json devpos(dev["position"]);
-    stagedev.position.x = my_js_value(devpos, "x", 0.0);
-    stagedev.position.y = my_js_value(devpos, "y", 0.0);
-    stagedev.position.z = my_js_value(devpos, "z", 0.0);
+    stagedev.position.x = my_js_value(devpos, "x", 0.0f);
+    stagedev.position.y = my_js_value(devpos, "y", 0.0f);
+    stagedev.position.z = my_js_value(devpos, "z", 0.0f);
     /// Orientation of the stage device in the virtual space, ZYX Euler angles:
     nlohmann::json devorient(dev["orientation"]);
-    stagedev.orientation.z = my_js_value(devorient, "z", 0.0);
-    stagedev.orientation.y = my_js_value(devorient, "y", 0.0);
-    stagedev.orientation.x = my_js_value(devorient, "x", 0.0);
+    stagedev.orientation.z = my_js_value(devorient, "z", 0.0f);
+    stagedev.orientation.y = my_js_value(devorient, "y", 0.0f);
+    stagedev.orientation.x = my_js_value(devorient, "x", 0.0f);
     /// Linear gain of the stage device:
-    stagedev.gain = my_js_value(dev, "gain", 1.0);
+    stagedev.gain = my_js_value(dev, "gain", 1.0f);
     /// Mute flag:
     stagedev.mute = my_js_value(dev, "mute", false);
     // jitter buffer length:
     nlohmann::json jitter(dev["jitter"]);
-    stagedev.receiverjitter = my_js_value(jitter, "receive", 5.0);
-    stagedev.senderjitter = my_js_value(jitter, "send", 5.0);
+    stagedev.receiverjitter = my_js_value(jitter, "receive", 5.0f);
+    stagedev.senderjitter = my_js_value(jitter, "send", 5.0f);
     /// send to local IP address if in same network?
     stagedev.sendlocal = my_js_value(dev, "sendlocal", true);
     return stagedev;
@@ -586,7 +586,7 @@ void ov_client_orlandoviols_t::service()
                   my_js_value(js_audio, "driver", std::string("jack"));
               audio.devicename =
                   my_js_value(js_audio, "device", std::string("hw:1"));
-              audio.srate = my_js_value(js_audio, "srate", 48000.0);
+              audio.srate = my_js_value(js_audio, "srate", 48000.0f);
               audio.periodsize = my_js_value(js_audio, "periodsize", 96);
               audio.numperiods = my_js_value(js_audio, "numperiods", 2);
               audio.priority = my_js_value(js_audio, "priority", 40);
@@ -609,7 +609,7 @@ void ov_client_orlandoviols_t::service()
             if(js_stage.is_object()) {
               std::string stagehost(
                   my_js_value(js_stage, "host", std::string("")));
-              port_t stageport(my_js_value(js_stage, "port", 0));
+              port_t stageport((port_t)(my_js_value(js_stage, "port", 0)));
               secret_t stagepin(my_js_value(js_stage, "pin", 0u));
               backend.set_relay_server(stagehost, stageport, stagepin);
               nlohmann::json js_roomsize(js_stage["size"]);
@@ -703,8 +703,8 @@ void ov_client_orlandoviols_t::service()
                   } else if(xrp.is_string()) {
                     p = atoi(xrp.get<std::string>().c_str());
                   }
-                  if(p > 0)
-                    rendersettings.xrecport.push_back(p);
+                  if((p > 0) && (p < (1 << 16)))
+                    rendersettings.xrecport.push_back((port_t)p);
                 }
               rendersettings.headtracking =
                   my_js_value(js_rendersettings, "headtracking", false);
@@ -713,10 +713,10 @@ void ov_client_orlandoviols_t::service()
               rendersettings.headtrackingrotsrc =
                   my_js_value(js_rendersettings, "headtrackingrotsrc", true);
               rendersettings.headtrackingport =
-                  my_js_value(js_rendersettings, "headtrackingport", 0);
+                  (port_t)my_js_value(js_rendersettings, "headtrackingport", 0);
               backend.set_render_settings(
-                  rendersettings,
-                  my_js_value(js_rendersettings, "stagedevid", 0));
+                  rendersettings, (stage_device_id_t)(my_js_value(
+                                      js_rendersettings, "stagedevid", 0)));
               if(!js_rendersettings["extracfg"].is_null())
                 backend.set_extra_config(js_rendersettings["extracfg"].dump());
               nlohmann::json js_stagedevs(js_stagecfg["roomdev"]);

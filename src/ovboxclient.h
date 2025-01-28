@@ -31,17 +31,17 @@ std::string to_string(const message_stat_t& ms);
 class ping_stat_collecor_t {
 public:
   ping_stat_collecor_t(size_t N = 2048);
-  void add_value(double pt);
+  void add_value(float pt);
   // std::vector<double> get_min_med_99_mean_lost() const;
   void update_ping_stat(ping_stat_t& ps) const;
   size_t sent;
   size_t received;
 
 private:
-  std::vector<double> data;
+  std::vector<float> data;
   size_t idx;
   size_t filled;
-  double sum;
+  float sum;
 };
 
 /**
@@ -60,7 +60,7 @@ private:
   inline sequence_t deltaseq(std::map<stage_device_id_t, sequence_map_t>& seq,
                              const msgbuf_t& msg)
   {
-    sequence_t dseq_(msg.seq - seq[msg.cid][msg.destport]);
+    sequence_t dseq_((sequence_t)(msg.seq - seq[msg.cid][msg.destport]));
     seq[msg.cid][msg.destport] = msg.seq;
     return dseq_;
   };
@@ -68,7 +68,7 @@ private:
   deltaseq_const(std::map<stage_device_id_t, sequence_map_t>& seq,
                  const msgbuf_t& msg)
   {
-    return msg.seq - seq[msg.cid][msg.destport];
+    return (sequence_t)(msg.seq - seq[msg.cid][msg.destport]);
   };
   std::map<stage_device_id_t, sequence_map_t> seq_in;
   std::map<stage_device_id_t, sequence_map_t> seq_out;

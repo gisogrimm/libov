@@ -113,8 +113,8 @@ ovboxclient_t::ovboxclient_t(std::string desthost, port_t destport,
   if(use_tcp_tunnel && (!peer2peer_))
     desthost = "127.0.0.1";
   remote_server.set_destination(desthost.c_str());
-  if(deadline > 0)
-    remote_server.set_timeout_usec(1000 * deadline);
+  if(deadline > 0.0)
+    remote_server.set_timeout_usec((int)(1000.0 * std::min(1e3, deadline)));
   port_t local_relay_port = remote_server.bind(0, false);
   if(use_tcp_tunnel && (!peer2peer_)) {
     tcp_tunnel = new ovtcpsocket_t(0);
@@ -161,7 +161,7 @@ void ovboxclient_t::set_expedited_forwarding_PHB()
 void ovboxclient_t::set_reorder_deadline(double t_ms)
 {
   if(t_ms > 0) {
-    remote_server.set_timeout_usec(1000 * t_ms);
+    remote_server.set_timeout_usec((int)(1000.0 * std::min(1e3, t_ms)));
     DEBUG(t_ms);
   }
 }
@@ -174,8 +174,8 @@ void ovboxclient_t::getbitrate(double& txrate, double& rxrate)
       std::chrono::duration_cast<std::chrono::duration<double>>(t2 -
                                                                 t_bitrate));
   double sc(8.0 / std::max(1e-6, time_span.count()));
-  txrate = sc * (remote_server.tx_bytes - last_tx);
-  rxrate = sc * (remote_server.rx_bytes - last_rx);
+  txrate = sc * ((double)(remote_server.tx_bytes) - (double)last_tx);
+  rxrate = sc * ((double)(remote_server.rx_bytes) - (double)last_rx);
   t_bitrate = t2;
   last_tx = remote_server.tx_bytes;
   last_rx = remote_server.rx_bytes;
@@ -298,8 +298,8 @@ void ovboxclient_t::announce_latency(stage_device_id_t cid, double, double,
   data[1] = client_stats_announce[cid].ping_p2p.t_min;
   data[2] = client_stats_announce[cid].ping_p2p.t_med;
   data[3] = client_stats_announce[cid].ping_p2p.t_p99;
-  data[4] = client_stats_announce[cid].ping_p2p.received;
-  data[5] = client_stats_announce[cid].ping_p2p.lost;
+  data[4] = (double)(client_stats_announce[cid].ping_p2p.received);
+  data[5] = (double)(client_stats_announce[cid].ping_p2p.lost);
   remote_server.pack_and_send(PORT_PEERLATREP, (const char*)data,
                               6 * sizeof(double), toport);
 }
@@ -333,7 +333,7 @@ void ovboxclient_t::pingservice()
     // send registration to relay server:
     remote_server.send_registration(mode, toport, localep);
     // send ping to other peers:
-    size_t ocid(0);
+    uint8_t ocid(0);
     for(auto& ep : endpoints) {
       if(ep.timeout && (ocid != callerid)) {
         remote_server.send_ping(ep.ep, ocid);
@@ -411,13 +411,13 @@ void ovboxclient_t::process_pong_msg(msgbuf_t& msg)
       cb_ping(msg.cid, msg.destport, tms, msg.sender, cb_ping_data);
     switch(msg.destport) {
     case PORT_PONG:
-      ping_stat_collecors_p2p[msg.cid].add_value(tms);
+      ping_stat_collecors_p2p[msg.cid].add_value((float)tms);
       break;
     case PORT_PONG_SRV:
-      ping_stat_collecors_srv[msg.cid].add_value(tms);
+      ping_stat_collecors_srv[msg.cid].add_value((float)tms);
       break;
     case PORT_PONG_LOCAL:
-      ping_stat_collecors_local[msg.cid].add_value(tms);
+      ping_stat_collecors_local[msg.cid].add_value((float)tms);
       break;
     }
   }
@@ -434,10 +434,11 @@ void ovboxclient_t::process_msg(msgbuf_t& msg)
   if(msg.destport > MAXSPECIALPORT) {
     if(msg.destport + portoffset != recport)
       // forward to local UDP receivers (zita etc.), add portoffset:
-      local_server.send(msg.msg, msg.size, msg.destport + portoffset);
+      local_server.send(msg.msg, msg.size,
+                        (uint16_t)(msg.destport + portoffset));
     for(auto xd : xdest)
       if(msg.destport + xd != recport)
-        local_server.send(msg.msg, msg.size, msg.destport + xd);
+        local_server.send(msg.msg, msg.size, (uint16_t)(msg.destport + xd));
     // is this message from same network?
     if(!is_same_network(msg.sender, localep)) {
       // now send to proxy clients:
@@ -470,7 +471,9 @@ void ovboxclient_t::process_msg(msgbuf_t& msg)
   case PORT_LISTCID:
     if(msg.size == sizeof(endpoint_t)) {
       // seq is peer2peer flag:
-      cid_register(msg.cid, *((endpoint_t*)(msg.msg)), msg.seq, "");
+      if((msg.seq >= 0) && (msg.seq < 256))
+        cid_register(msg.cid, *((endpoint_t*)(msg.msg)), (uint8_t)(msg.seq),
+                     "");
     }
     break;
   }
@@ -489,8 +492,8 @@ void ovboxclient_t::recsrv()
       ssize_t n = local_server.recvfrom(buffer, BUFSIZE, sender_endpoint);
       if(n > 0) {
         // subtract port offset before forwarding to remote peers:
-        size_t un = remote_server.packmsg(msg, BUFSIZE, recport - portoffset,
-                                          buffer, n);
+        size_t un = remote_server.packmsg(
+            msg, BUFSIZE, (uint16_t)(recport - portoffset), buffer, n);
         bool sendtoserver(!(mode & B_PEER2PEER));
         if(mode & B_PEER2PEER) {
           // we are in peer-to-peer mode.
@@ -670,7 +673,7 @@ ping_stat_collecor_t::ping_stat_collecor_t(size_t N)
 {
 }
 
-void ping_stat_collecor_t::add_value(double pt)
+void ping_stat_collecor_t::add_value(float pt)
 {
   ++received;
   sum -= data[idx];
@@ -696,11 +699,11 @@ void ping_stat_collecor_t::update_ping_stat(ping_stat_t& ps) const
   ps.state_received = received;
   if(!filled)
     return;
-  std::vector<double> sb(data);
+  std::vector<float> sb(data);
   sb.resize(filled);
   std::sort(sb.begin(), sb.end());
-  size_t idx_med(std::round(0.5 * (filled - 1)));
-  size_t idx_99(std::round(0.99 * (filled - 1)));
+  size_t idx_med((size_t)(std::round(0.5f * ((float)filled - 1.0))));
+  size_t idx_99((size_t)(std::round(0.99f * ((float)filled - 1.0))));
   ps.t_med = sb[idx_med];
   if((filled & 1) == 0) {
     // even number of samples, median is mean of two neighbours
@@ -708,11 +711,11 @@ void ping_stat_collecor_t::update_ping_stat(ping_stat_t& ps) const
       ps.t_med += sb[idx_med - 1];
     else
       ps.t_med += sb[idx_med + 1];
-    ps.t_med *= 0.5;
+    ps.t_med *= 0.5f;
   }
   ps.t_min = sb[0];
   ps.t_p99 = sb[idx_99];
-  ps.t_mean = sum / filled;
+  ps.t_mean = sum / (float)filled;
   return;
 }
 

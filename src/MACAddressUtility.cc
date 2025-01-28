@@ -181,10 +181,11 @@ long MACAddressUtility::GetMACAddressLinux(unsigned char* result)
   struct ifreq* IFR;
   struct ifconf ifc;
   char buf[1024];
-  int s, i;
-  int ok = 0;
+  // int s, i;
+  // int ok = 0;
+  bool success = false;
 
-  s = socket(AF_INET, SOCK_DGRAM, 0);
+  auto s = socket(AF_INET, SOCK_DGRAM, 0);
   if(s == -1) {
     return -1;
   }
@@ -194,12 +195,12 @@ long MACAddressUtility::GetMACAddressLinux(unsigned char* result)
   ioctl(s, SIOCGIFCONF, &ifc);
 
   IFR = ifc.ifc_req;
-  for(i = ifc.ifc_len / sizeof(struct ifreq); --i >= 0; IFR++) {
+  for(ssize_t i = ifc.ifc_len / sizeof(struct ifreq); --i >= 0; IFR++) {
     strcpy(ifr.ifr_name, IFR->ifr_name);
     if(ioctl(s, SIOCGIFFLAGS, &ifr) == 0) {
       if(!(ifr.ifr_flags & IFF_LOOPBACK)) {
         if(ioctl(s, SIOCGIFHWADDR, &ifr) == 0) {
-          ok = 1;
+          success = true;
           break;
         }
       }
@@ -207,7 +208,7 @@ long MACAddressUtility::GetMACAddressLinux(unsigned char* result)
   }
 
   shutdown(s, SHUT_RDWR);
-  if(ok) {
+  if(success) {
     bcopy(ifr.ifr_hwaddr.sa_data, result, 6);
   } else {
     return -1;

@@ -229,7 +229,7 @@ endpoint_t udpsocket_t::getsockep()
   return my_addr;
 }
 
-ssize_t udpsocket_t::send(const char* buf, size_t len, int portno)
+ssize_t udpsocket_t::send(const char* buf, size_t len, uint16_t portno)
 {
   if(portno == 0)
     return len;

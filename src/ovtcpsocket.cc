@@ -124,9 +124,9 @@ void ovtcpsocket_t::acceptor()
 
 ssize_t ovtcpsocket_t::nbread(int fd, uint8_t* buf, size_t cnt)
 {
-  int rcnt = 0;
+  ssize_t rcnt = 0;
   while(run_server && (cnt > 0)) {
-    int lrcnt = read(fd, buf, cnt);
+    ssize_t lrcnt = read(fd, buf, cnt);
     if(lrcnt < 0) {
       if(!((errno == EAGAIN) || (errno == EWOULDBLOCK)))
         return lrcnt;
