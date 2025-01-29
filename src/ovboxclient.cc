@@ -465,15 +465,14 @@ void ovboxclient_t::process_msg(msgbuf_t& msg)
   case PORT_SETLOCALIP:
     // we received the local IP address of a peer:
     if(msg.size == sizeof(endpoint_t)) {
-      cid_setlocalip(msg.cid, *((endpoint_t*)(msg.msg)));
+      cid_setlocalip(msg.cid, msg.msg);
     }
     break;
   case PORT_LISTCID:
     if(msg.size == sizeof(endpoint_t)) {
       // seq is peer2peer flag:
       if((msg.seq >= 0) && (msg.seq < 256))
-        cid_register(msg.cid, *((endpoint_t*)(msg.msg)), (uint8_t)(msg.seq),
-                     "");
+        cid_register(msg.cid, msg.msg, (uint8_t)(msg.seq), "");
     }
     break;
   }

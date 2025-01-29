@@ -312,7 +312,8 @@ double ovbox_udpsocket_t::get_pingtime(char*& msg, size_t& msglen)
 {
   if(msglen >= sizeof(double)) {
     double t_since_start = time_since_start();
-    double t_send = *(double*)msg;
+    double t_send = 0;
+    memcpy(&t_send, msg, sizeof(t_send));
     msglen -= sizeof(double);
     msg += sizeof(double);
     auto dt = t_since_start - t_send;
