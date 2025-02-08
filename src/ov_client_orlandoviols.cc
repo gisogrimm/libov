@@ -34,7 +34,8 @@
 // #include <filesystem>
 
 #ifdef WIN32
-#include <Windows.h>
+#include <windows.h>
+#include <VersionHelpers.h>
 #endif
 
 CURL* curl;
@@ -84,18 +85,34 @@ ov_client_orlandoviols_t::ov_client_orlandoviols_t(ov_render_base_t& backend,
   if(WSAStartup(MAKEWORD(2, 2), &WSAData) != 0)
     throw ErrMsg("Unable to initialize WSA");
   uname_sysname = "WIN32";
-  // Get the OS version
-  NTSTATUS status;
-  OSVERSIONINFOEXW osvi;
-  ZeroMemory(&osvi, sizeof(OSVERSIONINFOEXW));
-  osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEXW);
-  status = RtlGetVersion(&osvi);
-  if(status == 0) {
-    // Construct the OS version string
-    uname_release = std::to_string(osvi.dwMajorVersion) + "." +
-                    std::to_string(osvi.dwMinorVersion) + "." +
-                    std::to_string(osvi.dwBuildNumber);
-  }
+  // Get the OS version:
+  if(IsWindowsXPOrGreater())
+    uname_release = "XP";
+  if(IsWindowsXPSP1OrGreater())
+    uname_release = "XPSP1";
+  if(IsWindowsXPSP2OrGreater())
+    uname_release = "XPSP2";
+  if(IsWindowsXPSP3OrGreater())
+    uname_release = "XPSP3";
+  if(IsWindowsVistaOrGreater())
+    uname_release = "Vista";
+  if(IsWindowsVistaSP1OrGreater())
+    uname_release = "VistaSP1";
+  if(IsWindowsVistaSP2OrGreater())
+    uname_release = "VistaSP2";
+  if(IsWindows7OrGreater())
+    uname_release = "Windows7";
+  if(IsWindows7SP1OrGreater())
+    uname_release = "Windows7SP1";
+  if(IsWindows8OrGreater())
+    uname_release = "Windows8";
+  if(IsWindows8Point1OrGreater())
+    uname_release = "Windows8Point1";
+  if(IsWindows10OrGreater())
+    uname_release = "Windows10";
+  if(IsWindowsServer())
+    uname_release += " Server";
+  // Get the system architecture:
   SYSTEM_INFO sysInfo;
   GetNativeSystemInfo(&sysInfo);
   switch(sysInfo.wProcessorArchitecture) {
