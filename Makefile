@@ -27,7 +27,7 @@ CXXFLAGS = -Wall -Wno-deprecated-declarations -std=c++17 -pthread	\
 -ggdb -fno-finite-math-only -fPIC -Wno-psabi -Wconversion -Wextra -Wno-unused-parameter
 #-Werror
 
-EXTERNALS = jack xerces-c liblo sndfile libcurl gsl samplerate fftw3f xerces-c
+EXTERNALS = jack xerces-c liblo sndfile libcurl gsl samplerate fftw3f xerces-c libsodium
 
 BUILD_OBJ = $(patsubst %,build/%.o,$(OBJ))
 
@@ -172,7 +172,7 @@ tascar/Makefile:
 
 lib: build build/libov.a
 
-libovserver: EXTERNALS=libcurl xerces-c
+libovserver: EXTERNALS=libcurl xerces-c libsodium
 libovserver: build/tscobj build/libovserver.a
 
 build/libov.a: $(BUILD_OBJ)
