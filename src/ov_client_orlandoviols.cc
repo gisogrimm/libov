@@ -29,10 +29,13 @@
 #include <string.h>
 #ifndef WIN32
 #include <sys/utsname.h>
-#include <wdm.h>
 #endif
 #include <unistd.h>
 // #include <filesystem>
+
+#ifdef WIN32
+#include <wdm.h>
+#endif
 
 CURL* curl;
 
