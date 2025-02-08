@@ -29,6 +29,7 @@
 #include <string.h>
 #ifndef WIN32
 #include <sys/utsname.h>
+#include <wdm.h>
 #endif
 #include <unistd.h>
 // #include <filesystem>
@@ -97,24 +98,31 @@ ov_client_orlandoviols_t::ov_client_orlandoviols_t(ov_render_base_t& backend,
   switch(sysInfo.wProcessorArchitecture) {
   case PROCESSOR_ARCHITECTURE_INTEL:
     uname_machine = "x86";
+    break;
   case PROCESSOR_ARCHITECTURE_AMD64:
     uname_machine = "x64";
+    break;
   case PROCESSOR_ARCHITECTURE_ARM:
     uname_machine = "ARM";
+    break;
   case PROCESSOR_ARCHITECTURE_ARM64:
     uname_machine = "ARM64";
+    break;
   case PROCESSOR_ARCHITECTURE_MIPS:
     uname_machine = "MIPS";
+    break;
   case PROCESSOR_ARCHITECTURE_ALPHA:
     uname_machine = "Alpha";
+    break;
   case PROCESSOR_ARCHITECTURE_PPC:
     uname_machine = "PowerPC";
+    break;
   case PROCESSOR_ARCHITECTURE_SHX:
     uname_machine = "SHX";
-  case PROCESSOR_ARCHITECTURE_SPARC:
-    uname_machine = "SPARC";
+    break;
   default:
     uname_machine = "Unknown";
+    break;
   }
 #else
   // Get the OS information on non-Windows platforms
