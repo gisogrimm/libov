@@ -22,6 +22,8 @@
 #define UDP_SOCKET_H
 
 #include "common.h"
+// include sodium for encryption:
+#include <sodium.h>
 #include <atomic>
 #if defined(LINUX) || defined(linux) || defined(__APPLE__)
 #include <netinet/ip.h>

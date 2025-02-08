@@ -70,15 +70,15 @@ ov_client_orlandoviols_t::ov_client_orlandoviols_t(ov_render_base_t& backend,
       quitrequest_(false), isovbox(is_ovbox())
 {
   std::lock_guard<std::mutex> lock(curlmtx);
+  if(sodium_init() < 0)
+    throw ErrMsg("Unable to initialize libsodium");
   curl = curl_easy_init();
   if(!curl)
     throw ErrMsg("Unable to initialize curl");
 #ifdef WIN32
   uname_sysname = "WIN32";
-
   if(WSAStartup(MAKEWORD(2, 2), &WSAData) != 0)
     throw ErrMsg("Unable to initialize WSA");
-
 #else
   struct utsname buffer;
   if(uname(&buffer) == 0) {

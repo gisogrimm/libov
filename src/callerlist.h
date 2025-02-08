@@ -29,11 +29,11 @@
 class ep_desc_t {
 public:
   ep_desc_t();
-  endpoint_t ep;
-  endpoint_t localep;
+  endpoint_t ep;      // public IP address
+  endpoint_t localep; // local IP address
   uint32_t timeout = 0;
   bool announced = false;
-  epmode_t mode = B_PEER2PEER;
+  epmode_t mode = B_PEER2PEER; // endpoint operation mode
   double pingt_min = 10000.0;
   double pingt_max = 0.0;
   double pingt_sum = 0.0;
@@ -41,6 +41,8 @@ public:
   uint32_t num_received = 0;
   uint32_t num_lost = 0;
   std::string version;
+  bool has_pubkey = false;
+  uint8_t pubkey[crypto_box_PUBLICKEYBYTES];
   uint64_t padding = 0;
 };
 
@@ -62,6 +64,7 @@ protected:
   void cid_register(stage_device_id_t cid, char* data, epmode_t mode,
                     const std::string& rver);
   void cid_setlocalip(stage_device_id_t cid, char* data);
+  void cid_set_pubkey(stage_device_id_t cid, char* data, size_t len);
   uint32_t get_num_clients();
   std::vector<ep_desc_t> endpoints;
   // ping period time in milliseconds:

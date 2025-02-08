@@ -93,6 +93,19 @@ void endpoint_list_t::cid_setpingtime(stage_device_id_t cid, double pingtime)
   }
 }
 
+void endpoint_list_t::cid_set_pubkey(stage_device_id_t cid, char* data,
+                                     size_t len)
+{
+  if(cid < MAX_STAGE_ID) {
+    if(len == crypto_box_PUBLICKEYBYTES) {
+      memcpy(endpoints[cid].pubkey, data, len);
+      endpoints[cid].has_pubkey = true;
+    } else {
+      endpoints[cid].has_pubkey = false;
+    }
+  }
+}
+
 void endpoint_list_t::set_hiresping(bool hr)
 {
   if(hr)
