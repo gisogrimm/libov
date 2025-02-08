@@ -76,10 +76,48 @@ ov_client_orlandoviols_t::ov_client_orlandoviols_t(ov_render_base_t& backend,
   if(!curl)
     throw ErrMsg("Unable to initialize curl");
 #ifdef WIN32
-  uname_sysname = "WIN32";
+  // Initialize WSA on Windows
   if(WSAStartup(MAKEWORD(2, 2), &WSAData) != 0)
     throw ErrMsg("Unable to initialize WSA");
+  uname_sysname = "WIN32";
+  // Get the OS version
+  NTSTATUS status;
+  OSVERSIONINFOEXW osvi;
+  ZeroMemory(&osvi, sizeof(OSVERSIONINFOEXW));
+  osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEXW);
+  status = RtlGetVersion(&osvi);
+  if(status == 0) {
+    // Construct the OS version string
+    uname_release = std::to_string(osvi.dwMajorVersion) + "." +
+                    std::to_string(osvi.dwMinorVersion) + "." +
+                    std::to_string(osvi.dwBuildNumber);
+  }
+  SYSTEM_INFO sysInfo;
+  GetNativeSystemInfo(&sysInfo);
+  switch(sysInfo.wProcessorArchitecture) {
+  case PROCESSOR_ARCHITECTURE_INTEL:
+    uname_machine = "x86";
+  case PROCESSOR_ARCHITECTURE_AMD64:
+    uname_machine = "x64";
+  case PROCESSOR_ARCHITECTURE_ARM:
+    uname_machine = "ARM";
+  case PROCESSOR_ARCHITECTURE_ARM64:
+    uname_machine = "ARM64";
+  case PROCESSOR_ARCHITECTURE_MIPS:
+    uname_machine = "MIPS";
+  case PROCESSOR_ARCHITECTURE_ALPHA:
+    uname_machine = "Alpha";
+  case PROCESSOR_ARCHITECTURE_PPC:
+    uname_machine = "PowerPC";
+  case PROCESSOR_ARCHITECTURE_SHX:
+    uname_machine = "SHX";
+  case PROCESSOR_ARCHITECTURE_SPARC:
+    uname_machine = "SPARC";
+  default:
+    uname_machine = "Unknown";
+  }
 #else
+  // Get the OS information on non-Windows platforms
   struct utsname buffer;
   if(uname(&buffer) == 0) {
     uname_sysname = buffer.sysname;
