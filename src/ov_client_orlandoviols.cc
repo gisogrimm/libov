@@ -34,7 +34,7 @@
 // #include <filesystem>
 
 #ifdef WIN32
-#include <wdm.h>
+#include <Windows.h>
 #endif
 
 CURL* curl;
