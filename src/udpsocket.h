@@ -259,6 +259,9 @@ private:
   std::chrono::high_resolution_clock::time_point t;
 };
 
+/** handle packaging/depackaging as well as encryption of data
+ *
+ */
 class ovbox_udpsocket_t : public udpsocket_t {
 public:
   ovbox_udpsocket_t(secret_t secret, stage_device_id_t id);
@@ -345,7 +348,11 @@ protected:
   stage_device_id_t callerid;
   sequence_map_t seqmap;
   std::chrono::high_resolution_clock::time_point t_start;
+  uint8_t recipient_public[crypto_box_PUBLICKEYBYTES];
+  uint8_t recipient_secret[crypto_box_SECRETKEYBYTES];
 };
+
+std::string bin2base64( uint8_t* data, size_t len);
 
 #endif
 

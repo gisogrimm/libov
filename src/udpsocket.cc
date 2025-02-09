@@ -51,6 +51,8 @@
 #define MSG_CONFIRM 0
 #endif
 
+#include "../tascar/libtascar/include/tscconfig.h"
+
 #define LISTEN_BACKLOG 512
 
 const size_t
@@ -284,6 +286,11 @@ ovbox_udpsocket_t::ovbox_udpsocket_t(secret_t secret, stage_device_id_t cid)
     : secret(secret), callerid(cid)
 {
   t_start = std::chrono::high_resolution_clock::now();
+  // create key pair:
+  crypto_box_keypair(recipient_public, recipient_secret);
+  TASCAR::console_log("My public key is \"" +
+                      bin2base64(recipient_public, crypto_box_PUBLICKEYBYTES) +
+                      "\".");
 }
 
 double ovbox_udpsocket_t::time_since_start() const
@@ -337,10 +344,19 @@ void ovbox_udpsocket_t::send_registration(epmode_t mode, port_t port,
     send(buffer, n, port);
   }
   {
+    // send local IP address:
     size_t buflen(HEADERLEN + sizeof(endpoint_t));
     char buffer[buflen];
     size_t n(packmsg(buffer, buflen, PORT_SETLOCALIP, (const char*)(&localep),
                      sizeof(endpoint_t)));
+    send(buffer, n, port);
+  }
+  {
+    // send public key:
+    size_t buflen(HEADERLEN + crypto_box_PUBLICKEYBYTES);
+    char buffer[buflen];
+    size_t n(packmsg(buffer, buflen, PORT_PUBKEY, (const char*)recipient_public,
+                     crypto_box_PUBLICKEYBYTES));
     send(buffer, n, port);
   }
 }
@@ -599,6 +615,17 @@ double msgbuf_t::get_age()
   std::chrono::duration<double> time_span =
       std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t);
   return (1000.0 * time_span.count());
+}
+
+std::string bin2base64(uint8_t* data, size_t len)
+{
+  std::string b64;
+  size_t b64_len =
+      sodium_base64_encoded_len(len, sodium_base64_VARIANT_ORIGINAL);
+  b64.resize(b64_len);
+  sodium_bin2base64(b64.data(), b64_len, data, len,
+                    sodium_base64_VARIANT_ORIGINAL);
+  return b64;
 }
 
 /*

@@ -18,6 +18,18 @@
  * Version 3 along with ovbox. If not, see <http://www.gnu.org/licenses/>.
  */
 
+
+/** \mainpage libov
+ *
+ *  An ovbox application consists primarily of two classes:
+ *  ov_client_base_t is responsible for communication with the
+ *  configuration server. ov_render_base_t is the base class to create
+ *  the virtual acoustics with all members. The class ovboxclient_t
+ *  handles the actual communication with the session server and the
+ *  other peers.
+ *
+ */
+
 #ifndef OV_TYPES
 #define OV_TYPES
 

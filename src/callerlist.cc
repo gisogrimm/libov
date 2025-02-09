@@ -98,7 +98,12 @@ void endpoint_list_t::cid_set_pubkey(stage_device_id_t cid, char* data,
 {
   if(cid < MAX_STAGE_ID) {
     if(len == crypto_box_PUBLICKEYBYTES) {
-      memcpy(endpoints[cid].pubkey, data, len);
+      if(bcmp(data, endpoints[cid].pubkey, len) != 0) {
+        memcpy(endpoints[cid].pubkey, data, len);
+        TASCAR::console_log(
+            "Updated public key for " + std::to_string((int)cid) + ": \"" +
+            bin2base64((uint8_t*)data, crypto_box_PUBLICKEYBYTES) + "\".");
+      }
       endpoints[cid].has_pubkey = true;
     } else {
       endpoints[cid].has_pubkey = false;
