@@ -360,10 +360,12 @@ void ovboxclient_t::sendsrv()
     set_thread_prio(prio);
     msgbuf_t msg;
     while(runsession) {
-      remote_server.recv_sec_msg(msg);
-      msgbuf_t* pmsg(&msg);
-      while(sorter.process(&pmsg))
-        process_msg(*pmsg);
+      bool can_process = remote_server.recv_sec_msg(msg);
+      if(can_process) {
+        msgbuf_t* pmsg(&msg);
+        while(sorter.process(&pmsg))
+          process_msg(*pmsg);
+      }
     }
   }
   catch(const std::exception& e) {
@@ -427,7 +429,7 @@ void ovboxclient_t::process_msg(msgbuf_t& msg)
 {
   msg.valid = false;
   // avoid handling of loopback messages:
-  if((msg.cid == callerid) && (msg.destport != PORT_LISTCID))
+  if((msg.cid == callerid) && (msg.destport != PORT_LISTCID)&&(msg.destport != PORT_PUBKEY))
     return;
   // not a special port, thus we forward data to localhost and proxy
   // clients:
@@ -474,6 +476,9 @@ void ovboxclient_t::process_msg(msgbuf_t& msg)
       if((msg.seq >= 0) && (msg.seq < 256))
         cid_register(msg.cid, msg.msg, (uint8_t)(msg.seq), "");
     }
+    break;
+  case PORT_PUBKEY:
+    cid_set_pubkey(msg.cid, msg.msg, msg.size);
     break;
   }
 }
