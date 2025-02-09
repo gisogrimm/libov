@@ -20,6 +20,7 @@
 #include "callerlist.h"
 #include "../tascar/libtascar/include/tscconfig.h"
 #include <string.h>
+#include <strings.h>
 
 ep_desc_t::ep_desc_t()
 {
