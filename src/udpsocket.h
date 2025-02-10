@@ -347,6 +347,7 @@ public:
    * Send public key to the given port of the remote end.
    */
   void send_pubkey(port_t port);
+  void send_pubkey(const endpoint_t& ep);
 
 protected:
   secret_t secret;

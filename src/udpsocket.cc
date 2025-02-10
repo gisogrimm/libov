@@ -182,16 +182,8 @@ void udpsocket_t::set_destination(const char* host)
 #else
     throw ErrMsg("No such host: " + std::string(hstrerror(h_errno)));
 #endif
-#if defined(WIN32) || defined(UNDER_CE)
-  // windows:
   memset((char*)&serv_addr, 0, sizeof(serv_addr));
-#else
-  bzero((char*)&serv_addr, sizeof(serv_addr));
-#endif
   serv_addr.sin_family = AF_INET;
-  // bcopy((char*)server->h_addr, (char*)&serv_addr.sin_addr.s_addr,
-  //      server->h_length);
-  // windows:
   memcpy((char*)&serv_addr.sin_addr.s_addr, (char*)server->h_addr,
          server->h_length);
 }
@@ -362,6 +354,16 @@ void ovbox_udpsocket_t::send_pubkey(port_t port)
   size_t n(packmsg(buffer, buflen, PORT_PUBKEY, (const char*)recipient_public,
                    crypto_box_PUBLICKEYBYTES));
   send(buffer, n, port);
+}
+
+void ovbox_udpsocket_t::send_pubkey(const endpoint_t& ep)
+{
+  // send public key:
+  size_t buflen(HEADERLEN + crypto_box_PUBLICKEYBYTES);
+  char buffer[buflen];
+  size_t n(packmsg(buffer, buflen, PORT_PUBKEY, (const char*)recipient_public,
+                   crypto_box_PUBLICKEYBYTES));
+  send(buffer, n, ep);
 }
 
 size_t ovbox_udpsocket_t::packmsg(char* destbuf, size_t maxlen, port_t destport,
