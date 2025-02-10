@@ -96,8 +96,8 @@ void endpoint_list_t::cid_setpingtime(stage_device_id_t cid, double pingtime)
 void endpoint_list_t::cid_set_pubkey(stage_device_id_t cid, char* data,
                                      size_t len)
 {
-  if(cid < MAX_STAGE_ID) {
-    if(len == crypto_box_PUBLICKEYBYTES) {
+  if(len == crypto_box_PUBLICKEYBYTES) {
+    if(cid < MAX_STAGE_ID) {
       if(memcmp(data, endpoints[cid].pubkey, len) != 0) {
         memcpy(endpoints[cid].pubkey, data, len);
         TASCAR::console_log(
@@ -105,8 +105,14 @@ void endpoint_list_t::cid_set_pubkey(stage_device_id_t cid, char* data,
             bin2base64((uint8_t*)data, crypto_box_PUBLICKEYBYTES) + "\".");
       }
       endpoints[cid].has_pubkey = true;
-    } else {
-      endpoints[cid].has_pubkey = false;
+    } else if(cid == STAGE_ID_SERVER) {
+      if(memcmp(data, srv_pubkey, len) != 0) {
+        memcpy(srv_pubkey, data, len);
+        TASCAR::console_log(
+            "Updated public key of server: \"" +
+            bin2base64((uint8_t*)data, crypto_box_PUBLICKEYBYTES) + "\".");
+      }
+      srv_has_pubkey = true;
     }
   }
 }

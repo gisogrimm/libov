@@ -351,14 +351,17 @@ void ovbox_udpsocket_t::send_registration(epmode_t mode, port_t port,
                      sizeof(endpoint_t)));
     send(buffer, n, port);
   }
-  {
-    // send public key:
-    size_t buflen(HEADERLEN + crypto_box_PUBLICKEYBYTES);
-    char buffer[buflen];
-    size_t n(packmsg(buffer, buflen, PORT_PUBKEY, (const char*)recipient_public,
-                     crypto_box_PUBLICKEYBYTES));
-    send(buffer, n, port);
-  }
+  send_pubkey(port);
+}
+
+void ovbox_udpsocket_t::send_pubkey(port_t port)
+{
+  // send public key:
+  size_t buflen(HEADERLEN + crypto_box_PUBLICKEYBYTES);
+  char buffer[buflen];
+  size_t n(packmsg(buffer, buflen, PORT_PUBKEY, (const char*)recipient_public,
+                   crypto_box_PUBLICKEYBYTES));
+  send(buffer, n, port);
 }
 
 size_t ovbox_udpsocket_t::packmsg(char* destbuf, size_t maxlen, port_t destport,

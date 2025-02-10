@@ -69,6 +69,8 @@ protected:
   std::vector<ep_desc_t> endpoints;
   // ping period time in milliseconds:
   int pingperiodms = 2000;
+  bool srv_has_pubkey = false;
+  uint8_t srv_pubkey[crypto_box_PUBLICKEYBYTES];
 
 private:
   void checkstatus();

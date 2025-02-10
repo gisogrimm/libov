@@ -343,6 +343,11 @@ public:
   bool pack_and_send(port_t destport, const char* msg, size_t msglen,
                      port_t remoteport);
 
+  /*
+   * Send public key to the given port of the remote end.
+   */
+  void send_pubkey(port_t port);
+
 protected:
   secret_t secret;
   stage_device_id_t callerid;
