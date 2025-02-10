@@ -285,6 +285,15 @@ ovbox_udpsocket_t::ovbox_udpsocket_t(secret_t secret, stage_device_id_t cid)
                       "\".");
 }
 
+void ovbox_udpsocket_t::set_secret(secret_t s)
+{
+  secret = s;
+  crypto_box_keypair(recipient_public, recipient_secret);
+  TASCAR::console_log("My public key is \"" +
+                      bin2base64(recipient_public, crypto_box_PUBLICKEYBYTES) +
+                      "\".");
+}
+
 double ovbox_udpsocket_t::time_since_start() const
 {
   std::chrono::duration<double> time_span =

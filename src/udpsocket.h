@@ -23,8 +23,8 @@
 
 #include "common.h"
 // include sodium for encryption:
-#include <sodium.h>
 #include <atomic>
+#include <sodium.h>
 #if defined(LINUX) || defined(linux) || defined(__APPLE__)
 #include <netinet/ip.h>
 #include <sys/socket.h>
@@ -314,7 +314,7 @@ public:
    *
    */
   bool recv_sec_msg(msgbuf_t& msg);
-  void set_secret(secret_t s) { secret = s; };
+  void set_secret(secret_t s);
   /**
    * Pack a message with current secret, caller id and sequence number.
    *
@@ -358,7 +358,7 @@ protected:
   uint8_t recipient_secret[crypto_box_SECRETKEYBYTES];
 };
 
-std::string bin2base64( uint8_t* data, size_t len);
+std::string bin2base64(uint8_t* data, size_t len);
 
 #endif
 
