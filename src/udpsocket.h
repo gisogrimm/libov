@@ -314,7 +314,7 @@ public:
    *
    */
   bool recv_sec_msg(msgbuf_t& msg);
-  void set_secret(secret_t s) { secret = s; };
+  void set_secret(secret_t s);
   /**
    * Pack a message with current secret, caller id and sequence number.
    *
