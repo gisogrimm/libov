@@ -91,7 +91,6 @@ typedef std::function<void(stage_device_id_t, const std::string&,
 class ovboxclient_t : public endpoint_list_t {
 public:
   /**
-
      \param desthost hostname or IP address of relay server
      \param destport port number of relay server
      \param recport port of local receiver, for forwarding to peer/server
@@ -111,7 +110,8 @@ public:
                 port_t portoffset, int prio, secret_t secret,
                 stage_device_id_t callerid, bool peer2peer, bool donotsend,
                 bool receivedownmix, bool sendlocal, double deadline,
-                bool senddownmix, bool usingproxy, bool use_tcp_tunnel);
+                bool senddownmix, bool usingproxy, bool use_tcp_tunnel,
+                bool encryption);
   virtual ~ovboxclient_t();
   void announce_new_connection(stage_device_id_t cid, const ep_desc_t& ep);
   void announce_connection_lost(stage_device_id_t cid);
@@ -219,6 +219,8 @@ private:
   std::map<stage_device_id_t, client_stats_t> client_stats_announce;
 
   ovtcpsocket_t* tcp_tunnel = NULL;
+
+  msgbuf_t decrypted_msg;
 };
 
 #endif

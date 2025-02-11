@@ -1326,7 +1326,7 @@ void ov_render_tascar_t::start_session()
         stage.thisdevice.receivedownmix,
         stage.stage[stage.thisstagedeviceid].sendlocal, sorter_deadline,
         stage.thisdevice.senddownmix, use_proxy,
-        stage.rendersettings.usetcptunnel);
+        stage.rendersettings.usetcptunnel, stage.rendersettings.encryption);
     if(cb_seqerr)
       ovboxclient->set_seqerr_callback(cb_seqerr, cb_seqerr_data);
     if(stage.rendersettings.secrec > 0)

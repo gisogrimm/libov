@@ -20,6 +20,7 @@
 #include "common.h"
 #include <ctime>
 #include <iomanip>
+#include <sodium.h>
 #include <string.h>
 
 std::mutex logmutex;
@@ -80,6 +81,32 @@ size_t addmsg(char* destbuf, size_t maxlen, size_t currentlen, const char* msg,
     return 0;
   memcpy(&(destbuf[currentlen]), msg, msglen);
   return currentlen + msglen;
+}
+
+size_t encryptmsg(char* destmsg, size_t maxlen, const char* srcmsg,
+                  size_t msglen, const uint8_t* pubkey)
+{
+  if(maxlen < msglen + crypto_box_SEALBYTES)
+    return 0;
+  memcpy(destmsg, srcmsg, HEADERLEN);
+  crypto_box_seal((uint8_t*)(&(destmsg[HEADERLEN])),
+                  (uint8_t*)(&(srcmsg[HEADERLEN])), msglen - HEADERLEN, pubkey);
+  return msglen + crypto_box_SEALBYTES;
+}
+
+size_t decryptmsg(char* destmsg, const char* srcmsg, size_t msglen,
+                  const uint8_t* pubkey, const uint8_t* seckey)
+{
+  // Decrypt (recipient side)
+  if(crypto_box_seal_open((uint8_t*)(&(destmsg[HEADERLEN])),
+                          (uint8_t*)(&(srcmsg[HEADERLEN])), msglen - HEADERLEN,
+                          pubkey, seckey) != 0) {
+    // error, return original message:
+    DEBUG("decrypt failed");
+    memcpy(destmsg, srcmsg, msglen);
+    return msglen;
+  }
+  return msglen - crypto_box_SEALBYTES;
 }
 
 /*

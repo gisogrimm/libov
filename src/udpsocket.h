@@ -23,8 +23,8 @@
 
 #include "common.h"
 // include sodium for encryption:
-#include <sodium.h>
 #include <atomic>
+#include <sodium.h>
 #if defined(LINUX) || defined(linux) || defined(__APPLE__)
 #include <netinet/ip.h>
 #include <sys/socket.h>
@@ -354,11 +354,13 @@ protected:
   stage_device_id_t callerid;
   sequence_map_t seqmap;
   std::chrono::high_resolution_clock::time_point t_start;
+
+public:
   uint8_t recipient_public[crypto_box_PUBLICKEYBYTES];
   uint8_t recipient_secret[crypto_box_SECRETKEYBYTES];
 };
 
-std::string bin2base64( uint8_t* data, size_t len);
+std::string bin2base64(uint8_t* data, size_t len);
 
 #endif
 

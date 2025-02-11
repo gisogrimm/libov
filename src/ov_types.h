@@ -18,7 +18,6 @@
  * Version 3 along with ovbox. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 /** \mainpage libov
  *
  *  An ovbox application consists primarily of two classes:
@@ -259,6 +258,8 @@ public:
   float decorr;
   /// use tcp tunnel:
   bool usetcptunnel;
+  /// use encryption:
+  bool encryption = true;
 };
 
 bool operator!=(const render_settings_t& a, const render_settings_t& b);

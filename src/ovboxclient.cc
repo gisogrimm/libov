@@ -87,7 +87,7 @@ ovboxclient_t::ovboxclient_t(std::string desthost, port_t destport,
                              bool peer2peer_, bool donotsend_,
                              bool receivedownmix_, bool sendlocal_,
                              double deadline, bool senddownmix, bool usingproxy,
-                             bool use_tcp_tunnel)
+                             bool use_tcp_tunnel, bool encryption)
     : prio(prio), remote_server(secret, callerid), toport(destport),
       recport(recport), portoffset(portoffset), callerid(callerid),
       runsession(true), mode(0), sendlocal(sendlocal_), last_tx(0), last_rx(0),
@@ -104,6 +104,8 @@ ovboxclient_t::ovboxclient_t(std::string desthost, port_t destport,
     mode |= B_SENDDOWNMIX;
   if(usingproxy)
     mode |= B_USINGPROXY;
+  if(encryption)
+    mode |= B_ENCRYPTION;
   local_server.set_timeout_usec(10000);
   local_server.set_destination("localhost");
   local_server.bind(recport, true);
@@ -429,25 +431,36 @@ void ovboxclient_t::process_msg(msgbuf_t& msg)
 {
   msg.valid = false;
   // avoid handling of loopback messages:
-  if((msg.cid == callerid) && (msg.destport != PORT_LISTCID)&&(msg.destport != PORT_PUBKEY))
+  if((msg.cid == callerid) && (msg.destport != PORT_LISTCID) &&
+     (msg.destport != PORT_PUBKEY))
     return;
   // not a special port, thus we forward data to localhost and proxy
   // clients:
   if(msg.destport > MAXSPECIALPORT) {
+    char* send_msg = msg.msg;
+    size_t send_len = msg.size;
+    if((msg.cid < MAX_STAGE_ID) && (endpoints[msg.cid].mode & B_ENCRYPTION) &&
+       (mode & B_ENCRYPTION)) {
+      decrypted_msg.size = decryptmsg(decrypted_msg.msg, msg.msg, msg.size,
+                                      remote_server.recipient_public,
+                                      remote_server.recipient_secret);
+      send_msg = decrypted_msg.msg;
+      send_len = decrypted_msg.size;
+    }
     if(msg.destport + portoffset != recport)
       // forward to local UDP receivers (zita etc.), add portoffset:
-      local_server.send(msg.msg, msg.size,
+      local_server.send(send_msg, send_len,
                         (uint16_t)(msg.destport + portoffset));
     for(auto xd : xdest)
       if(msg.destport + xd != recport)
-        local_server.send(msg.msg, msg.size, (uint16_t)(msg.destport + xd));
+        local_server.send(send_msg, send_len, (uint16_t)(msg.destport + xd));
     // is this message from same network?
     if(!is_same_network(msg.sender, localep)) {
       // now send to proxy clients:
       for(auto& client : proxyclients) {
         if(msg.cid != client.first) {
           client.second.sin_port = htons((unsigned short)msg.destport);
-          remote_server.send(msg.msg, msg.size, client.second);
+          remote_server.send(send_msg, send_len, client.second);
         }
       }
     }
@@ -490,6 +503,7 @@ void ovboxclient_t::recsrv()
     set_thread_prio(prio);
     char buffer[BUFSIZE];
     char msg[BUFSIZE];
+    char cmsg[BUFSIZE + crypto_box_SEALBYTES];
     endpoint_t sender_endpoint;
     log(recport, "listening");
     while(runsession) {
@@ -509,6 +523,15 @@ void ovboxclient_t::recsrv()
                 // not sending to ourself.
                 if(ep.mode & B_PEER2PEER) {
                   // other end is in peer-to-peer mode.
+                  char* send_msg = msg;
+                  size_t send_len = un;
+                  // now check for encryption:
+                  if((mode & B_ENCRYPTION) && (ep.mode & B_ENCRYPTION) &&
+                     ep.has_pubkey) {
+                    encryptmsg(cmsg, BUFSIZE, msg, un, ep.pubkey);
+                    send_msg = cmsg;
+                    send_len = un + crypto_box_SEALBYTES;
+                  }
                   bool target_in_same_network(
                       (endpoints[callerid].ep.sin_addr.s_addr ==
                        ep.ep.sin_addr.s_addr) &&
@@ -522,9 +545,9 @@ void ovboxclient_t::recsrv()
                       // remote is receiving downmix and this is downmixer
                       if(sendlocal && target_in_same_network) {
                         // same network.
-                        remote_server.send(msg, un, ep.localep);
+                        remote_server.send(send_msg, send_len, ep.localep);
                       } else
-                        remote_server.send(msg, un, ep.ep);
+                        remote_server.send(send_msg, send_len, ep.ep);
                     }
                   }
                 } else {

@@ -125,6 +125,13 @@ typedef uint8_t epmode_t;
  * This device is using a proxy.
  */
 #define B_USINGPROXY 0x10
+/**
+ * @ingroup operationmodes
+ *
+ * This device should send and receive encrypted data (if public keys of peers
+ * are available).
+ */
+#define B_ENCRYPTION 0x20
 
 // the message header is a byte array with:
 // - secret
@@ -270,6 +277,33 @@ size_t packmsg(char* destbuf, size_t maxlen, secret_t secret,
  */
 size_t addmsg(char* destbuf, size_t maxlen, size_t currentlen, const char* msg,
               size_t msglen);
+
+/**
+ * @ingroup networkprotocol
+ * Encrypt the user data part of a packed message.
+ * @param[out] destmsg Start of memory area where the data is stored.
+ * @param[in] maxlen Size of destmsg in bytes.
+ * @param[in] srcmsg Source message, unencrypted.
+ * @param[in] msglen Length of the source message in bytes.
+ * @param[in] pubkey A valid libsodium public key of the receiver.
+ * @return The length of the encrypted message is returned.
+ */
+size_t encryptmsg(char* destmsg, size_t maxlen, const char* srcmsg,
+                  size_t msglen, const uint8_t* pubkey);
+
+/**
+ * @ingroup networkprotocol
+ * Decrypt the user data part of a packed message. Return source message on
+ * failure.
+ * @param[out] destmsg Start of memory area where the data is stored.
+ * @param[in] srcmsg Source message, encrypted.
+ * @param[in] msglen Length of the source message in bytes.
+ * @param[in] pubkey A valid libsodium public key of the receiver.
+ * @param[in] seckey A valid libsodium secret key of the receiver.
+ * @return The length of the decrypted message is returned.
+ */
+size_t decryptmsg(char* destmsg, const char* srcmsg, size_t msglen,
+                  const uint8_t* pubkey, const uint8_t* seckey);
 
 #endif
 

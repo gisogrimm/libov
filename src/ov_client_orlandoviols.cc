@@ -709,6 +709,7 @@ void ov_client_orlandoviols_t::service()
               GETJS(rendersettings, outputgain);
               GETJS(rendersettings, peer2peer);
               GETJS(rendersettings, usetcptunnel);
+              GETJS(rendersettings, encryption);
               // level metering:
               GETJS(rendersettings, lmetertc);
               GETJS(rendersettings, lmeterfw);

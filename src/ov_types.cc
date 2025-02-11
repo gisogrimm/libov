@@ -212,7 +212,7 @@ bool operator!=(const render_settings_t& a, const render_settings_t& b)
      (a.ambientsound != b.ambientsound) || (a.ambientlevel != b.ambientlevel) ||
      (a.lmetertc != b.lmetertc) || (a.lmeterfw != b.lmeterfw) ||
      (a.delaycomp != b.delaycomp) || (a.decorr != b.decorr) ||
-     (a.usetcptunnel != b.usetcptunnel)) {
+     (a.usetcptunnel != b.usetcptunnel) || (a.encryption != b.encryption)) {
 #ifdef SHOWDEBUG
     DEBUGNEQ(a.id, b.id);
     DEBUGNEQ2(a.roomsize, b.roomsize);
