@@ -444,6 +444,7 @@ public:
   const std::string& get_deviceid() const;
   virtual void getbitrate(double& txrate, double& rxrate);
   virtual float get_load() const { return 0; };
+  virtual uint8_t get_encrypt_state() const { return 0; };
   virtual std::vector<float> get_temperature() const
   {
     return std::vector<float>();

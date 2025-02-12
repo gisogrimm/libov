@@ -517,6 +517,8 @@ void ovboxclient_t::recsrv()
         size_t msglen_packed = remote_server.packmsg(
             msg, BUFSIZE, (uint16_t)(recport - portoffset), buffer, n);
         bool sendtoserver(!(mode & B_PEER2PEER));
+        uint32_t peers_total = 0;
+        uint32_t peers_encrypted = 0;
         if(mode & B_PEER2PEER) {
           // we are in peer-to-peer mode.
           size_t ocid(0);
@@ -529,12 +531,14 @@ void ovboxclient_t::recsrv()
                   // target/other end is in peer-to-peer mode.
                   char* send_msg = msg;
                   size_t send_len = msglen_packed;
+                  ++peers_total;
                   // now check for encryption:
                   if((mode & B_ENCRYPTION) && (ep.mode & B_ENCRYPTION) &&
                      ep.has_pubkey) {
                     send_len = encryptmsg(cmsg, BUFSIZE, msg, msglen_packed,
                                           ep.pubkey);
                     send_msg = cmsg;
+                    ++peers_encrypted;
                   }
                   bool target_in_same_network(
                       (endpoints[callerid].ep.sin_addr.s_addr ==
@@ -564,8 +568,21 @@ void ovboxclient_t::recsrv()
           } // for( ep : endpoints )
         }   // this is not B_PEER2PEER
         if(sendtoserver) {
-          remote_server.send(msg, msglen_packed, toport);
+          // encrypt if needed:
+          char* send_msg = msg;
+          size_t send_len = msglen_packed;
+          ++peers_total;
+          // now check for encryption:
+          if((mode & B_ENCRYPTION) && srv_has_pubkey) {
+            send_len = encryptmsg(cmsg, BUFSIZE, msg, msglen_packed,
+                                  srv_pubkey);
+            send_msg = cmsg;
+            ++peers_encrypted;
+          }
+          remote_server.send(send_msg, send_len, toport);
         }
+        send_encrypt_any = (peers_encrypted > 0);
+        send_encrypt_all = send_encrypt_any && (peers_encrypted == peers_total);
       }
     }
   }

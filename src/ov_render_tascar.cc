@@ -1491,11 +1491,14 @@ void ov_render_tascar_t::start_session()
   catch(const std::exception& e) {
     DEBUG(e.what());
     std::string err(e.what());
-    delete tascar;
+    auto del_tascar = tascar;
     tascar = NULL;
-    if(ovboxclient)
-      delete ovboxclient;
-    ovboxclient = NULL;
+    delete del_tascar;
+    if(ovboxclient) {
+      auto del_ovboxclient = ovboxclient;
+      ovboxclient = NULL;
+      delete del_ovboxclient;
+    }
     // end_session();
     throw ErrMsg(err);
   }

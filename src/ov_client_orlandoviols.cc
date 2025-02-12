@@ -329,6 +329,7 @@ std::string ov_client_orlandoviols_t::device_update(std::string url,
   jsdevice["backendperiodsize"] = backend.get_periodsize();
   jsdevice["backendsrate"] = backend.get_srate();
   jsdevice["backendxruns"] = backend.get_xruns();
+  jsdevice["encryptstate"] = backend.get_encrypt_state();
   jsdevice["uname_sysname"] = uname_sysname;
   jsdevice["uname_release"] = uname_release;
   jsdevice["uname_machine"] = uname_machine;

@@ -154,6 +154,11 @@ public:
    */
   void set_expedited_forwarding_PHB();
 
+  uint8_t get_encrypt_state() const
+  {
+    return (uint8_t)(send_encrypt_any + send_encrypt_all);
+  };
+
 private:
   void sendsrv();
   void recsrv();
@@ -221,6 +226,9 @@ private:
   ovtcpsocket_t* tcp_tunnel = NULL;
 
   msgbuf_t decrypted_msg;
+
+  std::atomic<bool> send_encrypt_any{false};
+  std::atomic<bool> send_encrypt_all{false};
 };
 
 #endif

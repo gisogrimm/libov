@@ -81,6 +81,13 @@ public:
   void update_level_stat(int32_t channel, const std::vector<float>& peak,
                          const std::vector<float>& ms);
   size_t get_xruns();
+  uint8_t get_encrypt_state() const
+  {
+    if(ovboxclient)
+      return ovboxclient->get_encrypt_state();
+    return 0;
+  };
+
   class metronome_t {
   public:
     metronome_t();
