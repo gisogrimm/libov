@@ -628,7 +628,6 @@ void ovboxclient_t::xrecsrv(port_t srcport, port_t destport)
                   // now check for encryption:
                   if((mode & B_ENCRYPTION) && (ep.mode & B_ENCRYPTION) &&
                      ep.has_pubkey) {
-                    std::cerr << "e";
                     send_len = encryptmsg(cmsg, BUFSIZE, msg, msglen_packed,
                                           ep.pubkey);
                     send_msg = cmsg;
