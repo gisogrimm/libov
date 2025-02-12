@@ -443,6 +443,11 @@ void ovboxclient_t::process_msg(msgbuf_t& msg)
     if((msg.cid < MAX_STAGE_ID) && (endpoints[msg.cid].mode & B_ENCRYPTION) &&
        (mode & B_ENCRYPTION)) {
       std::cerr << "d";
+      if( msg.destport == 10000 ){
+        DEBUG(msg.size);
+        DEBUG(bin2base64((uint8_t*)(remote_server.recipient_public), crypto_box_PUBLICKEYBYTES));
+        DEBUG(bin2base64((uint8_t*)(msg.msg), msg.size));
+      }
       decrypted_msg.size = decryptmsg(decrypted_msg.msg, msg.msg, msg.size,
                                       remote_server.recipient_public,
                                       remote_server.recipient_secret);
@@ -611,6 +616,12 @@ void ovboxclient_t::xrecsrv(port_t srcport, port_t destport)
                     std::cerr << "e";
                     send_len = encryptmsg(cmsg, BUFSIZE, msg, msglen_packed, ep.pubkey);
                     send_msg = cmsg;
+                    if( destport == 10000 ){
+                      DEBUG(msglen_packed);
+                      DEBUG(send_len);
+                      DEBUG(bin2base64((uint8_t*)(ep.pubkey), crypto_box_PUBLICKEYBYTES));
+                      DEBUG(bin2base64((uint8_t*)(send_msg), send_len));
+                    }
                   }
                   bool target_in_same_network(
                       (endpoints[callerid].ep.sin_addr.s_addr ==
