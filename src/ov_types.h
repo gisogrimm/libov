@@ -238,6 +238,8 @@ public:
   float secrec;
   /// load headtracking module:
   bool headtracking;
+  /// load serial port headtracking module instead of OSC:
+  bool headtrackingserial = false;
   /// apply head rotation to receiver:
   bool headtrackingrotrec;
   /// apply head rotation to source:

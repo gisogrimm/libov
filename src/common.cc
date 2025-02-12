@@ -88,7 +88,9 @@ size_t encryptmsg(char* destmsg, size_t maxlen, const char* srcmsg,
 {
   if(maxlen < msglen + crypto_box_SEALBYTES)
     return 0;
+  // copy the header part of the data:
   memcpy(destmsg, srcmsg, HEADERLEN);
+  // encrypt the rest of the message:
   crypto_box_seal((uint8_t*)(&(destmsg[HEADERLEN])),
                   (uint8_t*)(&(srcmsg[HEADERLEN])), msglen - HEADERLEN, pubkey);
   return msglen + crypto_box_SEALBYTES;
@@ -97,7 +99,9 @@ size_t encryptmsg(char* destmsg, size_t maxlen, const char* srcmsg,
 size_t decryptmsg(char* destmsg, const char* srcmsg, size_t msglen,
                   const uint8_t* pubkey, const uint8_t* seckey)
 {
-  // Decrypt (recipient side)
+  // copy the header part of the data:
+  memcpy(destmsg, srcmsg, HEADERLEN);
+  // decrypt the rest of the message:
   if(crypto_box_seal_open((uint8_t*)(&(destmsg[HEADERLEN])),
                           (uint8_t*)(&(srcmsg[HEADERLEN])), msglen - HEADERLEN,
                           pubkey, seckey) != 0) {

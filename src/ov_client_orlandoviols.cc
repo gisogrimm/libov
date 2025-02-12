@@ -775,6 +775,8 @@ void ov_client_orlandoviols_t::service()
                 }
               rendersettings.headtracking =
                   my_js_value(js_rendersettings, "headtracking", false);
+              rendersettings.headtrackingserial =
+                  my_js_value(js_rendersettings, "headtrackingserial", false);
               rendersettings.headtrackingrotrec =
                   my_js_value(js_rendersettings, "headtrackingrot", true);
               rendersettings.headtrackingrotsrc =

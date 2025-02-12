@@ -895,7 +895,11 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
                                waitports, true);
   // head tracking:
   if(stage.rendersettings.headtracking && stage.rendersettings.receive) {
-    tsccfg::node_t e_head = tsccfg::node_add_child(e_mods, "oscheadtracker");
+    tsccfg::node_t e_head;
+    if(stage.rendersettings.headtrackingserial)
+      e_head = tsccfg::node_add_child(e_mods, "serialheadtracker");
+    else
+      e_head = tsccfg::node_add_child(e_mods, "oscheadtracker");
     // enable data logging and/or OSC distribution:
     if(stage.rendersettings.headtrackingport > 0)
       tsccfg::node_set_attribute(
