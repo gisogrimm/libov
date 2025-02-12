@@ -106,7 +106,7 @@ size_t decryptmsg(char* destmsg, const char* srcmsg, size_t msglen,
                           (uint8_t*)(&(srcmsg[HEADERLEN])), msglen - HEADERLEN,
                           pubkey, seckey) != 0) {
     // error, return original message:
-    DEBUG("decrypt failed");
+    //DEBUG("decrypt failed");
     memcpy(destmsg, srcmsg, msglen);
     return msglen;
   }

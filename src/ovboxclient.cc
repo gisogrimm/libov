@@ -443,16 +443,23 @@ void ovboxclient_t::process_msg(msgbuf_t& msg)
     if((msg.cid < MAX_STAGE_ID) && (endpoints[msg.cid].mode & B_ENCRYPTION) &&
        (mode & B_ENCRYPTION)) {
       std::cerr << "d";
-      if( msg.destport == 10000 ){
+      if(msg.destport == 10000) {
         DEBUG(msg.size);
-        DEBUG(bin2base64((uint8_t*)(remote_server.recipient_public), crypto_box_PUBLICKEYBYTES));
+        DEBUG(bin2base64((uint8_t*)(remote_server.recipient_public),
+                         crypto_box_PUBLICKEYBYTES));
         DEBUG(bin2base64((uint8_t*)(msg.msg), msg.size));
       }
-      decrypted_msg.size = decryptmsg(decrypted_msg.msg, msg.msg, msg.size,
-                                      remote_server.recipient_public,
-                                      remote_server.recipient_secret);
-      send_msg = decrypted_msg.msg;
-      send_len = decrypted_msg.size;
+      if(crypto_box_seal_open((uint8_t*)(decrypted_msg.msg),
+                              (uint8_t*)(msg.msg), msg.size,
+                              remote_server.recipient_public,
+                              remote_server.recipient_secret) == 0) {
+        // success:
+        send_msg = decrypted_msg.msg;
+        send_len = msg.size - crypto_box_SEALBYTES;
+      }
+      // decrypted_msg.size = decryptmsg(decrypted_msg.msg, msg.msg, msg.size,
+      //                                remote_server.recipient_public,
+      //                                remote_server.recipient_secret);
     }
     if(msg.destport + portoffset != recport)
       // forward to local UDP receivers (zita etc.), add portoffset:
