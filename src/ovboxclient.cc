@@ -442,13 +442,6 @@ void ovboxclient_t::process_msg(msgbuf_t& msg)
     size_t send_len = msg.size;
     if((msg.cid < MAX_STAGE_ID) && (endpoints[msg.cid].mode & B_ENCRYPTION) &&
        (mode & B_ENCRYPTION)) {
-      std::cerr << "d";
-      if(msg.destport == 10000) {
-        DEBUG(msg.size);
-        DEBUG(bin2base64((uint8_t*)(remote_server.recipient_public),
-                         crypto_box_PUBLICKEYBYTES));
-        DEBUG(bin2base64((uint8_t*)(msg.msg), msg.size));
-      }
       if(crypto_box_seal_open((uint8_t*)(decrypted_msg.msg),
                               (uint8_t*)(msg.msg), msg.size,
                               remote_server.recipient_public,
@@ -457,9 +450,6 @@ void ovboxclient_t::process_msg(msgbuf_t& msg)
         send_msg = decrypted_msg.msg;
         send_len = msg.size - crypto_box_SEALBYTES;
       }
-      // decrypted_msg.size = decryptmsg(decrypted_msg.msg, msg.msg, msg.size,
-      //                                remote_server.recipient_public,
-      //                                remote_server.recipient_secret);
     }
     if(msg.destport + portoffset != recport)
       // forward to local UDP receivers (zita etc.), add portoffset:
@@ -542,8 +532,8 @@ void ovboxclient_t::recsrv()
                   // now check for encryption:
                   if((mode & B_ENCRYPTION) && (ep.mode & B_ENCRYPTION) &&
                      ep.has_pubkey) {
-                    std::cerr << "e";
-                    send_len = encryptmsg(cmsg, BUFSIZE, msg, msglen_packed, ep.pubkey);
+                    send_len = encryptmsg(cmsg, BUFSIZE, msg, msglen_packed,
+                                          ep.pubkey);
                     send_msg = cmsg;
                   }
                   bool target_in_same_network(
@@ -569,10 +559,10 @@ void ovboxclient_t::recsrv()
                   sendtoserver = true;
                 }
               } // ocid != callerid
-            } // ep.timeout
+            }   // ep.timeout
             ++ocid;
           } // for( ep : endpoints )
-        } // this is not B_PEER2PEER
+        }   // this is not B_PEER2PEER
         if(sendtoserver) {
           remote_server.send(msg, msglen_packed, toport);
         }
@@ -603,7 +593,8 @@ void ovboxclient_t::xrecsrv(port_t srcport, port_t destport)
     while(runsession) {
       ssize_t n = xlocal_server.recvfrom(buffer, BUFSIZE, sender_endpoint);
       if(n > 0) {
-        size_t msglen_packed = remote_server.packmsg(msg, BUFSIZE, destport, buffer, n);
+        size_t msglen_packed =
+            remote_server.packmsg(msg, BUFSIZE, destport, buffer, n);
         bool sendtoserver(!(mode & B_PEER2PEER));
         if(mode & B_PEER2PEER) {
           // we are in peer-to-peer mode.
@@ -621,14 +612,9 @@ void ovboxclient_t::xrecsrv(port_t srcport, port_t destport)
                   if((mode & B_ENCRYPTION) && (ep.mode & B_ENCRYPTION) &&
                      ep.has_pubkey) {
                     std::cerr << "e";
-                    send_len = encryptmsg(cmsg, BUFSIZE, msg, msglen_packed, ep.pubkey);
+                    send_len = encryptmsg(cmsg, BUFSIZE, msg, msglen_packed,
+                                          ep.pubkey);
                     send_msg = cmsg;
-                    if( destport == 10000 ){
-                      DEBUG(msglen_packed);
-                      DEBUG(send_len);
-                      DEBUG(bin2base64((uint8_t*)(ep.pubkey), crypto_box_PUBLICKEYBYTES));
-                      DEBUG(bin2base64((uint8_t*)(send_msg), send_len));
-                    }
                   }
                   bool target_in_same_network(
                       (endpoints[callerid].ep.sin_addr.s_addr ==
