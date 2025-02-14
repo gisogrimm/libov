@@ -934,7 +934,8 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
                                headtrack_autorefzonly ? "true" : "false");
     tsccfg::node_set_attribute(e_head, "smooth", "0.01");
     // tsccfg::node_set_attribute(e_head, "tilturl", headtrack_tilturl);
-    tsccfg::node_set_attribute(e_head, "eogpath", headtrack_eogpath);
+    if( !stage.rendersettings.headtrackingserial )
+      tsccfg::node_set_attribute(e_head, "eogpath", headtrack_eogpath);
     // tsccfg::node_set_attribute(e_head, "tiltmap", headtrack_tiltmap);
     // tsccfg::node_set_attribute(e_head, "levelpattern", "/*/ego/*");
     tsccfg::node_set_attribute(e_head, "name", stage.thisdeviceid);
@@ -969,6 +970,16 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
       tsccfg::node_set_attribute(e_echoc, "filterlen",
                                  std::to_string(echoc_filterlen));
     }
+  }
+  if( !stage.rendersettings.rawmode ){
+    // add pos2osc to send to object based mixer:
+    auto e_p2o = tsccfg::node_add_child(e_mods,"pos2osc");
+    tsccfg::node_set_attribute(e_p2o,"url","osc.udp://localhost:9000");
+    tsccfg::node_set_attribute(e_p2o,"mode","2");
+    tsccfg::node_set_attribute(e_p2o,"addparentname","true");
+    tsccfg::node_set_attribute(e_p2o,"sendsounds","true");
+    tsccfg::node_set_attribute(e_p2o,"taumin","0.1");
+    tsccfg::node_set_attribute(e_p2o,"transport","false");
   }
 }
 
