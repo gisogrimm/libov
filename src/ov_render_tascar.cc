@@ -695,7 +695,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
             tsccfg::node_set_attribute(e_snd, "maxdist", "50");
             if(!stage.rendersettings.distancelaw)
               tsccfg::node_set_attribute(e_snd, "gainmodel", "1");
-            tsccfg::node_set_attribute(e_snd, "delayline", "false");
+            // tsccfg::node_set_attribute(e_snd, "delayline", "false");
             tsccfg::node_set_attribute(e_snd, "id", ch.id);
             // gain calculation: G_device * G_channel * (this: G_self |
             // (!distancelaw: 0.6 | 1.0) )
@@ -934,7 +934,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
                                headtrack_autorefzonly ? "true" : "false");
     tsccfg::node_set_attribute(e_head, "smooth", "0.01");
     // tsccfg::node_set_attribute(e_head, "tilturl", headtrack_tilturl);
-    if( !stage.rendersettings.headtrackingserial )
+    if(!stage.rendersettings.headtrackingserial)
       tsccfg::node_set_attribute(e_head, "eogpath", headtrack_eogpath);
     // tsccfg::node_set_attribute(e_head, "tiltmap", headtrack_tiltmap);
     // tsccfg::node_set_attribute(e_head, "levelpattern", "/*/ego/*");
@@ -971,15 +971,15 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
                                  std::to_string(echoc_filterlen));
     }
   }
-  if( !stage.rendersettings.rawmode ){
+  if(!stage.rendersettings.rawmode) {
     // add pos2osc to send to object based mixer:
-    auto e_p2o = tsccfg::node_add_child(e_mods,"pos2osc");
-    tsccfg::node_set_attribute(e_p2o,"url","osc.udp://localhost:9000");
-    tsccfg::node_set_attribute(e_p2o,"mode","2");
-    tsccfg::node_set_attribute(e_p2o,"addparentname","true");
-    tsccfg::node_set_attribute(e_p2o,"sendsounds","true");
-    tsccfg::node_set_attribute(e_p2o,"taumin","0.1");
-    tsccfg::node_set_attribute(e_p2o,"transport","false");
+    auto e_p2o = tsccfg::node_add_child(e_mods, "pos2osc");
+    tsccfg::node_set_attribute(e_p2o, "url", "osc.udp://localhost:9000");
+    tsccfg::node_set_attribute(e_p2o, "mode", "2");
+    tsccfg::node_set_attribute(e_p2o, "addparentname", "true");
+    tsccfg::node_set_attribute(e_p2o, "sendsounds", "true");
+    tsccfg::node_set_attribute(e_p2o, "taumin", "0.1");
+    tsccfg::node_set_attribute(e_p2o, "transport", "false");
   }
 }
 
@@ -1273,7 +1273,7 @@ void ov_render_tascar_t::start_session()
             tsccfg::node_set_attribute(e_snd, "maxdist", "50");
             if(!stage.rendersettings.distancelaw)
               tsccfg::node_set_attribute(e_snd, "gainmodel", "1");
-            tsccfg::node_set_attribute(e_snd, "delayline", "false");
+            // tsccfg::node_set_attribute(e_snd, "delayline", "false");
             tsccfg::node_set_attribute(e_snd, "id", ch.id);
             // gain calculation: G_device * G_channel * (this: G_self |
             // (!distancelaw: 0.6 | 1.0) )
@@ -1312,7 +1312,7 @@ void ov_render_tascar_t::start_session()
           tsccfg::node_t e_snd(tsccfg::node_add_child(e_src, "sound"));
           tsccfg::node_set_attribute(e_snd, "maxdist", "50");
           tsccfg::node_set_attribute(e_snd, "gainmodel", "1");
-          tsccfg::node_set_attribute(e_snd, "delayline", "false");
+          // tsccfg::node_set_attribute(e_snd, "delayline", "false");
           tsccfg::node_set_attribute(e_snd, "x", "4");
           tsccfg::node_t e_plugs(tsccfg::node_add_child(e_snd, "plugins"));
           tsccfg::node_t e_sndfile(tsccfg::node_add_child(e_plugs, "sndfile"));
