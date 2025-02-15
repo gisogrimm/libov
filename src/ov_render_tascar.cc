@@ -1647,9 +1647,15 @@ void ov_render_tascar_t::start_audiobackend()
     }
     h_jack = new TASCAR::spawn_process_t(cmd, false);
     // replace sleep by testing for jack presence with timeout:
-    while(!test_for_jack_server())
+    TASCAR::tictoc_t tictoc;
+    while((!test_for_jack_server()) && (tictoc.toc() < 10))
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    if(!test_for_jack_server()) {
+      throw TASCAR::ErrMsg("Unable to start audio backend. You might need to "
+                           "select a different audio device. (" +
+                           std::string(cmd) + ")");
+    }
     // sleep(7);
   }
   // get list of input ports:
