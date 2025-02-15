@@ -81,12 +81,7 @@ public:
   void update_level_stat(int32_t channel, const std::vector<float>& peak,
                          const std::vector<float>& ms);
   size_t get_xruns();
-  uint8_t get_encrypt_state() const
-  {
-    if(ovboxclient)
-      return ovboxclient->get_encrypt_state();
-    return 0;
-  };
+  uint8_t get_encrypt_state();
 
   class metronome_t {
   public:
@@ -127,9 +122,10 @@ private:
   // for the time being we start the webmixer as a local nodejs server
   // on port 8080. This will be replaced (or extended) by a web mixer
   // on the remote configuration interface:
-  TASCAR::spawn_process_t* h_webmixer;
-  TASCAR::session_t* tascar;
-  ovboxclient_t* ovboxclient;
+  TASCAR::spawn_process_t* h_webmixer = NULL;
+  TASCAR::session_t* tascar = NULL;
+  ovboxclient_t* ovboxclient = NULL;
+  std::mutex mtx_ovboxclient;
   port_t pinglogport;
   lo_address pinglogaddr;
   std::vector<std::string> inputports;

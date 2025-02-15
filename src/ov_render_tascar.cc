@@ -1333,6 +1333,7 @@ void ov_render_tascar_t::start_session()
   for(auto xport : stage.rendersettings.xports)
     session_add_connect(e_session, xport.first, xport.second);
   if(!stage.host.empty()) {
+    std::lock_guard<std::mutex> lock(mtx_ovboxclient);
     ovboxclient = new ovboxclient_t(
         stage.host, stage.port,
         get_zitaport_(stage.thisstagedeviceid, portoffset), portoffset, 30,
@@ -1356,9 +1357,7 @@ void ov_render_tascar_t::start_session()
     for(auto proxyclient : proxyclients) {
       ovboxclient->add_proxy_client(proxyclient.first, proxyclient.second);
     }
-  }
-  // update ping timimng:
-  if(ovboxclient) {
+    // update ping timimng:
     ovboxclient->set_hiresping(stage.thisdevice.hiresping);
   }
   if(mczita) {
@@ -1505,6 +1504,7 @@ void ov_render_tascar_t::start_session()
     auto del_tascar = tascar;
     tascar = NULL;
     delete del_tascar;
+    std::lock_guard<std::mutex> lock(mtx_ovboxclient);
     if(ovboxclient) {
       auto del_ovboxclient = ovboxclient;
       ovboxclient = NULL;
@@ -1563,6 +1563,7 @@ void ov_render_tascar_t::end_session()
     TASCAR::console_log("deleted TASCAR session");
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
   }
+  std::lock_guard<std::mutex> lock(mtx_ovboxclient);
   if(ovboxclient) {
     delete ovboxclient;
     ovboxclient = NULL;
@@ -1817,6 +1818,7 @@ std::string ov_render_tascar_t::get_stagedev_name(stage_device_id_t id) const
 
 void ov_render_tascar_t::getbitrate(double& txrate, double& rxrate)
 {
+  std::lock_guard<std::mutex> lock(mtx_ovboxclient);
   if(ovboxclient)
     ovboxclient->getbitrate(txrate, rxrate);
 }
@@ -1903,15 +1905,19 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
             my_js_value(xcfg["network"], "deadline", sorter_deadline);
         if(new_deadline != sorter_deadline) {
           sorter_deadline = new_deadline;
+          std::lock_guard<std::mutex> lock(mtx_ovboxclient);
           if(ovboxclient)
             ovboxclient->set_reorder_deadline(sorter_deadline);
         }
-        bool new_expedited_forwarding_PHB = my_js_value(
-            xcfg["network"], "expeditedforwarding", expedited_forwarding_PHB);
-        if(new_expedited_forwarding_PHB != expedited_forwarding_PHB) {
-          expedited_forwarding_PHB = new_expedited_forwarding_PHB;
-          if(expedited_forwarding_PHB && ovboxclient)
-            ovboxclient->set_expedited_forwarding_PHB();
+        {
+          std::lock_guard<std::mutex> lock(mtx_ovboxclient);
+          bool new_expedited_forwarding_PHB = my_js_value(
+              xcfg["network"], "expeditedforwarding", expedited_forwarding_PHB);
+          if(new_expedited_forwarding_PHB != expedited_forwarding_PHB) {
+            expedited_forwarding_PHB = new_expedited_forwarding_PHB;
+            if(expedited_forwarding_PHB && ovboxclient)
+              ovboxclient->set_expedited_forwarding_PHB();
+          }
         }
       }
       if(xcfg["headtrack"].is_object()) {
@@ -2073,6 +2079,7 @@ nlohmann::json to_json(const client_stats_t& ms)
 
 std::string ov_render_tascar_t::get_client_stats()
 {
+  std::lock_guard<std::mutex> lock(mtx_ovboxclient);
   if(ovboxclient)
     for(auto dev : stage.stage)
       ovboxclient->update_client_stats(dev.first, client_stats[dev.first]);
@@ -2090,6 +2097,14 @@ size_t ov_render_tascar_t::get_xruns()
   if(tascar) {
     return tascar->get_xruns();
   }
+  return 0;
+}
+
+uint8_t ov_render_tascar_t::get_encrypt_state()
+{
+  std::lock_guard<std::mutex> lock(mtx_ovboxclient);
+  if(ovboxclient)
+    return ovboxclient->get_encrypt_state();
   return 0;
 }
 
