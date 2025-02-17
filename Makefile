@@ -90,7 +90,7 @@ TASCARSOURCE = omni cardioidmod
 TASCARMODULS = system touchosc waitforjackport route jackrec sleep	\
   epicycles hossustain hoafdnrot matrix savegains granularsynth		\
   oscserver oscrelay pos2osc echoc oscheadtracker osceog systime	\
-  pos2osc serialheadtracker
+  pos2osc
 
 ifeq ($(UNAME_S),Linux)
 TASCAROBJECTS += alsamidicc.o
