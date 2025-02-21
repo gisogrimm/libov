@@ -1894,7 +1894,10 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
       bool restart_session(false);
       // parse extra configuration:
       nlohmann::json xcfg(nlohmann::json::parse(js));
-      start_webmixer = my_js_value(xcfg, "start_webmixer", true);
+      bool prev_start_webmixer = start_webmixer;
+      start_webmixer = my_js_value(xcfg, "start_webmixer", start_webmixer);
+      if( prev_start_webmixer != start_webmixer)
+        restart_session = true;
       std::string prev_tscinclude(tscinclude);
       tscinclude = my_js_value(xcfg, "tscinclude", tscinclude);
       if(prev_tscinclude != tscinclude)
