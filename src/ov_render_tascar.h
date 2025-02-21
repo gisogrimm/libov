@@ -209,6 +209,7 @@ private:
   lo_message msg_level_analysis_trigger;
   std::map<int32_t, std::vector<float>> level_analysis_peak;
   std::map<int32_t, std::vector<float>> level_analysis_ms;
+  bool start_webmixer = true;
 };
 
 #endif

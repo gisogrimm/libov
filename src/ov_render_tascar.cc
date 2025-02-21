@@ -1514,7 +1514,7 @@ void ov_render_tascar_t::start_session()
     throw ErrMsg(err);
   }
 #ifndef GUI
-  if(!secondary) {
+  if(start_webmixer && (!secondary)) {
     // add web mixer tools (node-js server and touchosc interface):
     std::string command;
     std::string ipaddr(ep2ipstr(getipaddr()));
@@ -1894,6 +1894,7 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
       bool restart_session(false);
       // parse extra configuration:
       nlohmann::json xcfg(nlohmann::json::parse(js));
+      start_webmixer = my_js_value(xcfg, "start_webmixer", true);
       std::string prev_tscinclude(tscinclude);
       tscinclude = my_js_value(xcfg, "tscinclude", tscinclude);
       if(prev_tscinclude != tscinclude)
