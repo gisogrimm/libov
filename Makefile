@@ -1,17 +1,18 @@
 VERSION=0.29
-export FULLVERSION:=$(shell ./get_version.sh)
+# keep the version number always in the first line of the Makefile!
+
+# no c++2a or c++20, max 17 for the time being (c++-2a breaks build on
+# CI pipeline for Ubuntu and arm):
+CXXFLAGS = -Wall -Wno-deprecated-declarations -std=c++17 -pthread	\
+-ggdb -fno-finite-math-only -fPIC -Wno-psabi -Wconversion -Wextra -Wno-unused-parameter
+
+# external libraries used in the ovbox:
+EXTERNALS = jack xerces-c liblo sndfile libcurl gsl samplerate fftw3f xerces-c libsodium
 
 all: tascarplugins lib
+cli: tascarpluginscli lib
 
-#tscver build showver lib tscobj tascarplugins
-#
-#tascarplugins: tscobj
-#
-#lib: showver tscver tscobj
-#
-#showver: build
-#
-#build: tscver
+export FULLVERSION:=$(shell ./get_version.sh)
 
 BASEOBJ = ov_types errmsg common udpsocket ovtcpsocket callerlist	\
 	ov_tools MACAddressUtility
@@ -21,21 +22,11 @@ OBJ = $(BASEOBJ) ovboxclient ov_client_orlandoviols	\
 
 HAS_LSL:=$(shell tascar/check_for_lsl)
 
-# please no c++2a or c++20, max 17 for the time being (c++-2a breaks
-# build on CI pipeline for Ubuntu and arm)
-CXXFLAGS = -Wall -Wno-deprecated-declarations -std=c++17 -pthread	\
--ggdb -fno-finite-math-only -fPIC -Wno-psabi -Wconversion -Wextra -Wno-unused-parameter
-#-Werror
-
-EXTERNALS = jack xerces-c liblo sndfile libcurl gsl samplerate fftw3f xerces-c libsodium
-
 BUILD_OBJ = $(patsubst %,build/%.o,$(OBJ))
 
 BUILD_OBJ_SERVER = $(patsubst %,build/%.o,$(BASEOBJ))
 
 CXXFLAGS += -DOVBOXVERSION="\"$(FULLVERSION)\""
-
-$(BUILD_OBJ): build/tscobj
 
 ifeq "$(ARCH)" "x86_64"
 CXXFLAGS += -msse -msse2 -mfpmath=sse -ffast-math
@@ -49,7 +40,7 @@ ifeq ($(UNAME_S),Darwin)
 LIBVAR=DYLD_LIBRARY_PATH
 endif
 
-CPPFLAGS = -std=c++2a
+#CPPFLAGS = -std=c++2a
 PREFIX = /usr/local
 BUILD_DIR = build
 SOURCE_DIR = src
@@ -58,15 +49,6 @@ LDLIBS += `pkg-config --libs $(EXTERNALS)`
 CXXFLAGS += `pkg-config --cflags $(EXTERNALS)`
 LDLIBS += -ldl -lovclienttascar
 LDFLAGS += -Ltascar/libtascar/build
-
-# libcpprest dependencies:
-#LDLIBS += -lcrypto -lboost_filesystem -lboost_system -lcpprest
-#LDLIBS += -lcrypto -lcpprest
-
-#libov submodule:
-#CXXFLAGS += -Ilibov/src
-#LDLIBS += -lov
-#LDFLAGS += -Llibov/build
 
 HEADER := $(wildcard src/*.h) $(wildcard libov/src/*.h) build/tscver
 
@@ -131,15 +113,11 @@ else
 		TASCARMODULS += ovheadtracker lightctl midicc2osc
 		TASCARDMXOBJECTS += termsetbaud.o serialport.o dmxdriver.o
 		TASCARAUDIOPLUGS += simplesynth
-#		ifneq ($DISTRO,arch)
-#		TASCARRECEIVERS += itu51
-#		endif
 	endif
 	ifeq ($(UNAME_S),Darwin)
 		OSFLAG += -D OSX -D DARWIN
 		LDFLAGS += -framework IOKit -framework CoreFoundation
 		CXXFLAGS += -I`brew --prefix libsoundio`/include
-#		LDLIBS += `brew --prefix libsoundio`
 		LDFLAGS += -L`brew --prefix libsoundio`/lib
 		LDLIBS += -lsoundio
 		LDLIBS += `pkg-config --libs nlohmann_json`
@@ -176,10 +154,10 @@ lib: build build/libov.a
 libovserver: EXTERNALS=libcurl xerces-c libsodium
 libovserver: build/tscobj build/libovserver.a
 
+$(BUILD_OBJ): build/tscobjcli
+
 build/libov.a: $(BUILD_OBJ)
 	ar rcs $@ $^
-
-# $(patsubst %,tascar/libtascar/build/%,$(TASCAROBJECTS)) $(patsubst %,tascar/libtascar/build/%,$(TASCARDMXOBJECTS))
 
 build/libovserver.a: $(patsubst %,tascar/libtascar/build/%,$(TASCAROBJECTS)) $(BUILD_OBJ_SERVER)
 	ar rcs $@ $^
@@ -192,21 +170,41 @@ build: build/.directory
 build/%.o: src/%.cc $(wildcard src/*.h)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+##
+## TASCAR related targets:
+##
+
+# create build directory within TASCAR:
 build/tscbuild:
 	$(MAKE) -C tascar/libtascar build && mkdir -p build && touch $@
 
-#$(patsubst %,tascar/libtascar/build/%,$(TASCAROBJECTS)): tscobj
+# build SOFA library within TASCAR:
+build/tscsofa: build
+	$(MAKE) -C tascar libmysofa && touch $@
 
-build/tscver: build/tscbuild
+# generate TASCAR version number and related header files:
+build/tscver: build/tscbuild build/tscsofa
 	$(MAKE) -C tascar/libtascar ver && mkdir -p build && touch $@
 
-build/tscobj: build/tscver
-	$(MAKE) -C tascar libmysofa && $(MAKE) -C tascar/libtascar PLUGINPREFIX=ovclient TSCCXXFLAGS=-DPLUGINPREFIX='\"ovclient\"' all && mkdir -p build && touch $@
+# build TASCAR library with GUI components:
+build/tscobj: build/tscobjcli
+	$(MAKE) -C tascar/libtascar PLUGINPREFIX=ovclient TSCCXXFLAGS=-DPLUGINPREFIX='\"ovclient\"' all && mkdir -p build && touch $@
 
-#&& touch $@
+# build TASCAR library without GUI components:
+build/tscobjcli: build/tscver
+	$(MAKE) -C tascar/libtascar PLUGINPREFIX=ovclient TSCCXXFLAGS=-DPLUGINPREFIX='\"ovclient\"' cli && mkdir -p build && touch $@
 
+# build TASCAR plugins, including GUI plugins:
 tascarplugins: build/tscobj
 	 $(MAKE) -C tascar/plugins PLUGINPREFIX=ovclient RECEIVERS="$(TASCARRECEIVERS)" SOURCES="$(TASCARSOURCE)" TASCARMODS="$(TASCARMODULS)" TASCARMODSGUI="$(TASCARMODULSGUI)" AUDIOPLUGINS="$(TASCARAUDIOPLUGS)" GLABSENSORS= TASCARLIB="-lovclienttascar" TASCARGUILIB="-lovclienttascargui" TASCARDMXLIB="-lovclienttascardmx"
+
+# build TASCAR plugins, only non-GUI:
+tascarpluginscli: build/tscobjcli
+	 $(MAKE) -C tascar/plugins PLUGINPREFIX=ovclient RECEIVERS="$(TASCARRECEIVERS)" SOURCES="$(TASCARSOURCE)" TASCARMODS="$(TASCARMODULS)" TASCARMODSGUI="" AUDIOPLUGINS="$(TASCARAUDIOPLUGS)" GLABSENSORS= TASCARLIB="-lovclienttascar" TASCARGUILIB="" TASCARDMXLIB="-lovclienttascardmx"
+
+##
+## general purpose targets:
+##
 
 clangformat:
 	clang-format-9 -i $(wildcard src/*.cc) $(wildcard src/*.h)
@@ -215,7 +213,10 @@ clean:
 	rm -Rf build src/*~ .ov_version .ov_minor_version .ov_full_version .ov_commitver libtascar googletest CMakeFiles
 	-$(MAKE) -C tascar clean
 
+
+##
 ## unit testing:
+##
 
 googletest/WORKSPACE:
 	git clone https://github.com/google/googletest &&	(cd googletest && git checkout release-1.11.0)
@@ -242,7 +243,6 @@ $(patsubst %,%-subdir-unit-tests,$(SUBDIRS)):
 execute-unit-tests: $(BUILD_DIR)/unit-test-runner
 	if [ -x $< ]; then $(LIBVAR)=./build:./tascar/libtascar/build: $<; fi
 
-#$(BUILD_DIR)/unit-test-runner: gtest
 
 unit_tests_test_files = $(wildcard unittests/*.cc)
 $(BUILD_DIR)/unit-test-runner: $(BUILD_DIR)/.directory $(unit_tests_test_files) $(BUILD_OBJ)
