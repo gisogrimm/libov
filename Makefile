@@ -72,7 +72,7 @@ TASCARSOURCE = omni cardioidmod
 TASCARMODULS = system touchosc waitforjackport route jackrec sleep	\
   epicycles hossustain hoafdnrot matrix savegains granularsynth		\
   oscserver oscrelay pos2osc echoc oscheadtracker osceog systime	\
-  pos2osc
+  pos2osc oscactor
 
 ifeq ($(UNAME_S),Linux)
 TASCAROBJECTS += alsamidicc.o
@@ -83,7 +83,7 @@ TASCARMODULS += ltcgen serialheadtracker
 endif
 
 ifeq "$(HAS_LSL)" "yes"
-TASCARMODULS += lsl2osc
+TASCARMODULS += lsl2osc osc2lsl lslactor
 endif
 
 TASCARMODULSGUI = tracegui datalogging
