@@ -178,9 +178,9 @@ build/%.o: src/%.cc $(wildcard src/*.h)
 build/tscbuild:
 	$(MAKE) -C tascar/libtascar build && mkdir -p build && touch $@
 
-# build SOFA library within TASCAR:
+# build SOFA and LSL library within TASCAR:
 build/tscsofa: build
-	$(MAKE) -C tascar libmysofa && touch $@
+	$(MAKE) -C tascar libmysofa liblsl && touch $@
 
 # generate TASCAR version number and related header files:
 build/tscver: build/tscbuild build/tscsofa
