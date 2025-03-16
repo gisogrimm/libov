@@ -620,6 +620,10 @@ void ov_client_orlandoviols_t::service()
             std::ofstream ofh(folder + "ov-client.firmwareupdate");
             quitrequest_ = true;
           }
+          if(my_js_value(js_stagecfg, "firmwareupdategit", false)) {
+            std::ofstream ofh(folder + "ov-client.firmwareupdategit");
+            quitrequest_ = true;
+          }
           if(my_js_value(js_stagecfg, "usedevversion", false)) {
             std::ofstream ofh(folder + "ov-client.usedevversion");
             quitrequest_ = true;
