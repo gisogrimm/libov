@@ -37,7 +37,8 @@ public:
   ~ov_client_orlandoviols_t();
   void start_service();
   void stop_service();
-  bool download_file(const std::string& url, const std::string& dest);
+  bool download_file(const std::string& url, const std::string& dest,
+                     bool use_pw = true);
   bool is_going_to_stop() const { return quitrequest_; };
   std::string get_owner() const { return owner; };
   void upload_plugin_settings();

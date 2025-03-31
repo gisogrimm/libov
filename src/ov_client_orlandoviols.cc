@@ -34,8 +34,8 @@
 // #include <filesystem>
 
 #ifdef WIN32
-#include <windows.h>
 #include <VersionHelpers.h>
+#include <windows.h>
 #endif
 
 CURL* curl;
@@ -211,7 +211,8 @@ bool ov_client_orlandoviols_t::report_error(std::string url,
 }
 
 bool ov_client_orlandoviols_t::download_file(const std::string& url,
-                                             const std::string& dest)
+                                             const std::string& dest,
+                                             bool use_pw)
 {
 #ifdef SHOWDEBUG
   std::cout << "ov_client_orlandoviols_t::download_file " << url << " to "
@@ -226,17 +227,21 @@ bool ov_client_orlandoviols_t::download_file(const std::string& url,
     if(localfile.good()) {
       TASCAR::console_log("Using file \"" + hashname + "\" for URL \"" + url +
                           "\".");
-      std::ofstream destfile(dest, std::ios::binary);
-      destfile << localfile.rdbuf();
-      if(!destfile.good()) {
-        std::cerr << "could not copy \"" << hashname << "\" to \"" << dest
-                  << "\", cashed from " << url << std::endl;
+      if(dest == hashname) {
+        TASCAR::console_log(
+            "Destination and hash file name are the same, not copying.");
+      } else {
+        std::ofstream destfile(dest, std::ios::binary);
+        destfile << localfile.rdbuf();
+        if(!destfile.good()) {
+          std::cerr << "could not copy \"" << hashname << "\" to \"" << dest
+                    << "\", cashed from " << url << std::endl;
+        }
       }
       return true;
     }
   }
-  std::cerr << "could not open cashed file, downloading from " << url
-            << std::endl;
+  TASCAR::console_log("Could not open cashed file, downloading from " + url);
   CURLcode res;
   struct webCURL::MemoryStruct chunk;
   chunk.memory =
@@ -245,7 +250,8 @@ bool ov_client_orlandoviols_t::download_file(const std::string& url,
   std::lock_guard<std::mutex> lock(curlmtx);
   curl_easy_reset(curl);
   curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-  curl_easy_setopt(curl, CURLOPT_USERPWD, "device:device");
+  if(use_pw)
+    curl_easy_setopt(curl, CURLOPT_USERPWD, "device:device");
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, webCURL::WriteMemoryCallback);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&chunk);
   curl_easy_setopt(curl, CURLOPT_USERAGENT, "libcurl-agent/1.0");
@@ -730,13 +736,11 @@ void ov_client_orlandoviols_t::service()
                 std::string hashname(
                     folder + url2localfilename(rendersettings.ambientsound));
                 // test if file already exists:
-                std::ifstream ambif(hashname);
-                if(!ambif.good()) {
-                  if(!download_file(rendersettings.ambientsound, hashname)) {
-                    report_error(lobby, backend.get_deviceid(),
-                                 "Unable to download ambient sound file from " +
-                                     rendersettings.ambientsound);
-                  }
+                if(!download_file(rendersettings.ambientsound, hashname,
+                                  false)) {
+                  report_error(lobby, backend.get_deviceid(),
+                               "Unable to download ambient sound file from " +
+                                   rendersettings.ambientsound);
                 }
                 // test if file can be read and has four channels:
                 try {
