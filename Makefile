@@ -219,7 +219,7 @@ clean:
 ##
 
 googletest/WORKSPACE:
-	git clone https://github.com/google/googletest &&	(cd googletest && git checkout release-1.11.0)
+	git clone https://github.com/google/googletest &&	(cd googletest && git checkout v1.16.0)
 
 gtest:
 	$(MAKE) googlemock
