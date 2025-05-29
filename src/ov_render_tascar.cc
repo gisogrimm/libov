@@ -705,6 +705,9 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
               if(selfmonitor_active && (!useloudspeaker))
                 tsccfg::node_set_attribute(e_snd, "connect",
                                            "'" + get_channel_source(ch) + "'");
+              if( stage.rendersettings.egogain == 0 ){
+                tsccfg::node_set_attribute(e_snd, "mute","true");
+              }else
               gain *= stage.rendersettings.egogain;
             } else {
               if(!stage.rendersettings.distancelaw)
@@ -1278,11 +1281,14 @@ void ov_render_tascar_t::start_session()
             tsccfg::node_set_attribute(e_snd, "id", ch.id);
             // gain calculation: G_device * G_channel * (this: G_self |
             // (!distancelaw: 0.6 | 1.0) )
-            float gain(ch.gain);
             // connect self-monitoring source ports:
             tsccfg::node_set_attribute(e_snd, "connect",
                                        "'" + get_channel_source(ch) + "'");
-            gain *= stage.rendersettings.egogain;
+            float gain(ch.gain);
+            if( stage.rendersettings.egogain == 0 ){
+              tsccfg::node_set_attribute(e_snd, "mute","true");
+            }else
+              gain *= stage.rendersettings.egogain;
             tsccfg::node_set_attribute(e_snd, "gain",
                                        TASCAR::to_string(20.0f * log10f(gain)));
             // set relative channel positions:
