@@ -705,10 +705,10 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
               if(selfmonitor_active && (!useloudspeaker))
                 tsccfg::node_set_attribute(e_snd, "connect",
                                            "'" + get_channel_source(ch) + "'");
-              if( stage.rendersettings.egogain == 0 ){
-                tsccfg::node_set_attribute(e_snd, "mute","true");
-              }else
-              gain *= stage.rendersettings.egogain;
+              if(stage.rendersettings.egogain == 0) {
+                tsccfg::node_set_attribute(e_snd, "mute", "true");
+              } else
+                gain *= stage.rendersettings.egogain;
             } else {
               if(!stage.rendersettings.distancelaw)
                 // if not self-monitor then decrease gain:
@@ -1285,9 +1285,9 @@ void ov_render_tascar_t::start_session()
             tsccfg::node_set_attribute(e_snd, "connect",
                                        "'" + get_channel_source(ch) + "'");
             float gain(ch.gain);
-            if( stage.rendersettings.egogain == 0 ){
-              tsccfg::node_set_attribute(e_snd, "mute","true");
-            }else
+            if(stage.rendersettings.egogain == 0) {
+              tsccfg::node_set_attribute(e_snd, "mute", "true");
+            } else
               gain *= stage.rendersettings.egogain;
             tsccfg::node_set_attribute(e_snd, "gain",
                                        TASCAR::to_string(20.0f * log10f(gain)));
@@ -1465,22 +1465,29 @@ void ov_render_tascar_t::start_session()
     std::vector<std::string> pattern;
     std::vector<std::string> gaincontrollers;
     std::vector<std::string> mutecontrollers;
+    uint32_t midi_channel = 0;
     uint32_t k = 0;
     uint32_t k_name = 0;
     for(auto ch : stage.thisdevice.channels) {
-      if(k < 7) {
-        auto name = ch.name;
-        if(name.empty())
-          name = TASCAR::to_string(k_name++);
-        pattern.push_back("/*/ego/" + name);
-        gaincontrollers.push_back("0/" + TASCAR::to_string(k));
-        mutecontrollers.push_back("0/" + TASCAR::to_string(k + 8));
-        ++k;
+      if(k == 7) {
+        midi_channel++;
+        k = 0;
       }
+      auto name = ch.name;
+      if(name.empty())
+        name = TASCAR::to_string(k_name++);
+      pattern.push_back("/*/ego/" + name);
+      gaincontrollers.push_back(TASCAR::to_string(midi_channel) + "/" +
+                                TASCAR::to_string(k));
+      mutecontrollers.push_back(TASCAR::to_string(midi_channel) + "/" +
+                                TASCAR::to_string(k + 8));
+      ++k;
     }
-    pattern.push_back("/*/main");
-    gaincontrollers.push_back("0/7");
-    mutecontrollers.push_back("0/15");
+    for(k = 0; k <= midi_channel; ++k) {
+      pattern.push_back("/*/main");
+      gaincontrollers.push_back(TASCAR::to_string(k) + "/7");
+      mutecontrollers.push_back(TASCAR::to_string(k) + "/15");
+    }
     tsccfg::node_set_attribute(e_midi, "controllers",
                                TASCAR::vecstr2str(gaincontrollers) + " " +
                                    TASCAR::vecstr2str(mutecontrollers));
@@ -1903,7 +1910,7 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
       nlohmann::json xcfg(nlohmann::json::parse(js));
       bool prev_start_webmixer = start_webmixer;
       start_webmixer = my_js_value(xcfg, "start_webmixer", start_webmixer);
-      if( prev_start_webmixer != start_webmixer)
+      if(prev_start_webmixer != start_webmixer)
         restart_session = true;
       std::string prev_tscinclude(tscinclude);
       tscinclude = my_js_value(xcfg, "tscinclude", tscinclude);
