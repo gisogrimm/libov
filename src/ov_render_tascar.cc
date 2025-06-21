@@ -1462,6 +1462,7 @@ void ov_render_tascar_t::start_session()
     tsccfg::node_set_attribute(e_midi, "connect", "BCF2000:0");
     tsccfg::node_set_attribute(e_midi, "min", "-30");
     tsccfg::node_set_attribute(e_midi, "max", "10");
+    tsccfg::node_set_attribute(e_midi, "nonlinscale", "true");
     std::vector<std::string> pattern;
     std::vector<std::string> gaincontrollers;
     std::vector<std::string> mutecontrollers;
