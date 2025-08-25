@@ -1,4 +1,4 @@
-VERSION=0.30
+VERSION=0.31
 # keep the version number always in the first line of the Makefile!
 
 # no c++2a or c++20, max 17 for the time being (c++-2a breaks build on
