@@ -1195,7 +1195,8 @@ void ov_render_tascar_t::start_session()
       tsccfg::node_t e_bus(tsccfg::node_add_child(e_mods, "route"));
       tsccfg::node_set_attribute(e_bus, "name", std::string("bus.") + ch.id);
       tsccfg::node_set_attribute(e_bus, "channels", "1");
-      tsccfg::node_set_attribute(e_bus, "connect", "'" + ch.sourceport + "'");
+      session_add_connect(e_session, ch.sourceport,
+                          std::string("bus.") + ch.id + ":in.0");
       if(!ch.plugins.empty()) {
         tsccfg::node_t e_plugs(tsccfg::node_add_child(e_bus, "plugins"));
         for(auto plug : ch.plugins) {
