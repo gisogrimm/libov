@@ -1188,7 +1188,10 @@ void ov_render_tascar_t::start_session()
   tsccfg::node_t e_mods(tsccfg::node_add_child(e_session, "modules"));
   // create a route for level analysis:
   create_levelmeter_route(e_session, e_mods);
-  // end of level analysis.
+  // add a pitch analyser/tuner:
+  tsccfg::node_t e_tuner = tsccfg::node_add_child(e_mods,"tuner");
+  tsccfg::node_set_attribute(e_tuner, "url", "osc.udp://localhost:9000/");
+  // end of level and pitch analysis.
   // add effect bus:
   if(!stage.host.empty() || emptysessionismonitor)
     for(auto ch : stage.thisdevice.channels) {
