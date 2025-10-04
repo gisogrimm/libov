@@ -210,6 +210,10 @@ private:
   std::map<int32_t, std::vector<float>> level_analysis_peak;
   std::map<int32_t, std::vector<float>> level_analysis_ms;
   bool start_webmixer = true;
+  // tuner variables:
+  std::string tuner_tuning = "equal";
+  float tuner_f0 = 440.0f;
+  bool tuner_active = false;
 };
 
 #endif

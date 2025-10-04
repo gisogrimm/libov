@@ -1189,8 +1189,14 @@ void ov_render_tascar_t::start_session()
   // create a route for level analysis:
   create_levelmeter_route(e_session, e_mods);
   // add a pitch analyser/tuner:
-  tsccfg::node_t e_tuner = tsccfg::node_add_child(e_mods,"tuner");
+  tsccfg::node_t e_tuner = tsccfg::node_add_child(e_mods, "tuner");
   tsccfg::node_set_attribute(e_tuner, "url", "osc.udp://localhost:9000/");
+  tsccfg::node_set_attribute(e_tuner, "f0", TASCAR::to_string(tuner_f0));
+  tsccfg::node_set_attribute(e_tuner, "tuning", tuner_tuning);
+  tsccfg::node_set_attribute(e_tuner, "isactive",
+                             TASCAR::to_string_bool(tuner_active));
+  for(auto ch : stage.thisdevice.channels)
+    session_add_connect(e_session, ch.sourceport, "tuner:in");
   // end of level and pitch analysis.
   // add effect bus:
   if(!stage.host.empty() || emptysessionismonitor)
@@ -1929,6 +1935,11 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
       usebcf2000 = my_js_value(xcfg["render"], "usebcf2000", false);
       if(prev_usebcf2000 != usebcf2000)
         restart_session = true;
+      if(xcfg["tuner"].is_object()) {
+        UPDATEVAR_RESTART("tuner", tuner_tuning);
+        UPDATEVAR_RESTART("tuner", tuner_f0);
+        UPDATEVAR_RESTART("tuner", tuner_active);
+      }
       if(xcfg["network"].is_object()) {
         float new_deadline =
             my_js_value(xcfg["network"], "deadline", sorter_deadline);
