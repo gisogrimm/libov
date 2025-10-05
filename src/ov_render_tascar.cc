@@ -1193,6 +1193,7 @@ void ov_render_tascar_t::start_session()
   tsccfg::node_set_attribute(e_tuner, "url", "osc.udp://localhost:9000/");
   tsccfg::node_set_attribute(e_tuner, "f0", TASCAR::to_string(tuner_f0));
   tsccfg::node_set_attribute(e_tuner, "tuning", tuner_tuning);
+  tsccfg::node_set_attribute(e_tuner, "tau", "0.02");
   tsccfg::node_set_attribute(e_tuner, "isactive",
                              TASCAR::to_string_bool(tuner_active));
   for(auto ch : stage.thisdevice.channels)
