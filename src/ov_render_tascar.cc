@@ -64,6 +64,7 @@ std::vector<std::string> get_jack_input_ports(jack_client_t* jc,
       // Filter out ports that don't match the desired criteria:
       if(!(ends_with(port, ":sync_out") ||
            starts_with(port, "render." + deviceid) ||
+           starts_with(port, "levelanalysis." + deviceid) ||
            starts_with(port, deviceid + ".metronome") ||
            ends_with(port, "." + deviceid + ":out_1") ||
            ends_with(port, "." + deviceid + ":out_2") ||
