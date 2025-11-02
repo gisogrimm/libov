@@ -620,7 +620,7 @@ void ov_client_orlandoviols_t::service()
       std::ofstream ofh(folder + "ovboxcfg.json");
       ofh << devcfg.dump();
     }
-    start_mixer = my_js_value(devcfg, "startmixer", false);
+    standalone_mixer = my_js_value(devcfg, "standalonemixer", false);
   }
   try {
     // register_device(lobby, backend.get_deviceid());
@@ -630,7 +630,7 @@ void ov_client_orlandoviols_t::service()
       throw TASCAR::ErrMsg("Unable to download announcement file from server.");
   }
   catch(const std::exception& e) {
-    if(!start_mixer) {
+    if(!standalone_mixer) {
       TASCAR::console_log(std::string("Error: ") + e.what());
       TASCAR::console_log("Invalid URL or server may be down.");
       quitrequest_ = true;
@@ -639,8 +639,8 @@ void ov_client_orlandoviols_t::service()
   }
   while(runservice) {
     try {
-      std::string stagecfg(
-          device_update(lobby, backend.get_deviceid(), hash, !start_mixer));
+      std::string stagecfg(device_update(lobby, backend.get_deviceid(), hash,
+                                         !standalone_mixer));
       try {
         if(stagecfg.size()) {
           devcfg = json_merge(devcfg, nlohmann::json::parse(stagecfg));
@@ -674,9 +674,11 @@ void ov_client_orlandoviols_t::service()
 
 void ov_client_orlandoviols_t::parse_config()
 {
-  bool new_startmixer = my_js_value(devcfg, "startmixer", false);
-  if(new_startmixer != start_mixer)
+  bool new_startmixer = my_js_value(devcfg, "standalonemixer", false);
+  if(new_startmixer != standalone_mixer) {
+    standalone_mixer = new_startmixer;
     quitrequest_ = true;
+  }
   auto newowner = my_js_value(devcfg, "owner", owner);
   if(newowner != owner) {
     owner = newowner;

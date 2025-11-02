@@ -70,7 +70,7 @@ private:
   // device configuration:
   nlohmann::json devcfg;
   // start in mixer mode:
-  bool start_mixer = false;
+  bool standalone_mixer = false;
 
 #ifdef WIN32
   WSADATA WSAData; // Structure to store details of the Windows Sockets
