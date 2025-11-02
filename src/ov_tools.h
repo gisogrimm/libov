@@ -1,7 +1,7 @@
 /*
  * This file is part of the ovbox software tool, see <http://orlandoviols.com/>.
  *
- * Copyright (c) 2021 Giso Grimm
+ * Copyright (c) 2021 - 2025 Giso Grimm
  */
 /*
  * ovbox is free software: you can redistribute it and/or modify
@@ -10,7 +10,7 @@
  *
  * ovbox is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHATABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License, version 3 for more details.
  *
  * You should have received a copy of the GNU General Public License,
@@ -48,6 +48,10 @@ T my_js_value(const nlohmann::json& obj, const std::string& key,
                  key + "')");
   }
 }
+
+nlohmann::json json_merge(const nlohmann::json& lhs, const nlohmann::json& rhs);
+
+std::string get_file_contents(const std::string& fname);
 
 #endif
 

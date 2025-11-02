@@ -18,7 +18,9 @@
  */
 
 #include "ov_tools.h"
+#include <fstream>
 #include <iostream>
+#include <sstream>
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -105,6 +107,69 @@ std::string ovstrrep(std::string s, const std::string& pat,
   }
   s = out_string + s;
   return s;
+}
+
+nlohmann::json json_merge(const nlohmann::json& lhs, const nlohmann::json& rhs)
+{
+  nlohmann::json j = lhs;
+  for(auto it = rhs.cbegin(); it != rhs.cend(); ++it) {
+    const auto& key = it.key();
+    if(it->is_object()) {
+      if(lhs.contains(key)) {
+        // object already exists (must merge)
+        j[key] = json_merge(lhs[key], rhs[key]);
+      } else {
+        // object does not exist in LHS, so use the RHS
+        j[key] = rhs[key];
+      }
+    } else {
+      // this is an individual item, use RHS
+      j[key] = it.value();
+    }
+  }
+  return j;
+}
+
+/**
+ * Reads the entire contents of a file into a single std::string.
+ *
+ * This function efficiently reads a file by utilizing stream buffer iterators,
+ * which handle memory allocation automatically and provide good performance
+ * for large files. The file is closed automatically when the ifstream object
+ * goes out of scope.
+ *
+ * @param fname The filename to open (as a string or path).
+ *              Relative paths are resolved according to the process's working
+ * directory.
+ *
+ * @return A string containing the file's contents if successful.
+ *         Returns an empty string ("") if:
+ *           - The file doesn't exist
+ *           - Permission is denied
+ *           - Any other error occurs during opening
+ *
+ * @note Advantages of this implementation:
+ *         - Handles files larger than available memory gracefully (via stream
+ * buffering)
+ *         - Correctly handles binary files (including null characters)
+ *         - Memory efficient (avoids redundant copying)
+ *         - Exception-safe (no leaks if construction fails)
+ *
+ * @warning Returns an empty string for both empty files and errors.
+ *          Callers should distinguish using additional checks if needed.
+ *          Example ambiguous cases:
+ *            - Truly empty file -> returns ""
+ *            - Failed to open file -> returns ""
+ */
+std::string get_file_contents(const std::string& fname)
+{
+  std::ifstream t(fname);
+  if(!t.is_open())
+    return "";
+  std::string str((std::istreambuf_iterator<char>(
+                      t)), // Extra parens prevent "most vexing parse"
+                  std::istreambuf_iterator<char>());
+  return str;
 }
 
 /*

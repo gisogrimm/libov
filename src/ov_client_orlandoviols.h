@@ -23,6 +23,7 @@
 #include "ov_types.h"
 #include <atomic>
 #include <mutex>
+#include <nlohmann/json.hpp>
 #include <thread>
 
 #ifdef WIN32
@@ -47,11 +48,12 @@ public:
 
 private:
   void service();
-  void register_device(std::string url, const std::string& device);
+  // void register_device(std::string url, const std::string& device);
   std::string device_update(std::string url, const std::string& device,
-                            std::string& hash);
+                            std::string& hash, bool show_errors);
   bool report_error(std::string url, const std::string& device,
                     const std::string& msg);
+  void parse_config();
 
   bool runservice;
   std::thread servicethread;
@@ -65,6 +67,10 @@ private:
   std::string uname_sysname;
   std::string uname_release;
   std::string uname_machine;
+  // device configuration:
+  nlohmann::json devcfg;
+  // start in mixer mode:
+  bool start_mixer = false;
 
 #ifdef WIN32
   WSADATA WSAData; // Structure to store details of the Windows Sockets

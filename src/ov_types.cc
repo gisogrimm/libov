@@ -352,7 +352,9 @@ void ov_render_base_t::configure_audio_backend(
       stop_audiobackend();
     }
     // now start audio:
-    start_audiobackend();
+    if(!no_restart)
+      start_audiobackend();
+    audio_active = true;
   }
 }
 
@@ -534,7 +536,7 @@ void device_channel_t::update_plugin_cfg(const std::string& jscfg)
         cplug.params[param] = TASCAR::to_string(v);
       } else if(val.is_boolean()) {
         bool v = val.get<bool>();
-        cplug.params[param] = (v?"true":"false");//TASCAR::to_string(v);
+        cplug.params[param] = (v ? "true" : "false"); // TASCAR::to_string(v);
       }
     }
     if(pcnt < plugins.size())

@@ -159,7 +159,6 @@ ov_client_orlandoviols_t::~ov_client_orlandoviols_t()
 {
 #ifdef WIN32
   WSACleanup(); // Clean up Winsock
-
 #endif
 }
 
@@ -202,7 +201,10 @@ bool ov_client_orlandoviols_t::report_error(std::string url,
   curl_easy_setopt(curl, CURLOPT_POSTFIELDS, msg.c_str());
   CURLcode err = CURLE_OK;
   if((err = curl_easy_perform(curl)) != CURLE_OK) {
-    DEBUG(curl_easy_strerror(err));
+    if(msg.size()) {
+      TASCAR::console_log(std::string("Error: ") + curl_easy_strerror(err));
+      TASCAR::console_log(std::string("\"") + msg + std::string("\""));
+    }
     free(chunk.memory);
     return false;
   }
@@ -299,11 +301,9 @@ unsigned long get_mem_total()
  */
 std::string ov_client_orlandoviols_t::device_update(std::string url,
                                                     const std::string& device,
-                                                    std::string& hash)
+                                                    std::string& hash,
+                                                    bool show_errors)
 {
-#ifdef SHOWDEBUG
-  std::cout << "ov_client_orlandoviols_t::device_update " << url << std::endl;
-#endif
   char chost[1024];
   memset(chost, 0, 1024);
   std::string hostname;
@@ -365,7 +365,11 @@ std::string ov_client_orlandoviols_t::device_update(std::string url,
     if(res == CURLE_OK) {
       retv.insert(0, chunk.memory, chunk.size);
     } else {
-      DEBUG(curl_easy_strerror(res));
+      if(show_errors) {
+        TASCAR::console_log("Error in ov_client_orlandoviols device_update " +
+                            device + " at " + url);
+        TASCAR::console_log(curl_easy_strerror(res));
+      }
     }
     free(chunk.memory);
   }
@@ -388,40 +392,38 @@ std::string ov_client_orlandoviols_t::device_update(std::string url,
   return retv;
 }
 
-void ov_client_orlandoviols_t::register_device(std::string url,
-                                               const std::string& device)
-{
-#ifdef SHOWDEBUG
-  std::cout << "ov_client_orlandoviols_t::register_device " << url
-            << " and device " << device << std::endl;
-#endif
-  struct webCURL::MemoryStruct chunk;
-  chunk.memory =
-      (char*)malloc(1); /* will be grown as needed by the realloc above */
-  chunk.size = 0;       /* no data at this point */
-  url += "?setver=" + device + "&ver=ovclient-" + OVBOXVERSION;
-  CURLcode err = CURLE_OK;
-  {
-    std::lock_guard<std::mutex> lock(curlmtx);
-    curl_easy_reset(curl);
-    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(curl, CURLOPT_USERPWD, "device:device");
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, webCURL::WriteMemoryCallback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void*)&chunk);
-    curl_easy_setopt(curl, CURLOPT_USERAGENT, "libcurl-agent/1.0");
-    err = curl_easy_perform(curl);
-  }
-  if(err != CURLE_OK) {
-    free(chunk.memory);
-    throw TASCAR::ErrMsg("Unable to register device with url \"" + url +
-                         "\". " + std::string(curl_easy_strerror(err)));
-  }
-  std::string result;
-  result.insert(0, chunk.memory, chunk.size);
-  free(chunk.memory);
-  if(result != "OK")
-    throw TASCAR::ErrMsg("The front end did not respond \"OK\".");
-}
+// void ov_client_orlandoviols_t::register_device(std::string url,
+//                                               const std::string& device)
+//{
+//  TASCAR::console_log("ov_client_orlandoviols register_device " + device +
+//                      " at " + url);
+//  struct webCURL::MemoryStruct chunk;
+//  chunk.memory =
+//      (char*)malloc(1); /* will be grown as needed by the realloc above */
+//  chunk.size = 0;       /* no data at this point */
+//  url += "?setver=" + device + "&ver=ovclient-" + OVBOXVERSION;
+//  CURLcode err = CURLE_OK;
+//  {
+//    std::lock_guard<std::mutex> lock(curlmtx);
+//    curl_easy_reset(curl);
+//    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+//    curl_easy_setopt(curl, CURLOPT_USERPWD, "device:device");
+//    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,
+//    webCURL::WriteMemoryCallback); curl_easy_setopt(curl, CURLOPT_WRITEDATA,
+//    (void*)&chunk); curl_easy_setopt(curl, CURLOPT_USERAGENT,
+//    "libcurl-agent/1.0"); err = curl_easy_perform(curl);
+//  }
+//  if(err != CURLE_OK) {
+//    free(chunk.memory);
+//    throw TASCAR::ErrMsg("Unable to register device with url \"" + url +
+//                         "\". " + std::string(curl_easy_strerror(err)));
+//  }
+//  std::string result;
+//  result.insert(0, chunk.memory, chunk.size);
+//  free(chunk.memory);
+//  if(result != "OK")
+//    throw TASCAR::ErrMsg("The front end did not respond \"OK\".");
+//}
 
 void ov_client_orlandoviols_t::upload_plugin_settings()
 {
@@ -590,239 +592,68 @@ stage_device_t get_stage_dev(nlohmann::json& dev)
 void ov_client_orlandoviols_t::service()
 {
   TASCAR::tictoc_t tictoc;
+  std::string hash;
+  double gracetime(7.7);
+  {
+    // read from cofiguration files:
+    for(const auto& cfgfile : std::vector<std::string>(
+            {"/boot/ovboxcfg.json",
+             std::string(std::getenv("HOME")) + std::string("/.ovboxcfg.json"),
+             folder + "ovboxcfg.json"})) {
+      auto config = get_file_contents(cfgfile);
+      if(config.size()) {
+        try {
+          nlohmann::json localcfg = nlohmann::json::parse(config);
+          devcfg = json_merge(devcfg, localcfg);
+        }
+        catch(const std::exception& err) {
+          TASCAR::console_log(std::string("Error parsing config file: ") +
+                              err.what());
+        }
+      }
+    }
+    // initial update:
+    std::string stagecfg(
+        device_update(lobby, backend.get_deviceid(), hash, true));
+    if(stagecfg.size()) {
+      devcfg = json_merge(devcfg, nlohmann::json::parse(stagecfg));
+      std::ofstream ofh(folder + "ovboxcfg.json");
+      ofh << devcfg.dump();
+    }
+    start_mixer = my_js_value(devcfg, "startmixer", false);
+  }
   try {
-    register_device(lobby, backend.get_deviceid());
+    // register_device(lobby, backend.get_deviceid());
     if(!report_error(lobby, backend.get_deviceid(), ""))
       throw TASCAR::ErrMsg("Unable to reset error message.");
     if(!download_file(lobby + "/announce.flac", folder + "announce.flac"))
       throw TASCAR::ErrMsg("Unable to download announcement file from server.");
   }
   catch(const std::exception& e) {
-    quitrequest_ = true;
-    std::cerr << "Error: " << e.what() << std::endl;
-    std::cerr << "Invalid URL or server may be down." << std::endl;
-    return;
+    if(!start_mixer) {
+      TASCAR::console_log(std::string("Error: ") + e.what());
+      TASCAR::console_log("Invalid URL or server may be down.");
+      quitrequest_ = true;
+      return;
+    }
   }
-  std::string hash;
-  double gracetime(7.7);
   while(runservice) {
     try {
-      std::string stagecfg(device_update(lobby, backend.get_deviceid(), hash));
-      if(!stagecfg.empty()) {
-        try {
-          nlohmann::json js_stagecfg(nlohmann::json::parse(stagecfg));
-          auto newowner = my_js_value(js_stagecfg, "owner", owner);
-          if(newowner != owner) {
-            owner = newowner;
-            std::cout << "Device ID: " << backend.get_deviceid()
-                      << " User: " << owner << std::endl;
-          }
-          if(!js_stagecfg["frontendconfig"].is_null()) {
-            std::ofstream ofh(folder + "ov-client.cfg");
-            ofh << js_stagecfg["frontendconfig"].dump();
-            quitrequest_ = true;
-          }
-          if(my_js_value(js_stagecfg, "firmwareupdate", false)) {
-            std::ofstream ofh(folder + "ov-client.firmwareupdate");
-            quitrequest_ = true;
-          }
-          if(my_js_value(js_stagecfg, "firmwareupdategit", false)) {
-            std::ofstream ofh(folder + "ov-client.firmwareupdategit");
-            quitrequest_ = true;
-          }
-          if(my_js_value(js_stagecfg, "usedevversion", false)) {
-            std::ofstream ofh(folder + "ov-client.usedevversion");
-            quitrequest_ = true;
-          }
-          if(my_js_value(js_stagecfg, "installopenmha", false)) {
-            std::ofstream ofh(folder + "ov-client.installopenmha");
-            quitrequest_ = true;
-          }
-          std::string hifiberry =
-              my_js_value(js_stagecfg, "usehifiberry", std::string(""));
-          if(hifiberry.size()) {
-            std::ofstream ofh(folder + "ov-client.hifiberry");
-            ofh << hifiberry << std::endl;
-            quitrequest_ = true;
-          }
-          if(js_stagecfg["wifisettings"].is_object()) {
-            std::ofstream ofh(folder + "ov-client.wificfg");
-            std::string ssid(my_js_value(js_stagecfg["wifisettings"], "ssid",
-                                         std::string("")));
-            std::string passwd(my_js_value(js_stagecfg["wifisettings"],
-                                           "passwd", std::string("")));
-            ofh << ssid << "\n" << passwd << "\n";
-            quitrequest_ = true;
-          }
-          if(!quitrequest_) {
-            nlohmann::json js_audio(js_stagecfg["audiocfg"]);
-            if(!js_audio.is_null()) {
-              audio_device_t audio;
-              // backend.clear_stage();
-              audio.drivername =
-                  my_js_value(js_audio, "driver", std::string("jack"));
-              audio.devicename =
-                  my_js_value(js_audio, "device", std::string("hw:1"));
-              audio.srate = my_js_value(js_audio, "srate", 48000.0f);
-              audio.periodsize = my_js_value(js_audio, "periodsize", 96);
-              audio.numperiods = my_js_value(js_audio, "numperiods", 2);
-              audio.priority = my_js_value(js_audio, "priority", 40);
-              backend.configure_audio_backend(audio);
-              if(my_js_value(js_audio, "restart", false)) {
-                bool session_was_active(backend.is_session_active());
-                if(session_was_active)
-                  backend.end_session();
-                backend.stop_audiobackend();
-                backend.start_audiobackend();
-                if(session_was_active)
-                  backend.require_session_restart();
-              }
-            }
-            nlohmann::json js_rendersettings(js_stagecfg["rendersettings"]);
-            if(!js_rendersettings.is_null()) {
-              backend.set_thisdev(get_stage_dev(js_rendersettings));
-            }
-            nlohmann::json js_stage(js_stagecfg["room"]);
-            if(js_stage.is_object()) {
-              std::string stagehost(
-                  my_js_value(js_stage, "host", std::string("")));
-              port_t stageport((port_t)(my_js_value(js_stage, "port", 0)));
-              secret_t stagepin(my_js_value(js_stage, "pin", 0u));
-              backend.set_relay_server(stagehost, stageport, stagepin);
-              nlohmann::json js_roomsize(js_stage["size"]);
-              nlohmann::json js_reverb(js_stage["reverb"]);
-              render_settings_t rendersettings;
-              GETJS(rendersettings, id);
-              rendersettings.roomsize.x = my_js_value(js_roomsize, "x", 25.0f);
-              rendersettings.roomsize.y = my_js_value(js_roomsize, "y", 13.0f);
-              rendersettings.roomsize.z = my_js_value(js_roomsize, "z", 7.5f);
-              rendersettings.absorption =
-                  my_js_value(js_reverb, "absorption", 0.6f);
-              rendersettings.damping = my_js_value(js_reverb, "damping", 0.7f);
-              rendersettings.reverbgain = my_js_value(js_reverb, "gain", 0.4f);
-              rendersettings.reverbgainroom =
-                  my_js_value(js_reverb, "roomgain", 0.4f);
-              rendersettings.reverbgaindev =
-                  my_js_value(js_reverb, "devgain", 1.0f);
-              GETJS(rendersettings, renderreverb);
-              GETJS(rendersettings, renderism);
-              GETJS(rendersettings, distancelaw);
-              GETJS(rendersettings, delaycomp);
-              GETJS(rendersettings, decorr);
-              // gains, ports and network:
-              GETJS(rendersettings, outputport1);
-              GETJS(rendersettings, outputport2);
-              GETJS(rendersettings, rawmode);
-              GETJS(rendersettings, receive);
-              GETJS(rendersettings, rectype);
-              GETJS(rendersettings, secrec);
-              GETJS(rendersettings, egogain);
-              GETJS(rendersettings, outputgain);
-              GETJS(rendersettings, peer2peer);
-              GETJS(rendersettings, usetcptunnel);
-              GETJS(rendersettings, encryption);
-              // level metering:
-              GETJS(rendersettings, lmetertc);
-              GETJS(rendersettings, lmeterfw);
-              // ambient sound:
-              rendersettings.ambientsound =
-                  my_js_value(js_stage, "ambientsound", std::string(""));
-              rendersettings.ambientlevel =
-                  my_js_value(js_stage, "ambientlevel", 0.0f);
-              rendersettings.ambientsound =
-                  ovstrrep(rendersettings.ambientsound, "\\/", "/");
-              // if not empty then download file to hash code:
-              if(rendersettings.ambientsound.size()) {
-                std::string hashname(
-                    folder + url2localfilename(rendersettings.ambientsound));
-                // test if file already exists:
-                if(!download_file(rendersettings.ambientsound, hashname,
-                                  false)) {
-                  report_error(lobby, backend.get_deviceid(),
-                               "Unable to download ambient sound file from " +
-                                   rendersettings.ambientsound);
-                }
-                // test if file can be read and has four channels:
-                try {
-                  TASCAR::sndfile_handle_t sf(hashname);
-                  if(sf.get_channels() != 4) {
-                    throw ErrMsg("Not in B-Format (" +
-                                 std::to_string(sf.get_channels()) +
-                                 " channels)");
-                  }
-                }
-                catch(const std::exception& e) {
-                  throw ErrMsg("Unable to open ambient sound file from " +
-                               rendersettings.ambientsound + ": " + e.what());
-                }
-              }
-              //
-              rendersettings.xports.clear();
-              nlohmann::json js_xports(js_rendersettings["xport"]);
-              if(js_xports.is_array())
-                for(auto xp : js_xports) {
-                  if(xp.is_array())
-                    if((xp.size() == 2) && xp[0].is_string() &&
-                       xp[1].is_string()) {
-                      std::string key(xp[0].get<std::string>());
-                      if(key.size())
-                        rendersettings.xports[key] = xp[1].get<std::string>();
-                    }
-                }
-              rendersettings.xrecport.clear();
-              nlohmann::json js_xrecports(js_rendersettings["xrecport"]);
-              if(js_xrecports.is_array())
-                for(auto xrp : js_xrecports) {
-                  int p = 0;
-                  if(xrp.is_number()) {
-                    p = xrp.get<int>();
-                  } else if(xrp.is_string()) {
-                    p = atoi(xrp.get<std::string>().c_str());
-                  }
-                  if((p > 0) && (p < (1 << 16)))
-                    rendersettings.xrecport.push_back((port_t)p);
-                }
-              rendersettings.headtracking =
-                  my_js_value(js_rendersettings, "headtracking", false);
-              rendersettings.headtrackingserial =
-                  my_js_value(js_rendersettings, "headtrackingserial", false);
-              rendersettings.headtrackingrotrec =
-                  my_js_value(js_rendersettings, "headtrackingrot", true);
-              rendersettings.headtrackingrotsrc =
-                  my_js_value(js_rendersettings, "headtrackingrotsrc", true);
-              rendersettings.headtrackingport =
-                  (port_t)my_js_value(js_rendersettings, "headtrackingport", 0);
-              backend.set_render_settings(
-                  rendersettings, (stage_device_id_t)(my_js_value(
-                                      js_rendersettings, "stagedevid", 0)));
-              if(!js_rendersettings["extracfg"].is_null())
-                backend.set_extra_config(js_rendersettings["extracfg"].dump());
-              nlohmann::json js_stagedevs(js_stagecfg["roomdev"]);
-              std::map<stage_device_id_t, stage_device_t> newstage;
-              if(js_stagedevs.is_array()) {
-                for(auto dev : js_stagedevs) {
-                  auto sdev(get_stage_dev(dev));
-                  newstage[sdev.id] = sdev;
-                }
-                backend.set_stage(newstage);
-              }
-            }
-            if(!backend.is_audio_active())
-              backend.start_audiobackend();
-            backend.restart_session_if_needed();
-            refplugcfg = backend.get_all_current_plugincfg_as_json();
-            if(backend.is_session_active()) {
-              report_error(lobby, backend.get_deviceid(), "");
-            }
-          }
+      std::string stagecfg(
+          device_update(lobby, backend.get_deviceid(), hash, !start_mixer));
+      try {
+        if(stagecfg.size()) {
+          devcfg = json_merge(devcfg, nlohmann::json::parse(stagecfg));
+          std::ofstream ofh(folder + "ovboxcfg.json");
+          ofh << devcfg.dump();
         }
-        catch(const std::exception& e) {
-          std::cerr << "Error: " << e.what() << std::endl;
-          report_error(lobby, backend.get_deviceid(), e.what());
-          DEBUG(stagecfg);
-        }
+        parse_config();
       }
-      //      double t(0);
+      catch(const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        report_error(lobby, backend.get_deviceid(), e.what());
+        DEBUG(stagecfg);
+      }
       while((tictoc.toc() < gracetime) && runservice && nocancelwait) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
         // t += 0.001;
@@ -839,6 +670,209 @@ void ov_client_orlandoviols_t::service()
   if(backend.is_session_active())
     backend.end_session();
   backend.stop_audiobackend();
+}
+
+void ov_client_orlandoviols_t::parse_config()
+{
+  bool new_startmixer = my_js_value(devcfg, "startmixer", false);
+  if(new_startmixer != start_mixer)
+    quitrequest_ = true;
+  auto newowner = my_js_value(devcfg, "owner", owner);
+  if(newowner != owner) {
+    owner = newowner;
+    TASCAR::console_log(std::string("Device ID: ") + backend.get_deviceid() +
+                        std::string(" User: ") + owner);
+  }
+  if(!devcfg["frontendconfig"].is_null()) {
+    // a change of session server was requested:
+    std::ofstream ofh(folder + "ov-client.cfg");
+    ofh << devcfg["frontendconfig"].dump();
+    std::ofstream ofh2(folder + "ovboxcfg.json");
+    ofh2 << "{}";
+    quitrequest_ = true;
+  }
+  if(my_js_value(devcfg, "firmwareupdate", false)) {
+    std::ofstream ofh(folder + "ov-client.firmwareupdate");
+    quitrequest_ = true;
+  }
+  if(my_js_value(devcfg, "firmwareupdategit", false)) {
+    std::ofstream ofh(folder + "ov-client.firmwareupdategit");
+    quitrequest_ = true;
+  }
+  if(my_js_value(devcfg, "usedevversion", false)) {
+    std::ofstream ofh(folder + "ov-client.usedevversion");
+    quitrequest_ = true;
+  }
+  if(my_js_value(devcfg, "installopenmha", false)) {
+    std::ofstream ofh(folder + "ov-client.installopenmha");
+    quitrequest_ = true;
+  }
+  std::string hifiberry = my_js_value(devcfg, "usehifiberry", std::string(""));
+  if(hifiberry.size()) {
+    std::ofstream ofh(folder + "ov-client.hifiberry");
+    ofh << hifiberry << std::endl;
+    quitrequest_ = true;
+  }
+  if(devcfg["wifisettings"].is_object()) {
+    std::ofstream ofh(folder + "ov-client.wificfg");
+    std::string ssid(
+        my_js_value(devcfg["wifisettings"], "ssid", std::string("")));
+    std::string passwd(
+        my_js_value(devcfg["wifisettings"], "passwd", std::string("")));
+    ofh << ssid << "\n" << passwd << "\n";
+    quitrequest_ = true;
+  }
+  if(!quitrequest_) {
+    nlohmann::json js_audio(devcfg["audiocfg"]);
+    if(!js_audio.is_null()) {
+      audio_device_t audio;
+      // backend.clear_stage();
+      audio.drivername = my_js_value(js_audio, "driver", std::string("jack"));
+      audio.devicename = my_js_value(js_audio, "device", std::string("hw:1"));
+      audio.srate = my_js_value(js_audio, "srate", 48000.0f);
+      audio.periodsize = my_js_value(js_audio, "periodsize", 96);
+      audio.numperiods = my_js_value(js_audio, "numperiods", 2);
+      audio.priority = my_js_value(js_audio, "priority", 40);
+      backend.configure_audio_backend(audio);
+      if(my_js_value(js_audio, "restart", false)) {
+        bool session_was_active(backend.is_session_active());
+        if(session_was_active)
+          backend.end_session();
+        backend.stop_audiobackend();
+        backend.start_audiobackend();
+        if(session_was_active)
+          backend.require_session_restart();
+      }
+    }
+    nlohmann::json js_rendersettings(devcfg["rendersettings"]);
+    if(!js_rendersettings.is_null()) {
+      backend.set_thisdev(get_stage_dev(js_rendersettings));
+    }
+    nlohmann::json js_stage(devcfg["room"]);
+    if(js_stage.is_object()) {
+      std::string stagehost(my_js_value(js_stage, "host", std::string("")));
+      port_t stageport((port_t)(my_js_value(js_stage, "port", 0)));
+      secret_t stagepin(my_js_value(js_stage, "pin", 0u));
+      backend.set_relay_server(stagehost, stageport, stagepin);
+      nlohmann::json js_roomsize(js_stage["size"]);
+      nlohmann::json js_reverb(js_stage["reverb"]);
+      render_settings_t rendersettings;
+      GETJS(rendersettings, id);
+      rendersettings.roomsize.x = my_js_value(js_roomsize, "x", 25.0f);
+      rendersettings.roomsize.y = my_js_value(js_roomsize, "y", 13.0f);
+      rendersettings.roomsize.z = my_js_value(js_roomsize, "z", 7.5f);
+      rendersettings.absorption = my_js_value(js_reverb, "absorption", 0.6f);
+      rendersettings.damping = my_js_value(js_reverb, "damping", 0.7f);
+      rendersettings.reverbgain = my_js_value(js_reverb, "gain", 0.4f);
+      rendersettings.reverbgainroom = my_js_value(js_reverb, "roomgain", 0.4f);
+      rendersettings.reverbgaindev = my_js_value(js_reverb, "devgain", 1.0f);
+      GETJS(rendersettings, renderreverb);
+      GETJS(rendersettings, renderism);
+      GETJS(rendersettings, distancelaw);
+      GETJS(rendersettings, delaycomp);
+      GETJS(rendersettings, decorr);
+      // gains, ports and network:
+      GETJS(rendersettings, outputport1);
+      GETJS(rendersettings, outputport2);
+      GETJS(rendersettings, rawmode);
+      GETJS(rendersettings, receive);
+      GETJS(rendersettings, rectype);
+      GETJS(rendersettings, secrec);
+      GETJS(rendersettings, egogain);
+      GETJS(rendersettings, outputgain);
+      GETJS(rendersettings, peer2peer);
+      GETJS(rendersettings, usetcptunnel);
+      GETJS(rendersettings, encryption);
+      // level metering:
+      GETJS(rendersettings, lmetertc);
+      GETJS(rendersettings, lmeterfw);
+      // ambient sound:
+      rendersettings.ambientsound =
+          my_js_value(js_stage, "ambientsound", std::string(""));
+      rendersettings.ambientlevel = my_js_value(js_stage, "ambientlevel", 0.0f);
+      rendersettings.ambientsound =
+          ovstrrep(rendersettings.ambientsound, "\\/", "/");
+      // if not empty then download file to hash code:
+      if(rendersettings.ambientsound.size()) {
+        std::string hashname(folder +
+                             url2localfilename(rendersettings.ambientsound));
+        // test if file already exists:
+        if(!download_file(rendersettings.ambientsound, hashname, false)) {
+          report_error(lobby, backend.get_deviceid(),
+                       "Unable to download ambient sound file from " +
+                           rendersettings.ambientsound);
+        }
+        // test if file can be read and has four channels:
+        try {
+          TASCAR::sndfile_handle_t sf(hashname);
+          if(sf.get_channels() != 4) {
+            throw ErrMsg("Not in B-Format (" +
+                         std::to_string(sf.get_channels()) + " channels)");
+          }
+        }
+        catch(const std::exception& e) {
+          throw ErrMsg("Unable to open ambient sound file from " +
+                       rendersettings.ambientsound + ": " + e.what());
+        }
+      }
+      //
+      rendersettings.xports.clear();
+      nlohmann::json js_xports(js_rendersettings["xport"]);
+      if(js_xports.is_array())
+        for(auto xp : js_xports) {
+          if(xp.is_array())
+            if((xp.size() == 2) && xp[0].is_string() && xp[1].is_string()) {
+              std::string key(xp[0].get<std::string>());
+              if(key.size())
+                rendersettings.xports[key] = xp[1].get<std::string>();
+            }
+        }
+      rendersettings.xrecport.clear();
+      nlohmann::json js_xrecports(js_rendersettings["xrecport"]);
+      if(js_xrecports.is_array())
+        for(auto xrp : js_xrecports) {
+          int p = 0;
+          if(xrp.is_number()) {
+            p = xrp.get<int>();
+          } else if(xrp.is_string()) {
+            p = atoi(xrp.get<std::string>().c_str());
+          }
+          if((p > 0) && (p < (1 << 16)))
+            rendersettings.xrecport.push_back((port_t)p);
+        }
+      rendersettings.headtracking =
+          my_js_value(js_rendersettings, "headtracking", false);
+      rendersettings.headtrackingserial =
+          my_js_value(js_rendersettings, "headtrackingserial", false);
+      rendersettings.headtrackingrotrec =
+          my_js_value(js_rendersettings, "headtrackingrot", true);
+      rendersettings.headtrackingrotsrc =
+          my_js_value(js_rendersettings, "headtrackingrotsrc", true);
+      rendersettings.headtrackingport =
+          (port_t)my_js_value(js_rendersettings, "headtrackingport", 0);
+      backend.set_render_settings(
+          rendersettings,
+          (stage_device_id_t)(my_js_value(js_rendersettings, "stagedevid", 0)));
+      if(!js_rendersettings["extracfg"].is_null())
+        backend.set_extra_config(js_rendersettings["extracfg"].dump());
+      nlohmann::json js_stagedevs(devcfg["roomdev"]);
+      std::map<stage_device_id_t, stage_device_t> newstage;
+      if(js_stagedevs.is_array()) {
+        for(auto dev : js_stagedevs) {
+          auto sdev(get_stage_dev(dev));
+          newstage[sdev.id] = sdev;
+        }
+        backend.set_stage(newstage);
+      }
+    }
+    if(!backend.is_audio_active())
+      backend.start_audiobackend();
+    backend.restart_session_if_needed();
+    refplugcfg = backend.get_all_current_plugincfg_as_json();
+    if(backend.is_session_active()) {
+      report_error(lobby, backend.get_deviceid(), "");
+    }
+  }
 }
 
 /*
