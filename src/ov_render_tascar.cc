@@ -63,7 +63,7 @@ std::vector<std::string> get_jack_input_ports(jack_client_t* jc,
       std::string port = *p;
       // Filter out ports that don't match the desired criteria:
       if(!(ends_with(port, ":sync_out") ||
-           starts_with(port, "render." + deviceid) ||
+           starts_with(port, deviceid + ".main") ||
            starts_with(port, "levelanalysis." + deviceid) ||
            starts_with(port, deviceid + ".metronome") ||
            ends_with(port, "." + deviceid + ":out_1") ||
@@ -548,12 +548,12 @@ void ov_render_tascar_t::add_network_receiver(
                                 std::to_string(c + 1));
             std::string destport;
             if(stagemember.channels[c].name.empty()) {
-              destport = "render." + stage.thisdeviceid + ":" + clientname +
-                         "." + std::to_string(portnamenumber) + ".0";
+              destport = stage.thisdeviceid + ".main:" + clientname + "." +
+                         std::to_string(portnamenumber) + ".0";
               ++portnamenumber;
             } else
-              destport = "render." + stage.thisdeviceid + ":" + clientname +
-                         "." + stagemember.channels[c].name + ".0";
+              destport = stage.thisdeviceid + ".main:" + clientname + "." +
+                         stagemember.channels[c].name + ".0";
             waitports.push_back(srcport);
             session_add_connect(e_session, srcport, destport);
           }
@@ -575,7 +575,7 @@ tsccfg::node_t ov_render_tascar_t::configure_simplefdn(tsccfg::node_t e_scene)
   // create reverb engine:
   tsccfg::node_t e_rvb(tsccfg::node_add_child(e_scene, "reverb"));
   tsccfg::node_set_attribute(e_rvb, "name", "reverb");
-  tsccfg::node_set_attribute(e_rvb, "id", "reverb");
+  // tsccfg::node_set_attribute(e_rvb, "id", "reverb");
   tsccfg::node_set_attribute(e_rvb, "type", "simplefdn");
   tsccfg::node_set_attribute(
       e_rvb, "volumetric",
@@ -602,7 +602,7 @@ void ov_render_tascar_t::create_levelmeter_route(tsccfg::node_t e_session,
                                                  tsccfg::node_t e_mods)
 {
   stage_device_t& thisdev(stage.thisdevice);
-  std::string clientname("levelanalysis." + thisdev.uid);
+  std::string clientname(thisdev.uid + ".levelanalysis");
   tsccfg::node_t mod = tsccfg::node_add_child(e_mods, "route");
   tsccfg::node_set_attribute(mod, "name", clientname);
   tsccfg::node_set_attribute(mod, "channels", std::to_string(get_num_inputs()));
@@ -697,7 +697,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
             if(!stage.rendersettings.distancelaw)
               tsccfg::node_set_attribute(e_snd, "gainmodel", "1");
             // tsccfg::node_set_attribute(e_snd, "delayline", "false");
-            tsccfg::node_set_attribute(e_snd, "id", ch.id);
+            // tsccfg::node_set_attribute(e_snd, "id", ch.id);
             // gain calculation: G_device * G_channel * (this: G_self |
             // (!distancelaw: 0.6 | 1.0) )
             float gain(ch.gain * stagemember.second.gain);
@@ -870,8 +870,8 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
       if(stage.rendersettings.receive &&
          (chn - 1 < (int)(ego_source_names.size())))
         session_add_connect(e_session, stage.thisdeviceid + ".metronome:out.1",
-                            "render." + stage.thisdeviceid + ":" +
-                                ego_source_names[chn - 1]);
+                            stage.thisdeviceid +
+                                ".main:" + ego_source_names[chn - 1]);
       if(!stage.thisdevice.nozita) {
         waitports.push_back(stage.thisdeviceid + "_sender:in_" +
                             std::to_string(chn));
@@ -891,9 +891,9 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
             " 127.0.0.1 " +
             std::to_string(get_zitaport_(stage.thisstagedeviceid, portoffset)));
     // tsccfg::node_set_attribute(e_sys, "onunload", "killall ovzita-j2n");
-    session_add_connect(e_session, "render." + stage.thisdeviceid + ":main_l",
+    session_add_connect(e_session, stage.thisdeviceid + ".main:main_l",
                         stage.thisdeviceid + "_sender:in_1");
-    session_add_connect(e_session, "render." + stage.thisdeviceid + ":main_r",
+    session_add_connect(e_session, stage.thisdeviceid + ".main:main_r",
                         stage.thisdeviceid + "_sender:in_2");
   }
   session_add_waitforjackports(e_mods, stage.thisdeviceid + ".waitforports",
@@ -1184,7 +1184,7 @@ void ov_render_tascar_t::start_session()
                              stage.rendersettings.lmeterfw);
   // create a virtual acoustics "scene":
   tsccfg::node_t e_scene(tsccfg::node_add_child(e_session, "scene"));
-  tsccfg::node_set_attribute(e_scene, "name", stage.thisdeviceid);
+  tsccfg::node_set_attribute(e_scene, "name", "main");
   // modules section:
   tsccfg::node_t e_mods(tsccfg::node_add_child(e_session, "modules"));
   // create a route for level analysis:
@@ -1259,7 +1259,7 @@ void ov_render_tascar_t::start_session()
           if(stage.rendersettings.rectype == "omni")
             srcport = "main.0";
           session_add_connect(e_session,
-                              "render." + stage.thisdeviceid + ":" + srcport,
+                              stage.thisdeviceid + ".main:" + srcport,
                               stage.rendersettings.outputport1);
         }
         if(!stage.rendersettings.outputport2.empty()) {
@@ -1269,7 +1269,7 @@ void ov_render_tascar_t::start_session()
           if(stage.rendersettings.rectype == "omni")
             srcport = "main.0";
           session_add_connect(e_session,
-                              "render." + stage.thisdeviceid + ":" + srcport,
+                              stage.thisdeviceid + ".main:" + srcport,
                               stage.rendersettings.outputport2);
         }
       }
@@ -1291,7 +1291,7 @@ void ov_render_tascar_t::start_session()
             if(!stage.rendersettings.distancelaw)
               tsccfg::node_set_attribute(e_snd, "gainmodel", "1");
             // tsccfg::node_set_attribute(e_snd, "delayline", "false");
-            tsccfg::node_set_attribute(e_snd, "id", ch.id);
+            // tsccfg::node_set_attribute(e_snd, "id", ch.id);
             // gain calculation: G_device * G_channel * (this: G_self |
             // (!distancelaw: 0.6 | 1.0) )
             // connect self-monitoring source ports:
