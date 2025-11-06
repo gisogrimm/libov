@@ -204,9 +204,7 @@ std::string ov_render_tascar_t::get_objmixcfg_as_json()
   }
   cfg += "]";
   try {
-    std::string pattern = "/";
-    pattern += get_deviceid();
-    pattern += "/reverb";
+    std::string pattern = "/main/reverb";
     auto rev = tascar->find_audio_ports(std::vector<std::string>(1, pattern));
     if(rev.size()) {
       float g = rev[0]->get_gain();
@@ -219,9 +217,7 @@ std::string ov_render_tascar_t::get_objmixcfg_as_json()
     std::cerr << e.what() << std::endl;
   }
   try {
-    std::string pattern = "/";
-    pattern += get_deviceid();
-    pattern += "/main";
+    std::string pattern = "/main/main";
     auto rev = tascar->find_audio_ports(std::vector<std::string>(1, pattern));
     if(rev.size()) {
       float g = rev[0]->get_gain();
@@ -575,7 +571,7 @@ tsccfg::node_t ov_render_tascar_t::configure_simplefdn(tsccfg::node_t e_scene)
   // create reverb engine:
   tsccfg::node_t e_rvb(tsccfg::node_add_child(e_scene, "reverb"));
   tsccfg::node_set_attribute(e_rvb, "name", "reverb");
-  // tsccfg::node_set_attribute(e_rvb, "id", "reverb");
+  tsccfg::node_set_attribute(e_rvb, "id", "reverb");
   tsccfg::node_set_attribute(e_rvb, "type", "simplefdn");
   tsccfg::node_set_attribute(
       e_rvb, "volumetric",
@@ -697,7 +693,7 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
             if(!stage.rendersettings.distancelaw)
               tsccfg::node_set_attribute(e_snd, "gainmodel", "1");
             // tsccfg::node_set_attribute(e_snd, "delayline", "false");
-            // tsccfg::node_set_attribute(e_snd, "id", ch.id);
+            tsccfg::node_set_attribute(e_snd, "id", ch.id);
             // gain calculation: G_device * G_channel * (this: G_self |
             // (!distancelaw: 0.6 | 1.0) )
             float gain(ch.gain * stagemember.second.gain);
@@ -1291,7 +1287,7 @@ void ov_render_tascar_t::start_session()
             if(!stage.rendersettings.distancelaw)
               tsccfg::node_set_attribute(e_snd, "gainmodel", "1");
             // tsccfg::node_set_attribute(e_snd, "delayline", "false");
-            // tsccfg::node_set_attribute(e_snd, "id", ch.id);
+            tsccfg::node_set_attribute(e_snd, "id", ch.id);
             // gain calculation: G_device * G_channel * (this: G_self |
             // (!distancelaw: 0.6 | 1.0) )
             // connect self-monitoring source ports:
