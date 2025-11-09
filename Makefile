@@ -76,7 +76,8 @@ TASCARMODULS = system touchosc waitforjackport route jackrec sleep	\
 
 ifeq ($(UNAME_S),Linux)
 TASCAROBJECTS += alsamidicc.o
-TASCARMODULS += ltcgen midictl midicc2osc mididispatch serialheadtracker
+TASCARMODULS += ltcgen midictl mcuctl midicc2osc mididispatch	\
+serialheadtracker
 endif
 ifeq ($(UNAME_S),Darwin)
 TASCARMODULS += ltcgen serialheadtracker
