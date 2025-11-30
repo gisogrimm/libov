@@ -115,7 +115,7 @@ nlohmann::json json_merge(const nlohmann::json& lhs, const nlohmann::json& rhs)
   for(auto it = rhs.cbegin(); it != rhs.cend(); ++it) {
     const auto& key = it.key();
     if(it->is_object()) {
-      if(lhs.contains(key)) {
+      if(!j[key].is_null()) {
         // object already exists (must merge)
         j[key] = json_merge(lhs[key], rhs[key]);
       } else {
