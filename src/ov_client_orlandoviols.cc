@@ -27,6 +27,7 @@
 #include <fstream>
 #include <functional>
 #include <sstream>
+#include <stdlib.h>
 #include <string.h>
 #ifndef WIN32
 #include <sys/utsname.h>
@@ -74,8 +75,7 @@ std::string ov_client_orlandoviols_t::url_requestcnt()
 {
   std::lock_guard<std::mutex> lock(curlmtx);
   ++requestcnt;
-  return "&apreq=" +
-         std::to_string(std::hash<long int>{}(requestcnt + random()));
+  return "&apreq=" + std::to_string(std::hash<int>{}(requestcnt + rand()));
 }
 
 ov_client_orlandoviols_t::ov_client_orlandoviols_t(ov_render_base_t& backend,

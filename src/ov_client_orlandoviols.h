@@ -64,7 +64,7 @@ private:
   std::string owner;
   std::string refplugcfg;
   std::mutex curlmtx;
-  long int requestcnt = 0;
+  int requestcnt = 0;
   // system information:
   std::string uname_sysname;
   std::string uname_release;
