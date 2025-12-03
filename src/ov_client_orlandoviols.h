@@ -54,6 +54,7 @@ private:
   bool report_error(std::string url, const std::string& device,
                     const std::string& msg);
   void parse_config();
+  std::string url_requestcnt();
 
   bool runservice;
   std::thread servicethread;
@@ -63,6 +64,7 @@ private:
   std::string owner;
   std::string refplugcfg;
   std::mutex curlmtx;
+  long int requestcnt = 0;
   // system information:
   std::string uname_sysname;
   std::string uname_release;
@@ -71,6 +73,7 @@ private:
   nlohmann::json devcfg;
   // start in mixer mode:
   bool standalone_mixer = false;
+  std::string lasterrmsg = "xxx";
 
 #ifdef WIN32
   WSADATA WSAData; // Structure to store details of the Windows Sockets

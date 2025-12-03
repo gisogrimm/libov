@@ -25,6 +25,7 @@
 #include "udpsocket.h"
 #include <curl/curl.h>
 #include <fstream>
+#include <functional>
 #include <sstream>
 #include <string.h>
 #ifndef WIN32
@@ -68,6 +69,14 @@ namespace webCURL {
   }
 
 } // namespace webCURL
+
+std::string ov_client_orlandoviols_t::url_requestcnt()
+{
+  std::lock_guard<std::mutex> lock(curlmtx);
+  ++requestcnt;
+  return "&apreq=" +
+         std::to_string(std::hash<long int>{}(requestcnt + random()));
+}
 
 ov_client_orlandoviols_t::ov_client_orlandoviols_t(ov_render_base_t& backend,
                                                    const std::string& lobby)
@@ -184,13 +193,16 @@ bool ov_client_orlandoviols_t::report_error(std::string url,
 #ifdef SHOWDEBUG
   std::cout << "ov_client_orlandoviols_t::report_error " << msg << std::endl;
 #endif
+  if(msg == lasterrmsg)
+    return true;
   std::string retv;
   struct webCURL::MemoryStruct chunk;
   chunk.memory =
       (char*)malloc(1); /* will be grown as needed by the realloc above */
   chunk.size = 0;       /* no data at this point */
-  url += "?ovclientmsg=" + device;
+  url += "?ovclientmsg=" + device + url_requestcnt();
   std::lock_guard<std::mutex> lock(curlmtx);
+  // DEBUG(url);
   curl_easy_reset(curl);
   curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
   curl_easy_setopt(curl, CURLOPT_USERPWD, "device:device");
@@ -209,6 +221,7 @@ bool ov_client_orlandoviols_t::report_error(std::string url,
     return false;
   }
   free(chunk.memory);
+  lasterrmsg = msg;
   return true;
 }
 
@@ -244,14 +257,16 @@ bool ov_client_orlandoviols_t::download_file(const std::string& url,
     }
   }
   TASCAR::console_log("Could not open cashed file, downloading from " + url);
+  std::string requrl = url + url_requestcnt();
   CURLcode res;
   struct webCURL::MemoryStruct chunk;
   chunk.memory =
       (char*)malloc(1); /* will be grown as needed by the realloc above */
   chunk.size = 0;       /* no data at this point */
   std::lock_guard<std::mutex> lock(curlmtx);
+  // DEBUG(requrl);
   curl_easy_reset(curl);
-  curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+  curl_easy_setopt(curl, CURLOPT_URL, requrl.c_str());
   if(use_pw)
     curl_easy_setopt(curl, CURLOPT_USERPWD, "device:device");
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, webCURL::WriteMemoryCallback);
@@ -351,8 +366,10 @@ std::string ov_client_orlandoviols_t::device_update(std::string url,
   url += "?ovclient2=" + device + "&hash=" + hash;
   if(hostname.size() > 0)
     url += "&host=" + hostname;
+  url += url_requestcnt();
   {
     std::lock_guard<std::mutex> lock(curlmtx);
+    // DEBUG(url);
     curl_easy_reset(curl);
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_USERPWD, "device:device");
@@ -448,9 +465,12 @@ void ov_client_orlandoviols_t::upload_plugin_settings()
         chunk.memory =
             (char*)malloc(1); /* will be grown as needed by the realloc above */
         chunk.size = 0;       /* no data at this point */
-        std::string url = lobby + "?pluginscfg=" + backend.get_deviceid();
+        std::string url =
+            lobby + "?pluginscfg=" + backend.get_deviceid() + url_requestcnt();
+
         {
           std::lock_guard<std::mutex> lock(curlmtx);
+          // DEBUG(url);
           curl_easy_reset(curl);
           curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
           curl_easy_setopt(curl, CURLOPT_USERPWD, "device:device");
@@ -504,9 +524,11 @@ void ov_client_orlandoviols_t::upload_objmix()
       chunk.memory =
           (char*)malloc(1); /* will be grown as needed by the realloc above */
       chunk.size = 0;       /* no data at this point */
-      std::string url = lobby + "?objmixcfg=" + backend.get_deviceid();
+      std::string url =
+          lobby + "?objmixcfg=" + backend.get_deviceid() + url_requestcnt();
       {
         std::lock_guard<std::mutex> lock(curlmtx);
+        // DEBUG(url);
         curl_easy_reset(curl);
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_USERPWD, "device:device");
@@ -654,7 +676,13 @@ void ov_client_orlandoviols_t::service()
         report_error(lobby, backend.get_deviceid(), e.what());
         DEBUG(stagecfg);
       }
-      while((tictoc.toc() < gracetime) && runservice && nocancelwait) {
+      auto lgracetime = gracetime;
+      auto rnd = random();
+      if(rnd % 2 == 0)
+        lgracetime += 0.6;
+      if(rnd % 3 == 0)
+        lgracetime += 0.9;
+      while((tictoc.toc() < lgracetime) && runservice && nocancelwait) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
         // t += 0.001;
       }
