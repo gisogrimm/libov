@@ -677,7 +677,7 @@ void ov_client_orlandoviols_t::service()
         DEBUG(stagecfg);
       }
       auto lgracetime = gracetime;
-      auto rnd = random();
+      auto rnd = rand();
       if(rnd % 2 == 0)
         lgracetime += 0.6;
       if(rnd % 3 == 0)
