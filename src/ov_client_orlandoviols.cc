@@ -257,7 +257,6 @@ bool ov_client_orlandoviols_t::download_file(const std::string& url,
     }
   }
   TASCAR::console_log("Could not open cashed file, downloading from " + url);
-  std::string requrl = url + url_requestcnt();
   CURLcode res;
   struct webCURL::MemoryStruct chunk;
   chunk.memory =
@@ -266,7 +265,7 @@ bool ov_client_orlandoviols_t::download_file(const std::string& url,
   std::lock_guard<std::mutex> lock(curlmtx);
   // DEBUG(requrl);
   curl_easy_reset(curl);
-  curl_easy_setopt(curl, CURLOPT_URL, requrl.c_str());
+  curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
   if(use_pw)
     curl_easy_setopt(curl, CURLOPT_USERPWD, "device:device");
   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, webCURL::WriteMemoryCallback);
