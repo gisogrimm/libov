@@ -11,7 +11,7 @@
  *
  * ovbox is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHATABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License, version 3 for more details.
  *
  * You should have received a copy of the GNU General Public License,
@@ -28,9 +28,9 @@
 std::string to_string(const ping_stat_t& ps);
 std::string to_string(const message_stat_t& ms);
 
-class ping_stat_collecor_t {
+class ping_stat_collector_t {
 public:
-  ping_stat_collecor_t(size_t N = 2048);
+  ping_stat_collector_t(size_t N = 2048);
   void add_value(float pt);
   // std::vector<double> get_min_med_99_mean_lost() const;
   void update_ping_stat(ping_stat_t& ps) const;
@@ -218,12 +218,12 @@ private:
   // msgbuf_t* msgbuffers;
   message_sorter_t sorter;
   // std::map<stage_device_id_t, message_stat_t> stats;
-  std::map<stage_device_id_t, ping_stat_collecor_t> ping_stat_collecors_p2p;
-  std::map<stage_device_id_t, ping_stat_collecor_t> ping_stat_collecors_srv;
-  std::map<stage_device_id_t, ping_stat_collecor_t> ping_stat_collecors_local;
+  std::map<stage_device_id_t, ping_stat_collector_t> ping_stat_collecors_p2p;
+  std::map<stage_device_id_t, ping_stat_collector_t> ping_stat_collecors_srv;
+  std::map<stage_device_id_t, ping_stat_collector_t> ping_stat_collecors_local;
   std::map<stage_device_id_t, client_stats_t> client_stats_announce;
 
-  ovtcpsocket_t* tcp_tunnel = NULL;
+  ovtcpsocket_t* tcp_tunnel = nullptr;
 
   msgbuf_t decrypted_msg;
 

@@ -10,7 +10,7 @@
  *
  * ovbox is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHATABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License, version 3 for more details.
  *
  * You should have received a copy of the GNU General Public License,
@@ -51,18 +51,22 @@ std::vector<snddevname_t> list_sound_devices()
   while(*n != NULL) {
     name = snd_device_name_get_hint(*n, "NAME");
     desc = snd_device_name_get_hint(*n, "DESC");
-    if(strncmp("hw:", name, 3) == 0) {
-      snddevname_t dname;
-      dname.dev = name;
-      dname.desc = desc;
-      if(dname.desc.find("\n") != std::string::npos)
-        dname.desc.erase(dname.desc.find("\n"));
-      retv.push_back(dname);
+    if(name && desc) {
+      if(strncmp("hw:", name, 3) == 0) {
+        snddevname_t dname;
+        dname.dev = std::string(name);
+        dname.desc = std::string(desc);
+        if(dname.desc.find("\n") != std::string::npos)
+          dname.desc.erase(dname.desc.find("\n"));
+        retv.push_back(dname);
+      }
     }
-    if(name && strcmp("null", name))
+    if(name)
       free(name);
-    if(desc && strcmp("null", desc))
+    name = nullptr;
+    if(desc)
       free(desc);
+    desc = nullptr;
     n++;
   }
   // Free hint buffer too
@@ -93,9 +97,9 @@ std::vector<snddevname_t> list_sound_devices()
 #ifdef WIN32
   auto err = Pa_Initialize();
   if(err == paNoError) {
-    std::map<std::string,std::vector<std::string>> devices_duplex;
-    std::map<std::string,std::vector<std::string>> devices_input;
-    std::map<std::string,std::vector<std::string>> devices_output;
+    std::map<std::string, std::vector<std::string>> devices_duplex;
+    std::map<std::string, std::vector<std::string>> devices_input;
+    std::map<std::string, std::vector<std::string>> devices_output;
     int numDevices = Pa_GetDeviceCount();
     if(numDevices >= 0) {
       const PaDeviceInfo* deviceInfo;
@@ -103,37 +107,42 @@ std::vector<snddevname_t> list_sound_devices()
         deviceInfo = Pa_GetDeviceInfo(i);
         if(deviceInfo->maxInputChannels + deviceInfo->maxOutputChannels > 0) {
           const PaHostApiInfo* apiinfo = Pa_GetHostApiInfo(deviceInfo->hostApi);
-          if(apiinfo){
-          std::string devname = deviceInfo->name;
-	  std::string sapiinfo = apiinfo->name;
-	  if( (deviceInfo->maxInputChannels>0) && (deviceInfo->maxOutputChannels>0))
-	    devices_duplex[sapiinfo].push_back(devname);
-	  if( (deviceInfo->maxInputChannels>0) && (deviceInfo->maxOutputChannels==0))
-	    devices_input[sapiinfo].push_back( devname);
-	  if( (deviceInfo->maxInputChannels==0) && (deviceInfo->maxOutputChannels>0))
-	    devices_output[sapiinfo].push_back(devname);
-	  }
-	  //devname = std::string(apiinfo->name) + ": " + devname;
-          //devname += " ";
-          //if(deviceInfo->maxInputChannels > 0)
+          if(apiinfo) {
+            std::string devname = deviceInfo->name;
+            std::string sapiinfo = apiinfo->name;
+            if((deviceInfo->maxInputChannels > 0) &&
+               (deviceInfo->maxOutputChannels > 0))
+              devices_duplex[sapiinfo].push_back(devname);
+            if((deviceInfo->maxInputChannels > 0) &&
+               (deviceInfo->maxOutputChannels == 0))
+              devices_input[sapiinfo].push_back(devname);
+            if((deviceInfo->maxInputChannels == 0) &&
+               (deviceInfo->maxOutputChannels > 0))
+              devices_output[sapiinfo].push_back(devname);
+          }
+          // devname = std::string(apiinfo->name) + ": " + devname;
+          // devname += " ";
+          // if(deviceInfo->maxInputChannels > 0)
           //  devname +=
           //      std::to_string((int)(deviceInfo->maxInputChannels)) + "i";
-          //if(deviceInfo->maxOutputChannels > 0)
+          // if(deviceInfo->maxOutputChannels > 0)
           //  devname +=
           //      std::to_string((int)(deviceInfo->maxOutputChannels)) + "o";
-          //retv.push_back({std::to_string(i), devname});
+          // retv.push_back({std::to_string(i), devname});
         }
       }
     }
     Pa_Terminate();
-    for(auto devlist : devices_duplex )
-      for(auto dev : devlist.second )
-	retv.push_back({"-d \""+devlist.first+"::"+dev+"\"",devlist.first+": "+dev});
-    for(auto devlist : devices_input )
-      for(auto devi : devlist.second )
-	for(auto devo : devices_output[devlist.first])
-	  retv.push_back({"-C \""+devlist.first+"::"+devi+"\" -P \""+devlist.first+"::"+devo+"\"",devlist.first+": "+devi + "/"+devo});
-    
+    for(auto devlist : devices_duplex)
+      for(auto dev : devlist.second)
+        retv.push_back({"-d \"" + devlist.first + "::" + dev + "\"",
+                        devlist.first + ": " + dev});
+    for(auto devlist : devices_input)
+      for(auto devi : devlist.second)
+        for(auto devo : devices_output[devlist.first])
+          retv.push_back({"-C \"" + devlist.first + "::" + devi + "\" -P \"" +
+                              devlist.first + "::" + devo + "\"",
+                          devlist.first + ": " + devi + "/" + devo});
   }
 #endif
   return retv;

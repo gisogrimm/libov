@@ -11,7 +11,7 @@
  *
  * ovbox is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHATABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License, version 3 for more details.
  *
  * You should have received a copy of the GNU General Public License,
@@ -126,6 +126,7 @@ ovboxclient_t::ovboxclient_t(std::string desthost, port_t destport,
     }
     catch(...) {
       delete tcp_tunnel;
+      tcp_tunnel = nullptr;
       throw;
     }
   }
@@ -153,6 +154,7 @@ ovboxclient_t::~ovboxclient_t()
   }
   if(tcp_tunnel) {
     delete tcp_tunnel;
+    tcp_tunnel = nullptr;
   }
 }
 
@@ -176,7 +178,7 @@ void ovboxclient_t::getbitrate(double& txrate, double& rxrate)
   std::chrono::duration<double> time_span(
       std::chrono::duration_cast<std::chrono::duration<double>>(t2 -
                                                                 t_bitrate));
-  double sc(8.0 / std::max(1e-6, time_span.count()));
+  double sc(8.0 / std::max(1e-3, time_span.count()));
   txrate = sc * ((double)(remote_server.tx_bytes) - (double)last_tx);
   rxrate = sc * ((double)(remote_server.rx_bytes) - (double)last_rx);
   t_bitrate = t2;
@@ -728,12 +730,12 @@ message_stat_t message_sorter_t::get_stat(stage_device_id_t id)
   return stat[id];
 }
 
-ping_stat_collecor_t::ping_stat_collecor_t(size_t N)
+ping_stat_collector_t::ping_stat_collector_t(size_t N)
     : sent(0), received(0), data(N, 0.0), idx(0), filled(0), sum(0.0)
 {
 }
 
-void ping_stat_collecor_t::add_value(float pt)
+void ping_stat_collector_t::add_value(float pt)
 {
   ++received;
   sum -= data[idx];
@@ -746,7 +748,7 @@ void ping_stat_collecor_t::add_value(float pt)
     ++filled;
 }
 
-void ping_stat_collecor_t::update_ping_stat(ping_stat_t& ps) const
+void ping_stat_collector_t::update_ping_stat(ping_stat_t& ps) const
 {
   ps.t_min = -1.0;
   ps.t_med = -1.0;
@@ -782,7 +784,8 @@ void ping_stat_collecor_t::update_ping_stat(ping_stat_t& ps) const
 std::string to_string(const ping_stat_t& ps)
 {
   char ctmp[1024];
-  sprintf(ctmp, "min=%1.2fms median=%1.2fms p99=%1.2fms mean=%1.2fms received=",
+  ctmp[1023] = 0;
+  snprintf(ctmp, 1023, "min=%1.2fms median=%1.2fms p99=%1.2fms mean=%1.2fms received=",
           ps.t_min, ps.t_med, ps.t_p99, ps.t_mean);
   return ctmp + std::to_string(ps.received) +
          " lost=" + std::to_string(ps.lost);
@@ -791,7 +794,8 @@ std::string to_string(const ping_stat_t& ps)
 std::string to_string(const message_stat_t& ms)
 {
   char ctmp[1024];
-  sprintf(ctmp, " (%1.2f%%) seqerr=",
+  ctmp[1023] = 0;
+  snprintf(ctmp, 1023, " (%1.2f%%) seqerr=",
           100.0 * (double)ms.lost /
               (double)(std::max((size_t)1, ms.received + ms.lost)));
   return "received=" + std::to_string(ms.received) +
