@@ -42,7 +42,10 @@ void set_thread_prio(unsigned int prio)
     struct sched_param sp;
     memset(&sp, 0, sizeof(sp));
     sp.sched_priority = prio;
-    pthread_setschedparam(pthread_self(), SCHED_FIFO, &sp);
+    if(pthread_setschedparam(pthread_self(), SCHED_FIFO, &sp) != 0) {
+      std::cerr << "Warning: unable to set thread priority to " << prio
+                << ".\n";
+    }
   }
 }
 
@@ -99,6 +102,11 @@ size_t encryptmsg(char* destmsg, size_t maxlen, const char* srcmsg,
 size_t decryptmsg(char* destmsg, const char* srcmsg, size_t msglen,
                   const uint8_t* pubkey, const uint8_t* seckey)
 {
+  if(msglen <= HEADERLEN) {
+    // error, return original message:
+    memcpy(destmsg, srcmsg, msglen);
+    return msglen;
+  }
   // copy the header part of the data:
   memcpy(destmsg, srcmsg, HEADERLEN);
   // decrypt the rest of the message:

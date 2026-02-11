@@ -335,7 +335,7 @@ TEST(sorter, processJumpFirst)
 
 TEST(pingstat, get)
 {
-  ping_stat_collecor_t ps(8);
+  ping_stat_collector_t ps(8);
   ping_stat_t stat;
   EXPECT_EQ(0u, stat.received);
   EXPECT_EQ(0u, stat.lost);
