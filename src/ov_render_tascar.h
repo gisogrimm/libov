@@ -214,6 +214,12 @@ private:
   std::string tuner_tuning = "equal";
   float tuner_f0 = 440.0f;
   bool tuner_active = false;
+  // spkcalib vars:
+  bool spkcalib_use = false;
+  int spkcalib_firlen = 1025;
+  std::string spkcalib_vfreq;
+  std::string spkcalib_vgainl;
+  std::string spkcalib_vgainr;
 };
 
 #endif

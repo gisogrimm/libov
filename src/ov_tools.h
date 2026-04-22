@@ -39,8 +39,9 @@ T my_js_value(const nlohmann::json& obj, const std::string& key,
               const T& defval)
 {
   try {
-    if(obj.is_object())
+    if(obj.is_object()) {
       return obj.value(key, defval);
+    }
     return defval;
   }
   catch(const std::exception& e) {

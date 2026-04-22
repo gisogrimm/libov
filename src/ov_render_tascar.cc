@@ -76,7 +76,8 @@ std::vector<std::string> get_jack_input_ports(jack_client_t* jc,
       }
     }
     // Free the memory allocated by jack_get_ports:
-    jack_free(pp_ports);
+    if(pp_ports)
+      jack_free(pp_ports);
   }
   return ports;
 }
@@ -171,7 +172,8 @@ std::string ov_render_tascar_t::get_all_current_plugincfg_as_json()
   for(size_t ch = 0; ch < get_num_inputs(); ++ch) {
     currenteffectplugincfg += get_current_plugincfg_as_json(ch) + ",";
   }
-  if(currenteffectplugincfg[currenteffectplugincfg.size() - 1] == ',')
+  if(!currenteffectplugincfg.empty() &&
+     (currenteffectplugincfg[currenteffectplugincfg.size() - 1] == ','))
     currenteffectplugincfg.erase(currenteffectplugincfg.size() - 1);
   currenteffectplugincfg += "]";
   return currenteffectplugincfg;
@@ -248,7 +250,7 @@ std::string ov_render_tascar_t::get_current_plugincfg_as_json(size_t channel)
     r += tascar->get_vars_as_json(prefix, false) + ",";
     ++pcnt;
   }
-  if(r[r.size() - 1] == ',')
+  if(!r.empty() && (r[r.size() - 1] == ','))
     r.erase(r.size() - 1);
   r += "}";
   return r;
@@ -257,7 +259,7 @@ std::string ov_render_tascar_t::get_current_plugincfg_as_json(size_t channel)
 std::string ov_render_tascar_t::get_level_stat_as_json()
 {
   level_analysis_peak.clear();
-  level_analysis_peak.clear();
+  level_analysis_ms.clear();
   if(tascar)
     tascar->dispatch_data_message("/levelanalysis*/trigger",
                                   msg_level_analysis_trigger);
@@ -993,6 +995,21 @@ void ov_render_tascar_t::create_raw_dev(tsccfg::node_t e_session)
   tsccfg::node_t e_mods(tsccfg::node_add_child(e_session, "modules"));
   if(stage.rendersettings.receive) {
     tsccfg::node_t e_route = tsccfg::node_add_child(e_mods, "route");
+    if(spkcalib_use && (spkcalib_firlen > 0)) {
+      auto e_plug = tsccfg::node_add_child(e_route, "plugins");
+      auto e_spkcal = tsccfg::node_add_child(e_plug, "spkcalib");
+      auto e_layout = tsccfg::node_add_child(e_spkcal, "layout");
+      auto e_spkl = tsccfg::node_add_child(e_layout, "speaker");
+      auto e_spkr = tsccfg::node_add_child(e_layout, "speaker");
+      tsccfg::node_set_attribute(e_spkl, "eqfirlen",
+                                 std::to_string(spkcalib_firlen));
+      tsccfg::node_set_attribute(e_spkr, "eqfirlen",
+                                 std::to_string(spkcalib_firlen));
+      tsccfg::node_set_attribute(e_spkl, "eqfreq", spkcalib_vfreq);
+      tsccfg::node_set_attribute(e_spkr, "eqfreq", spkcalib_vfreq);
+      tsccfg::node_set_attribute(e_spkl, "eqgain", spkcalib_vgainl);
+      tsccfg::node_set_attribute(e_spkr, "eqgain", spkcalib_vgainr);
+    }
     std::string clname("main." + stage.thisdeviceid);
     tsccfg::node_set_attribute(e_route, "name", clname);
     tsccfg::node_set_attribute(e_route, "channels", "2");
@@ -1220,6 +1237,22 @@ void ov_render_tascar_t::start_session()
     if(stage.rendersettings.receive) {
       // add a main receiver for which the scene is rendered:
       e_rec = tsccfg::node_add_child(e_scene, "receiver");
+      if(spkcalib_use && (spkcalib_firlen > 0)) {
+        auto e_plug = tsccfg::node_add_child(e_rec, "plugins");
+        auto e_spkcal = tsccfg::node_add_child(e_plug, "spkcalib");
+        auto e_layout = tsccfg::node_add_child(e_spkcal, "layout");
+        auto e_spkl = tsccfg::node_add_child(e_layout, "speaker");
+        auto e_spkr = tsccfg::node_add_child(e_layout, "speaker");
+        tsccfg::node_set_attribute(e_spkl, "eqfirlen",
+                                   std::to_string(spkcalib_firlen));
+        tsccfg::node_set_attribute(e_spkr, "eqfirlen",
+                                   std::to_string(spkcalib_firlen));
+        tsccfg::node_set_attribute(e_spkl, "eqfreq", spkcalib_vfreq);
+        tsccfg::node_set_attribute(e_spkr, "eqfreq", spkcalib_vfreq);
+        tsccfg::node_set_attribute(e_spkl, "eqgain", spkcalib_vgainl);
+        tsccfg::node_set_attribute(e_spkr, "eqgain", spkcalib_vgainr);
+      }
+      //
       // receiver can be "hrtf" or "ortf" (more receivers are possible
       // in TASCAR, but only these two can produce audio which is
       // headphone-compatible):
@@ -1938,6 +1971,19 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
         UPDATEVAR_RESTART("tuner", tuner_tuning);
         UPDATEVAR_RESTART("tuner", tuner_f0);
         UPDATEVAR_RESTART("tuner", tuner_active);
+      }
+      if(xcfg["spkcalib"].is_object()) {
+        UPDATEVAR_RESTART("spkcalib", spkcalib_use);
+        UPDATEVAR_RESTART("spkcalib", spkcalib_firlen);
+        if(xcfg["spkcalib"]["spkcalib_vfreq"].is_string()) {
+          UPDATEVAR_RESTART("spkcalib", spkcalib_vfreq);
+        }
+        if(xcfg["spkcalib"]["spkcalib_vgainl"].is_string()) {
+          UPDATEVAR_RESTART("spkcalib", spkcalib_vgainl);
+        }
+        if(xcfg["spkcalib"]["spkcalib_vgainr"].is_string()) {
+          UPDATEVAR_RESTART("spkcalib", spkcalib_vgainr);
+        }
       }
       if(xcfg["network"].is_object()) {
         float new_deadline =
