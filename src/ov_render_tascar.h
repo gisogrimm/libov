@@ -75,6 +75,7 @@ public:
                          std::map<std::string, std::vector<float>>&);
   void set_zita_path(const std::string& path);
   void set_allow_systemmods(bool);
+  void add_spkcalib(tsccfg::node_t node);
   void upload_plugin_settings();
   void upload_session_gains();
   void upload_objmix();

@@ -986,6 +986,29 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
   }
 }
 
+void ov_render_tascar_t::add_spkcalib(tsccfg::node_t e_route)
+{
+  if(stage.rendersettings.rectype == "itu51")
+    return;
+  if(spkcalib_use && (spkcalib_firlen > 0)) {
+    auto e_plug = tsccfg::node_add_child(e_route, "plugins");
+    auto e_spkcal = tsccfg::node_add_child(e_plug, "spkcalib");
+    auto e_layout = tsccfg::node_add_child(e_spkcal, "layout");
+    auto e_spkl = tsccfg::node_add_child(e_layout, "speaker");
+    tsccfg::node_set_attribute(e_spkl, "eqfirlen",
+                               std::to_string(spkcalib_firlen));
+    tsccfg::node_set_attribute(e_spkl, "eqfreq", spkcalib_vfreq);
+    tsccfg::node_set_attribute(e_spkl, "eqgain", spkcalib_vgainl);
+    if(!(stage.rendersettings.rectype == "omni")) {
+      auto e_spkr = tsccfg::node_add_child(e_layout, "speaker");
+      tsccfg::node_set_attribute(e_spkr, "eqfirlen",
+                                 std::to_string(spkcalib_firlen));
+      tsccfg::node_set_attribute(e_spkr, "eqfreq", spkcalib_vfreq);
+      tsccfg::node_set_attribute(e_spkr, "eqgain", spkcalib_vgainr);
+    }
+  }
+}
+
 void ov_render_tascar_t::create_raw_dev(tsccfg::node_t e_session)
 {
   stage_device_t& thisdev(stage.stage[stage.thisstagedeviceid]);
@@ -995,21 +1018,8 @@ void ov_render_tascar_t::create_raw_dev(tsccfg::node_t e_session)
   tsccfg::node_t e_mods(tsccfg::node_add_child(e_session, "modules"));
   if(stage.rendersettings.receive) {
     tsccfg::node_t e_route = tsccfg::node_add_child(e_mods, "route");
-    if(spkcalib_use && (spkcalib_firlen > 0)) {
-      auto e_plug = tsccfg::node_add_child(e_route, "plugins");
-      auto e_spkcal = tsccfg::node_add_child(e_plug, "spkcalib");
-      auto e_layout = tsccfg::node_add_child(e_spkcal, "layout");
-      auto e_spkl = tsccfg::node_add_child(e_layout, "speaker");
-      auto e_spkr = tsccfg::node_add_child(e_layout, "speaker");
-      tsccfg::node_set_attribute(e_spkl, "eqfirlen",
-                                 std::to_string(spkcalib_firlen));
-      tsccfg::node_set_attribute(e_spkr, "eqfirlen",
-                                 std::to_string(spkcalib_firlen));
-      tsccfg::node_set_attribute(e_spkl, "eqfreq", spkcalib_vfreq);
-      tsccfg::node_set_attribute(e_spkr, "eqfreq", spkcalib_vfreq);
-      tsccfg::node_set_attribute(e_spkl, "eqgain", spkcalib_vgainl);
-      tsccfg::node_set_attribute(e_spkr, "eqgain", spkcalib_vgainr);
-    }
+    if(spkcalib_use && (spkcalib_firlen > 0))
+      add_spkcalib(e_route);
     std::string clname("main." + stage.thisdeviceid);
     tsccfg::node_set_attribute(e_route, "name", clname);
     tsccfg::node_set_attribute(e_route, "channels", "2");
@@ -1237,22 +1247,8 @@ void ov_render_tascar_t::start_session()
     if(stage.rendersettings.receive) {
       // add a main receiver for which the scene is rendered:
       e_rec = tsccfg::node_add_child(e_scene, "receiver");
-      if(spkcalib_use && (spkcalib_firlen > 0)) {
-        auto e_plug = tsccfg::node_add_child(e_rec, "plugins");
-        auto e_spkcal = tsccfg::node_add_child(e_plug, "spkcalib");
-        auto e_layout = tsccfg::node_add_child(e_spkcal, "layout");
-        auto e_spkl = tsccfg::node_add_child(e_layout, "speaker");
-        auto e_spkr = tsccfg::node_add_child(e_layout, "speaker");
-        tsccfg::node_set_attribute(e_spkl, "eqfirlen",
-                                   std::to_string(spkcalib_firlen));
-        tsccfg::node_set_attribute(e_spkr, "eqfirlen",
-                                   std::to_string(spkcalib_firlen));
-        tsccfg::node_set_attribute(e_spkl, "eqfreq", spkcalib_vfreq);
-        tsccfg::node_set_attribute(e_spkr, "eqfreq", spkcalib_vfreq);
-        tsccfg::node_set_attribute(e_spkl, "eqgain", spkcalib_vgainl);
-        tsccfg::node_set_attribute(e_spkr, "eqgain", spkcalib_vgainr);
-      }
-      //
+      if(spkcalib_use && (spkcalib_firlen > 0))
+        add_spkcalib(e_rec);
       // receiver can be "hrtf" or "ortf" (more receivers are possible
       // in TASCAR, but only these two can produce audio which is
       // headphone-compatible):
