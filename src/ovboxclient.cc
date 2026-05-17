@@ -97,11 +97,11 @@ ovboxclient_t::ovboxclient_t(std::string desthost, port_t destport,
   if(peer2peer_)
     mode |= B_PEER2PEER;
   if(receivedownmix_)
-    mode |= B_RECEIVEDOWNMIX;
+    mode |= B_RECEIVEDOWNMIX_deprecated;
   if(donotsend_)
     mode |= B_DONOTSEND;
   if(senddownmix)
-    mode |= B_SENDDOWNMIX;
+    mode |= B_SENDDOWNMIX_deprecated;
   if(usingproxy)
     mode |= B_USINGPROXY;
   if(encryption)
@@ -254,12 +254,12 @@ void ovboxclient_t::announce_new_connection(stage_device_id_t cid,
 {
   if(cid == callerid)
     return;
-  log(recport, "new connection for " + std::to_string(cid) + " from " +
-                   ep2str(ep.ep) + " [" + ep2str(ep.localep) + "] in " +
-                   ((ep.mode & B_PEER2PEER) ? "p2p" : "srv") + "-mode" +
-                   ((ep.mode & B_RECEIVEDOWNMIX) ? " receivedownmix" : "") +
-                   ((ep.mode & B_DONOTSEND) ? " donotsend" : "") + " v" +
-                   ep.version);
+  log(recport,
+      "new connection for " + std::to_string(cid) + " from " + ep2str(ep.ep) +
+          " [" + ep2str(ep.localep) + "] in " +
+          ((ep.mode & B_PEER2PEER) ? "p2p" : "srv") + "-mode" +
+          ((ep.mode & B_RECEIVEDOWNMIX_deprecated) ? " receivedownmix" : "") +
+          ((ep.mode & B_DONOTSEND) ? " donotsend" : "") + " v" + ep.version);
 }
 
 void ovboxclient_t::announce_connection_lost(stage_device_id_t cid)
@@ -550,9 +550,11 @@ void ovboxclient_t::recsrv()
                      ((bool)(ep.mode & B_USINGPROXY) &&
                       target_in_same_network)) {
                     // sending is not deactivated.
-                    if((bool)(ep.mode & B_RECEIVEDOWNMIX) ==
-                       (bool)(mode & B_SENDDOWNMIX)) {
-                      // remote is receiving downmix and this is downmixer
+                    if((bool)(ep.mode & B_RECEIVEDOWNMIX_deprecated) ==
+                       (bool)(mode & B_SENDDOWNMIX_deprecated)) {
+                      // remote is receiving downmix and this is downmixer, or
+                      // remote is not expecting downmix and this is not a
+                      // downmixer (normal mode):
                       if(sendlocal && target_in_same_network) {
                         // same network.
                         remote_server.send(send_msg, send_len, ep.localep);
@@ -565,10 +567,10 @@ void ovboxclient_t::recsrv()
                   sendtoserver = true;
                 }
               } // ocid != callerid
-            }   // ep.timeout
+            } // ep.timeout
             ++ocid;
           } // for( ep : endpoints )
-        }   // this is not B_PEER2PEER
+        } // this is not B_PEER2PEER
         if(sendtoserver) {
           // encrypt if needed:
           char* send_msg = msg;
@@ -576,8 +578,8 @@ void ovboxclient_t::recsrv()
           ++peers_total;
           // now check for encryption:
           if((mode & B_ENCRYPTION) && srv_has_pubkey) {
-            send_len = encryptmsg(cmsg, BUFSIZE, msg, msglen_packed,
-                                  srv_pubkey);
+            send_len =
+                encryptmsg(cmsg, BUFSIZE, msg, msglen_packed, srv_pubkey);
             send_msg = cmsg;
             ++peers_encrypted;
           }
@@ -785,8 +787,9 @@ std::string to_string(const ping_stat_t& ps)
 {
   char ctmp[1024];
   ctmp[1023] = 0;
-  snprintf(ctmp, 1023, "min=%1.2fms median=%1.2fms p99=%1.2fms mean=%1.2fms received=",
-          ps.t_min, ps.t_med, ps.t_p99, ps.t_mean);
+  snprintf(ctmp, 1023,
+           "min=%1.2fms median=%1.2fms p99=%1.2fms mean=%1.2fms received=",
+           ps.t_min, ps.t_med, ps.t_p99, ps.t_mean);
   return ctmp + std::to_string(ps.received) +
          " lost=" + std::to_string(ps.lost);
 }
@@ -796,8 +799,8 @@ std::string to_string(const message_stat_t& ms)
   char ctmp[1024];
   ctmp[1023] = 0;
   snprintf(ctmp, 1023, " (%1.2f%%) seqerr=",
-          100.0 * (double)ms.lost /
-              (double)(std::max((size_t)1, ms.received + ms.lost)));
+           100.0 * (double)ms.lost /
+               (double)(std::max((size_t)1, ms.received + ms.lost)));
   return "received=" + std::to_string(ms.received) +
          " lost=" + std::to_string(ms.lost) + ctmp +
          std::to_string(ms.seqerr_in) +

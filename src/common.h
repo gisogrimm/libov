@@ -107,7 +107,7 @@ typedef uint8_t epmode_t;
  * @ingroup operationmodes
  * Can receive only downmixed signals
  */
-#define B_RECEIVEDOWNMIX 0x02
+#define B_RECEIVEDOWNMIX_deprecated 0x02
 /**
  * @ingroup operationmodes
  * Do not send audio to this client.
@@ -118,7 +118,7 @@ typedef uint8_t epmode_t;
  * @ingroup operationmodes
  * This device is sending a session mix, do not send to normal clients.
  */
-#define B_SENDDOWNMIX 0x08
+#define B_SENDDOWNMIX_deprecated 0x08
 /**
  * @ingroup operationmodes
  *
