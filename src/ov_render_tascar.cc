@@ -1211,7 +1211,8 @@ void ov_render_tascar_t::start_session()
   // modules section:
   tsccfg::node_t e_mods(tsccfg::node_add_child(e_session, "modules"));
   // create a route for level analysis:
-  create_levelmeter_route(e_session, e_mods);
+  if( reclevelanalyser )
+    create_levelmeter_route(e_session, e_mods);
   // add a pitch analyser/tuner:
   tsccfg::node_t e_tuner = tsccfg::node_add_child(e_mods, "tuner");
   tsccfg::node_set_attribute(e_tuner, "url", "osc.udp://localhost:9000/");
@@ -1947,6 +1948,7 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
       bool restart_session(false);
       // parse extra configuration:
       nlohmann::json xcfg(nlohmann::json::parse(js));
+      UPDATEVAR_RESTART("reclevelanalyser", reclevelanalyser);
       bool prev_start_webmixer = start_webmixer;
       start_webmixer = my_js_value(xcfg, "start_webmixer", start_webmixer);
       if(prev_start_webmixer != start_webmixer)

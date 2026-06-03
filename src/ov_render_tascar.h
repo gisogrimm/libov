@@ -221,6 +221,8 @@ private:
   std::string spkcalib_vfreq;
   std::string spkcalib_vgainl;
   std::string spkcalib_vgainr;
+  // level analysis:
+  bool reclevelanalyser = false;
 };
 
 #endif
