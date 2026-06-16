@@ -276,9 +276,13 @@ std::string ov_render_tascar_t::get_level_stat_as_json()
 std::string ov_render_tascar_t::get_osc_var_list_as_json()
 {
   if(tascar) {
+    std::string list_osc = "{}";
+    std::string list_lsl = "{}";
     for(const auto& mod : tascar->modules)
       if(mod->modulename() == "osclist")
-        return mod->get_state_json();
+        list_osc = mod->get_state_json();
+    std::string data_streams = "{\"osc\":"+list_osc+",\"lsl\":"+list_lsl+"}";
+    return data_streams;
   }
   return "{}";
 }
