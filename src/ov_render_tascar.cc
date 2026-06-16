@@ -273,6 +273,16 @@ std::string ov_render_tascar_t::get_level_stat_as_json()
   return r;
 }
 
+std::string ov_render_tascar_t::get_osc_var_list_as_json()
+{
+  if(tascar) {
+    for(const auto& mod : tascar->modules)
+      if(mod->modulename() == "osclist")
+        return mod->get_state_json();
+  }
+  return "{}";
+}
+
 void ov_render_tascar_t::get_session_gains(
     float& outputgain, float& egogain, float& reverbgain,
     std::map<std::string, std::vector<float>>& othergains)
@@ -1210,8 +1220,12 @@ void ov_render_tascar_t::start_session()
   tsccfg::node_set_attribute(e_scene, "name", "main");
   // modules section:
   tsccfg::node_t e_mods(tsccfg::node_add_child(e_session, "modules"));
+  if(getoscvars) {
+    auto e_osclist = tsccfg::node_add_child(e_mods, "osclist");
+    tsccfg::node_set_attribute(e_osclist, "timeout", "120");
+  }
   // create a route for level analysis:
-  if( reclevelanalyser )
+  if(reclevelanalyser)
     create_levelmeter_route(e_session, e_mods);
   // add a pitch analyser/tuner:
   tsccfg::node_t e_tuner = tsccfg::node_add_child(e_mods, "tuner");
@@ -1965,6 +1979,9 @@ void ov_render_tascar_t::set_extra_config(const std::string& js)
       usebcf2000 = my_js_value(xcfg["render"], "usebcf2000", false);
       if(prev_usebcf2000 != usebcf2000)
         restart_session = true;
+      if(xcfg["scandatastreams"].is_object()) {
+        UPDATEVAR_RESTART("scandatastreams", getoscvars);
+      }
       if(xcfg["tuner"].is_object()) {
         UPDATEVAR_RESTART("tuner", tuner_tuning);
         UPDATEVAR_RESTART("tuner", tuner_f0);

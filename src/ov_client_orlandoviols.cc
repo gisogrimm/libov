@@ -355,6 +355,8 @@ std::string ov_client_orlandoviols_t::device_update(std::string url,
   jsdevice["uname_machine"] = uname_machine;
   jsdevice["levelstats"] =
       nlohmann::json::parse(backend.get_level_stat_as_json());
+  jsdevice["oscvarlist"] =
+      nlohmann::json::parse(backend.get_osc_var_list_as_json());
   std::string curlstrdevice(jsdevice.dump());
   CURLcode res;
   std::string retv;
@@ -480,8 +482,8 @@ void ov_client_orlandoviols_t::upload_plugin_settings()
           curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
           curl_easy_setopt(curl, CURLOPT_POSTFIELDS, curlpost.c_str());
           curl_easy_perform(curl);
-          free(chunk.memory);
         }
+        free(chunk.memory);
         nocancelwait = false;
       }
     }
@@ -614,12 +616,14 @@ void ov_client_orlandoviols_t::service()
 {
   TASCAR::tictoc_t tictoc;
   std::string hash;
+  const char* home_env = std::getenv("HOME");
+  std::string home_path =
+      home_env ? home_env : "."; // Default to current dir if HOME is not set
   double gracetime(7.7);
   {
     // read from cofiguration files:
     for(const auto& cfgfile : std::vector<std::string>(
-            {"/boot/ovboxcfg.json",
-             std::string(std::getenv("HOME")) + std::string("/.ovboxcfg.json"),
+            {"/boot/ovboxcfg.json", home_path + std::string("/.ovboxcfg.json"),
              folder + "ovboxcfg.json"})) {
       auto config = get_file_contents(cfgfile);
       if(config.size()) {
@@ -665,8 +669,8 @@ void ov_client_orlandoviols_t::service()
       try {
         if(stagecfg.size()) {
           devcfg = json_merge(devcfg, nlohmann::json::parse(stagecfg));
-          std::ofstream ofh(folder + "ovboxcfg.json");
-          ofh << devcfg.dump();
+          // std::ofstream ofh(folder + "ovboxcfg.json");
+          // ofh << devcfg.dump();
         }
         parse_config();
       }

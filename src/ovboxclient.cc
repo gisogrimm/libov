@@ -106,7 +106,6 @@ ovboxclient_t::ovboxclient_t(std::string desthost, port_t destport,
     mode |= B_USINGPROXY;
   if(encryption)
     mode |= B_ENCRYPTION;
-  DEBUG(encryption);
   local_server.set_timeout_usec(10000);
   local_server.set_destination("localhost");
   local_server.bind(recport, true);

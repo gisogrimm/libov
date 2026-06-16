@@ -503,6 +503,7 @@ public:
    * Return current level statistics as json
    */
   virtual std::string get_level_stat_as_json() { return "{}"; };
+  virtual std::string get_osc_var_list_as_json() { return "{}"; };
   void update_plugincfg(const std::string& cfg, size_t channel);
   /**
    * Return  current configuration of all input channel effect plugins

@@ -71,6 +71,7 @@ public:
   std::string get_all_current_plugincfg_as_json();
   std::string get_objmixcfg_as_json();
   std::string get_level_stat_as_json();
+  std::string get_osc_var_list_as_json();
   void get_session_gains(float& outputgain, float& egogain, float& reverbgain,
                          std::map<std::string, std::vector<float>>&);
   void set_zita_path(const std::string& path);
@@ -223,6 +224,8 @@ private:
   std::string spkcalib_vgainr;
   // level analysis:
   bool reclevelanalyser = false;
+  // data stream scanner:
+  bool getoscvars = false;
 };
 
 #endif
