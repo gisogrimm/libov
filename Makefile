@@ -84,7 +84,7 @@ TASCARMODULS += ltcgen serialheadtracker
 endif
 
 ifeq "$(HAS_LSL)" "yes"
-TASCARMODULS += lsl2osc osc2lsl lslactor
+TASCARMODULS += lsl2osc osc2lsl lslactor lsllist
 endif
 
 TASCARMODULSGUI = tracegui datalogging

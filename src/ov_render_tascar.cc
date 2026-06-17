@@ -278,9 +278,12 @@ std::string ov_render_tascar_t::get_osc_var_list_as_json()
   if(tascar) {
     std::string list_osc = "{}";
     std::string list_lsl = "{}";
-    for(const auto& mod : tascar->modules)
+    for(const auto& mod : tascar->modules){
       if(mod->modulename() == "osclist")
         list_osc = mod->get_state_json();
+      if(mod->modulename() == "lsllist")
+        list_lsl = mod->get_state_json();
+    }
     std::string data_streams = "{\"osc\":"+list_osc+",\"lsl\":"+list_lsl+"}";
     return data_streams;
   }
@@ -1227,6 +1230,7 @@ void ov_render_tascar_t::start_session()
   if(getoscvars) {
     auto e_osclist = tsccfg::node_add_child(e_mods, "osclist");
     tsccfg::node_set_attribute(e_osclist, "timeout", "120");
+    tsccfg::node_add_child(e_mods, "lsllist");
   }
   // create a route for level analysis:
   if(reclevelanalyser)
