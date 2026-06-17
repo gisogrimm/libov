@@ -541,6 +541,10 @@ void ovboxclient_t::recsrv()
                     send_msg = cmsg;
                     ++peers_encrypted;
                   }
+		  // The destination is probably in the same network as this device if:
+		  // a) the external IP address is the same (tested below), and
+		  // b) the local IP addresses start with the three octets (not yet tested).
+		  // This test should be replaced by a test if the peer can be reached using local networking only.
                   bool target_in_same_network(
                       (endpoints[callerid].ep.sin_addr.s_addr ==
                        ep.ep.sin_addr.s_addr) &&
