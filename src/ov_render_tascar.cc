@@ -929,10 +929,10 @@ void ov_render_tascar_t::create_virtual_acoustics(tsccfg::node_t e_session,
     std::vector<std::string> actor;
     // control local receiver:
     if(stage.rendersettings.headtrackingrotrec)
-      actor.push_back("/" + stage.thisdeviceid + "/main");
+      actor.push_back("/main/main");
     if(stage.rendersettings.headtrackingrotsrc) {
       // control local and remote sound source:
-      actor.push_back("/" + stage.thisdeviceid + "/ego");
+      actor.push_back("/main/ego");
       tsccfg::node_set_attribute(
           e_head, "roturl",
           "osc.udp://localhost:" + std::to_string(dist_to_other_tascarport) +
