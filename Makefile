@@ -52,7 +52,7 @@ LDFLAGS += -Ltascar/libtascar/build
 
 HEADER := $(wildcard src/*.h) $(wildcard libov/src/*.h) build/tscver
 
-CXXFLAGS += -Itascar/libtascar/build
+CXXFLAGS += -Itascar/libtascar/include -Itascar/libtascar/build
 
 TASCAROBJECTS = licensehandler.o audiostates.o coordinates.o		\
   audiochunks.o tscconfig.o dynamicobjects.o sourcemod.o		\
