@@ -139,10 +139,8 @@ void udpsocket_t::set_netpriority(int priority)
 void udpsocket_t::set_expedited_forwarding_PHB()
 {
 #ifndef __APPLE__
+#ifndef WIN32
   int iptos = IPTOS_DSCP_EF;
-#if defined(WIN32) || defined(UNDER_CE)
-  setsockopt(sockfd, IPPROTO_IP, IP_TOS, reinterpret_cast<const char*>(&iptos), sizeof(iptos));
-#else
   setsockopt(sockfd, IPPROTO_IP, IP_TOS, &iptos, sizeof(iptos));
 #endif
 #endif
