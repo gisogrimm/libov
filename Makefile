@@ -20,11 +20,14 @@ BASEOBJ = ov_types errmsg common udpsocket ovtcpsocket callerlist	\
 OBJ = $(BASEOBJ) ovboxclient ov_client_orlandoviols	\
   ov_render_tascar soundcardtools
 
+UNAME_S := $(shell uname -s)
+
 ifneq "$(UNAME_S)" "Darwin"
 HAS_LSL:=$(shell tascar/check_for_lsl)
 else
 HAS_LSL:=no
 endif
+#HAS_LSL := yes
 
 BUILD_OBJ = $(patsubst %,build/%.o,$(OBJ))
 
@@ -36,7 +39,6 @@ ifeq "$(ARCH)" "x86_64"
 CXXFLAGS += -msse -msse2 -mfpmath=sse -ffast-math
 endif
 
-UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
 LIBVAR=LD_LIBRARY_PATH
 endif
