@@ -20,8 +20,11 @@ BASEOBJ = ov_types errmsg common udpsocket ovtcpsocket callerlist	\
 OBJ = $(BASEOBJ) ovboxclient ov_client_orlandoviols	\
   ov_render_tascar soundcardtools
 
-#HAS_LSL:=$(shell tascar/check_for_lsl)
+ifneq "$(UNAME_S)" "Darwin"
+HAS_LSL:=$(shell tascar/check_for_lsl)
+else
 HAS_LSL:=no
+endif
 
 BUILD_OBJ = $(patsubst %,build/%.o,$(OBJ))
 
