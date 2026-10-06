@@ -22,12 +22,12 @@ OBJ = $(BASEOBJ) ovboxclient ov_client_orlandoviols	\
 
 UNAME_S := $(shell uname -s)
 
-ifneq "$(UNAME_S)" "Darwin"
-HAS_LSL:=$(shell tascar/check_for_lsl)
-else
-HAS_LSL:=no
-endif
-#HAS_LSL := yes
+#ifneq "$(UNAME_S)" "Darwin"
+#HAS_LSL:=$(shell tascar/check_for_lsl)
+#else
+#HAS_LSL:=no
+#endif
+HAS_LSL := yes
 
 BUILD_OBJ = $(patsubst %,build/%.o,$(OBJ))
 
