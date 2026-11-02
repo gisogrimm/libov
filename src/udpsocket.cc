@@ -559,7 +559,12 @@ endpoint_t getipaddr()
                 (struct sockaddr_in*)pUnicast->Address.lpSockaddr;
             // Check if it is not loopback (127.0.0.1)
             if(sa_in->sin_addr.s_addr != htonl(INADDR_LOOPBACK)) {
-              memcpy(&my_addr, sa_in, sizeof(endpoint_t));
+              // Correctly copy the address - only copy the relevant fields
+              my_addr.sin_family = AF_INET;
+              my_addr.sin_port = 0;
+              my_addr.sin_addr.s_addr = sa_in->sin_addr.s_addr;
+              // Zero out the rest to be safe
+              memset(my_addr.sin_zero, 0, sizeof(my_addr.sin_zero));
               free(pAddresses);
               return my_addr;
             }
