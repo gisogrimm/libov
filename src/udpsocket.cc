@@ -92,8 +92,13 @@ udpsocket_t::udpsocket_t() : tx_bytes(0), rx_bytes(0)
   // windows:
   memset((char*)&serv_addr, 0, sizeof(serv_addr));
   sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-  if(sockfd < 0)
+  if(sockfd < 0) {
+#if defined(WIN32) || defined(UNDER_CE)
+    throw ErrMsg("Opening socket failed: " + std::to_string(WSAGetLastError()));
+#else
     throw ErrMsg("Opening socket failed: ", errno);
+#endif
+  }
 #ifndef __APPLE__
   // int iptos = IPTOS_CLASS_CS6;
   int iptos = 0xc0;
@@ -154,13 +159,15 @@ udpsocket_t::~udpsocket_t()
 
 void udpsocket_t::set_timeout_usec(int usec)
 {
+#if defined(WIN32) || defined(UNDER_CE)
+  // Windows expects milliseconds as a DWORD
+  DWORD timeout = (DWORD)(usec / 1000);
+  setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout,
+             sizeof(timeout));
+#else
   struct timeval tv;
   tv.tv_sec = 0;
   tv.tv_usec = usec;
-#if defined(WIN32) || defined(UNDER_CE)
-  // windows (cast):
-  setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
-#else
   setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 #endif
 }
@@ -196,26 +203,28 @@ void udpsocket_t::set_destination(const char* host)
 port_t udpsocket_t::bind(port_t port, bool loopback)
 {
   int optval = 1;
-#if defined(WIN32) || defined(UNDER_CE)
-  // On Windows, SO_REUSEADDR allows hijacking active ports. 
-  // SO_EXCLUSIVEADDRUSE prevents this, behaving more like Linux's SO_REUSEADDR.
-  setsockopt(sockfd, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, (const char*)&optval, sizeof(int));
-#else
-  setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (const void*)&optval, sizeof(int));
-#endif
+  // Use SO_REUSEADDR for better compatibility across restarts
+  setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, (const char*)&optval,
+             sizeof(int));
 
   endpoint_t my_addr;
   memset(&my_addr, 0, sizeof(endpoint_t));
-  /* Clear structure */
   my_addr.sin_family = AF_INET;
   my_addr.sin_port = htons((unsigned short)port);
   if(loopback) {
-    my_addr.sin_addr.s_addr = 0x0100007f;
+    my_addr.sin_addr.s_addr =
+        htonl(INADDR_LOOPBACK); // Use htonl for portability
   }
-  if(::bind(sockfd, (struct sockaddr*)&my_addr, sizeof(endpoint_t)) == -1)
+
+  if(::bind(sockfd, (struct sockaddr*)&my_addr, sizeof(endpoint_t)) == -1) {
+#if defined(WIN32) || defined(UNDER_CE)
+    throw ErrMsg("Binding failed: " + std::to_string(WSAGetLastError()));
+#else
     throw ErrMsg("Binding the socket to port " + std::to_string(port) +
                      " failed: ",
                  errno);
+#endif
+  }
   socklen_t addrlen(sizeof(endpoint_t));
   getsockname(sockfd, (struct sockaddr*)&my_addr, &addrlen);
   return ntohs(my_addr.sin_port);
@@ -518,38 +527,42 @@ endpoint_t getipaddr()
   // (find first non-loopback IPv4 address)
   ULONG outBufLen = 15000;
   PIP_ADAPTER_ADDRESSES pAddresses = (PIP_ADAPTER_ADDRESSES)malloc(outBufLen);
-  
-  if (pAddresses == NULL) {
+
+  if(pAddresses == NULL) {
     // If malloc fails, return empty struct (matches Linux error handling)
     return my_addr;
   }
 
   // Make an initial call to GetAdaptersAddresses to get the size needed
-  DWORD dwRetVal = GetAdaptersAddresses(AF_INET, GAA_FLAG_INCLUDE_PREFIX, NULL, pAddresses, &outBufLen);
-  if (dwRetVal == ERROR_BUFFER_OVERFLOW) {
+  DWORD dwRetVal = GetAdaptersAddresses(AF_INET, GAA_FLAG_INCLUDE_PREFIX, NULL,
+                                        pAddresses, &outBufLen);
+  if(dwRetVal == ERROR_BUFFER_OVERFLOW) {
     free(pAddresses);
     pAddresses = (PIP_ADAPTER_ADDRESSES)malloc(outBufLen);
-    if (pAddresses == NULL) {
+    if(pAddresses == NULL) {
       return my_addr;
     }
-    dwRetVal = GetAdaptersAddresses(AF_INET, GAA_FLAG_INCLUDE_PREFIX, NULL, pAddresses, &outBufLen);
+    dwRetVal = GetAdaptersAddresses(AF_INET, GAA_FLAG_INCLUDE_PREFIX, NULL,
+                                    pAddresses, &outBufLen);
   }
 
-  if (dwRetVal == NO_ERROR) {
+  if(dwRetVal == NO_ERROR) {
     PIP_ADAPTER_ADDRESSES pCurrAddresses = pAddresses;
-    while (pCurrAddresses) {
+    while(pCurrAddresses) {
       // Check if the adapter is operational
-      if (pCurrAddresses->OperStatus == IfOperStatusUp) {
-        PIP_ADAPTER_UNICAST_ADDRESS pUnicast = pCurrAddresses->FirstUnicastAddress;
-        while (pUnicast) {
-          if (pUnicast->Address.lpSockaddr->sa_family == AF_INET) {
-             struct sockaddr_in* sa_in = (struct sockaddr_in*)pUnicast->Address.lpSockaddr;
-             // Check if it is not loopback (127.0.0.1)
-             if (sa_in->sin_addr.s_addr != htonl(INADDR_LOOPBACK)) {
-               memcpy(&my_addr, sa_in, sizeof(endpoint_t));
-               free(pAddresses);
-               return my_addr;
-             }
+      if(pCurrAddresses->OperStatus == IfOperStatusUp) {
+        PIP_ADAPTER_UNICAST_ADDRESS pUnicast =
+            pCurrAddresses->FirstUnicastAddress;
+        while(pUnicast) {
+          if(pUnicast->Address.lpSockaddr->sa_family == AF_INET) {
+            struct sockaddr_in* sa_in =
+                (struct sockaddr_in*)pUnicast->Address.lpSockaddr;
+            // Check if it is not loopback (127.0.0.1)
+            if(sa_in->sin_addr.s_addr != htonl(INADDR_LOOPBACK)) {
+              memcpy(&my_addr, sa_in, sizeof(endpoint_t));
+              free(pAddresses);
+              return my_addr;
+            }
           }
           pUnicast = pUnicast->Next;
         }
@@ -557,10 +570,12 @@ endpoint_t getipaddr()
       pCurrAddresses = pCurrAddresses->Next;
     }
   }
-  
-  if (pAddresses) free(pAddresses);
-  
-  // Fallback if no specific interface found (matches Linux return of empty/zeroed struct)
+
+  if(pAddresses)
+    free(pAddresses);
+
+  // Fallback if no specific interface found (matches Linux return of
+  // empty/zeroed struct)
   return my_addr;
 
 #else
@@ -588,27 +603,31 @@ std::vector<std::string> getnetworkdevices()
 #if defined(WIN32) || defined(UNDER_CE)
   ULONG outBufLen = 15000;
   PIP_ADAPTER_ADDRESSES pAddresses = (PIP_ADAPTER_ADDRESSES)malloc(outBufLen);
-  
-  if (pAddresses) {
-    DWORD dwRetVal = GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, NULL, pAddresses, &outBufLen);
-    if (dwRetVal == ERROR_BUFFER_OVERFLOW) {
+
+  if(pAddresses) {
+    DWORD dwRetVal = GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX,
+                                          NULL, pAddresses, &outBufLen);
+    if(dwRetVal == ERROR_BUFFER_OVERFLOW) {
       free(pAddresses);
       pAddresses = (PIP_ADAPTER_ADDRESSES)malloc(outBufLen);
-      if (pAddresses) {
-        dwRetVal = GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX, NULL, pAddresses, &outBufLen);
+      if(pAddresses) {
+        dwRetVal = GetAdaptersAddresses(AF_UNSPEC, GAA_FLAG_INCLUDE_PREFIX,
+                                        NULL, pAddresses, &outBufLen);
       }
     }
 
-    if (dwRetVal == NO_ERROR) {
+    if(dwRetVal == NO_ERROR) {
       PIP_ADAPTER_ADDRESSES pCurrAddresses = pAddresses;
-      while (pCurrAddresses) {
+      while(pCurrAddresses) {
         // AdapterName is a char* (GUID), FriendlyName is wchar_t*
-        // Using AdapterName to match the technical identifier nature of ifa_name
+        // Using AdapterName to match the technical identifier nature of
+        // ifa_name
         devices.push_back(std::string(pCurrAddresses->AdapterName));
         pCurrAddresses = pCurrAddresses->Next;
       }
     }
-    if (pAddresses) free(pAddresses);
+    if(pAddresses)
+      free(pAddresses);
   }
 
 #else
