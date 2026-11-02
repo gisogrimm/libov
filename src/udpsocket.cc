@@ -586,11 +586,14 @@ endpoint_t getipaddr()
 #else
   // Linux code remains unchanged
   struct ifaddrs* addrs;
-  getifaddrs(&addrs);
+  if(getifaddrs(&addrs) == -1) {
+    return my_addr; // Return empty struct on error
+  }
+  // getifaddrs(&addrs);
   struct ifaddrs* tmp = addrs;
   while(tmp) {
     if(tmp->ifa_addr && tmp->ifa_addr->sa_family == AF_INET &&
-       (!(tmp->ifa_flags & IFF_LOOPBACK))) {
+       (tmp->ifa_flags & IFF_UP) && (!(tmp->ifa_flags & IFF_LOOPBACK))) {
       memcpy(&my_addr, tmp->ifa_addr, sizeof(endpoint_t));
       freeifaddrs(addrs);
       return my_addr;
@@ -637,10 +640,14 @@ std::vector<std::string> getnetworkdevices()
 
 #else
   struct ifaddrs* addrs;
-  getifaddrs(&addrs);
+  if(getifaddrs(&addrs) == -1) {
+    return devices; // Return empty vector on error
+  }
+  // getifaddrs(&addrs);
   struct ifaddrs* tmp = addrs;
   while(tmp) {
-    if(tmp->ifa_addr && tmp->ifa_addr->sa_family == AF_INET)
+    if(tmp->ifa_addr && tmp->ifa_addr->sa_family == AF_INET &&
+       (tmp->ifa_flags & IFF_UP) && !(tmp->ifa_flags & IFF_LOOPBACK))
       devices.push_back(tmp->ifa_name);
     tmp = tmp->ifa_next;
   }
