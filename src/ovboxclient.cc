@@ -336,23 +336,27 @@ void ovboxclient_t::pingservice()
     std::this_thread::sleep_for(std::chrono::milliseconds(pingperiodms));
     // send registration to relay server:
     remote_server.send_registration(mode, toport, localep);
-    // send ping to other peers:
-    uint8_t ocid(0);
-    for(auto& ep : endpoints) {
-      if(ep.timeout && (ocid != callerid)) {
-        remote_server.send_ping(ep.ep, ocid);
-        ++ping_stat_collecors_p2p[ocid].sent;
-        remote_server.send_ping(remote_server.get_destination(), ocid,
-                                PORT_PING_SRV);
-        ++ping_stat_collecors_srv[ocid].sent;
-        // test if peer is in same network:
-        if((endpoints[callerid].ep.sin_addr.s_addr == ep.ep.sin_addr.s_addr) &&
-           (ep.localep.sin_addr.s_addr != 0)) {
-          remote_server.send_ping(ep.localep, ocid, PORT_PING_LOCAL);
-          ++ping_stat_collecors_local[ocid].sent;
+    {
+      std::shared_lock<std::shared_mutex> lock(mstat);
+      // send ping to other peers:
+      uint8_t ocid(0);
+      for(auto& ep : endpoints) {
+        if(ep.timeout && (ocid != callerid)) {
+          remote_server.send_ping(ep.ep, ocid);
+          ++ping_stat_collecors_p2p[ocid].sent;
+          remote_server.send_ping(remote_server.get_destination(), ocid,
+                                  PORT_PING_SRV);
+          ++ping_stat_collecors_srv[ocid].sent;
+          // test if peer is in same network:
+          if((endpoints[callerid].ep.sin_addr.s_addr ==
+              ep.ep.sin_addr.s_addr) &&
+             (ep.localep.sin_addr.s_addr != 0)) {
+            remote_server.send_ping(ep.localep, ocid, PORT_PING_LOCAL);
+            ++ping_stat_collecors_local[ocid].sent;
+          }
         }
+        ++ocid;
       }
-      ++ocid;
     }
   }
 }
@@ -529,6 +533,7 @@ void ovboxclient_t::recsrv()
               if(ocid != callerid) {
                 // not sending to ourself.
                 if(ep.mode & B_PEER2PEER) {
+                  std::shared_lock<std::shared_mutex> lock(mstat);
                   // target/other end is in peer-to-peer mode.
                   char* send_msg = msg;
                   size_t send_len = msglen_packed;
@@ -541,10 +546,12 @@ void ovboxclient_t::recsrv()
                     send_msg = cmsg;
                     ++peers_encrypted;
                   }
-		  // The destination is probably in the same network as this device if:
-		  // a) the external IP address is the same (tested below), and
-		  // b) the local IP addresses start with the three octets (not yet tested).
-		  // This test should be replaced by a test if the peer can be reached using local networking only.
+                  // The destination is probably in the same network as this
+                  // device if: a) the external IP address is the same (tested
+                  // below), and b) the local IP addresses start with the three
+                  // octets (not yet tested). This test should be replaced by a
+                  // test if the peer can be reached using local networking
+                  // only.
                   bool target_in_same_network(
                       (endpoints[callerid].ep.sin_addr.s_addr ==
                        ep.ep.sin_addr.s_addr) &&

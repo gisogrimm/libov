@@ -21,6 +21,7 @@
 #define CALLERLIST_H
 
 #include "udpsocket.h"
+#include <shared_mutex>
 #include <thread>
 
 // timeout of caller actvity, in ping periods:
@@ -55,11 +56,11 @@ public:
 
 protected:
   virtual void announce_new_connection(stage_device_id_t cid,
-                                       const ep_desc_t& ep){};
-  virtual void announce_connection_lost(stage_device_id_t cid){};
+                                       const ep_desc_t& ep) {};
+  virtual void announce_connection_lost(stage_device_id_t cid) {};
   virtual void announce_latency(stage_device_id_t cid, double lmin,
                                 double lmean, double lmax, uint32_t received,
-                                uint32_t lost){};
+                                uint32_t lost) {};
   void cid_setpingtime(stage_device_id_t cid, double pingtime);
   void cid_register(stage_device_id_t cid, char* data, epmode_t mode,
                     const std::string& rver);
@@ -71,12 +72,12 @@ protected:
   int pingperiodms = 2000;
   bool srv_has_pubkey = false;
   uint8_t srv_pubkey[crypto_box_PUBLICKEYBYTES];
+  mutable std::shared_mutex mstat;
 
 private:
   void checkstatus();
   bool runthread;
   std::thread statusthread;
-  std::mutex mstat;
 };
 
 #endif

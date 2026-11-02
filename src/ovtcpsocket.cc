@@ -225,7 +225,7 @@ void ovtcpsocket_t::handleconnection(int fd, endpoint_t ep)
             << " established, UDP listening on port " << udpport
             << ", sending to " << targetport << "\n";
   udp.set_destination("127.0.0.1");
-  uint8_t buf[BUFSIZE];
+  uint8_t buf[BUFSIZE+1];
   std::atomic_bool runthread = true;
   std::thread udphandlethread(&udpreceive, &udp, &runthread, this, fd);
   try {

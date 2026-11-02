@@ -54,16 +54,18 @@ void endpoint_list_t::cid_register(stage_device_id_t cid, char* data,
                                    epmode_t mode, const std::string& rver)
 {
   if(cid < MAX_STAGE_ID) {
-    if(mstat.try_lock()) {
-      size_t scid = (size_t)cid;
-      memcpy(&(endpoints[scid].ep), data, sizeof(endpoint_t));
-      if(mode != endpoints[cid].mode)
-        endpoints[scid].announced = false;
-      endpoints[scid].mode = mode;
-      endpoints[scid].timeout = CALLERLIST_TIMEOUT;
-      endpoints[scid].version = rver;
-      mstat.unlock();
-    }
+    // CHANGE: Use unique_lock to ensure registration always happens
+    std::unique_lock<std::shared_mutex> lock(mstat);
+    // if(mstat.try_lock()) {
+    size_t scid = (size_t)cid;
+    memcpy(&(endpoints[scid].ep), data, sizeof(endpoint_t));
+    if(mode != endpoints[cid].mode)
+      endpoints[scid].announced = false;
+    endpoints[scid].mode = mode;
+    endpoints[scid].timeout = CALLERLIST_TIMEOUT;
+    endpoints[scid].version = rver;
+    // mstat.unlock();
+    // }
   }
 }
 
@@ -130,26 +132,33 @@ void endpoint_list_t::checkstatus()
   uint32_t statlogcnt(60000 / pingperiodms);
   while(runthread) {
     std::this_thread::sleep_for(std::chrono::milliseconds(pingperiodms));
-    for(stage_device_id_t ep = 0; ep != MAX_STAGE_ID; ++ep) {
-      if(endpoints[ep].timeout) {
-        // bookkeeping of connected endpoints:
-        if(!endpoints[ep].announced) {
-          announce_new_connection(ep, endpoints[ep]);
-          endpoints[ep].announced = true;
-        }
-        --endpoints[ep].timeout;
-      } else {
-        // bookkeeping of disconnected endpoints:
-        if(endpoints[ep].announced) {
-          announce_connection_lost(ep);
-          endpoints[ep] = ep_desc_t();
+    {
+      // CHANGE: Lock exclusively for the duration of the status update
+      std::unique_lock<std::shared_mutex> lock(mstat);
+      for(stage_device_id_t ep = 0; ep != MAX_STAGE_ID; ++ep) {
+        if(endpoints[ep].timeout) {
+          // bookkeeping of connected endpoints:
+          if(!endpoints[ep].announced) {
+            announce_new_connection(ep, endpoints[ep]);
+            endpoints[ep].announced = true;
+          }
+          --endpoints[ep].timeout;
+        } else {
+          // bookkeeping of disconnected endpoints:
+          if(endpoints[ep].announced) {
+            announce_connection_lost(ep);
+            endpoints[ep] = ep_desc_t();
+          }
         }
       }
     }
+
     if(!statlogcnt) {
       // logging of ping statistics:
       statlogcnt = 60000 / pingperiodms;
-      std::lock_guard<std::mutex> lk(mstat);
+      std::unique_lock<std::shared_mutex> lock(
+          mstat); // Exclusive lock for stats reset
+      // std::lock_guard<std::mutex> lk(mstat);
       for(stage_device_id_t ep = 0; ep != MAX_STAGE_ID; ++ep) {
         if(endpoints[ep].timeout) {
           announce_latency(ep, endpoints[ep].pingt_min,
